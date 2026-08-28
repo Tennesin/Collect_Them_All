@@ -72,7 +72,7 @@ class TextInputBox:
             return True
         return False
 
-    def draw(self, surface, font_size=None):
+    def draw(self, surface, font_size=None, valid=True):
         font = get_font(font_size or FONT_SIZE_LABEL)
         now = time.time()
         if now - self._last_blink >= 0.5:
@@ -80,7 +80,12 @@ class TextInputBox:
             self._cursor_visible = not self._cursor_visible
 
         bg = INPUT_BG_COLOR_FOCUS if self.focused else INPUT_BG_COLOR
-        border = INPUT_BORDER_COLOR_FOCUS if self.focused else INPUT_BORDER_COLOR
+        if not valid:
+            border = INPUT_BORDER_COLOR_ERROR
+        elif self.focused:
+            border = INPUT_BORDER_COLOR_FOCUS
+        else:
+            border = INPUT_BORDER_COLOR
         pygame.draw.rect(surface, bg, self.rect, border_radius=4)
         pygame.draw.rect(surface, border, self.rect, 1, border_radius=4)
 
@@ -99,7 +104,7 @@ class TextInputBox:
 
         if self.focused and self._cursor_visible:
             pygame.draw.line(surface, INPUT_TEXT_COLOR,
-                              (cursor_x, self.rect.y + 6), (cursor_x, self.rect.bottom - 6), 1)
+                             (cursor_x, self.rect.y + 6), (cursor_x, self.rect.bottom - 6), 1)
 
 
 class Slider:

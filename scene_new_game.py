@@ -61,6 +61,23 @@ class NewGameScene(Scene):
         start_w, start_h = 240, 56
         self.start_button = Button((cx - start_w // 2, 500, start_w, start_h), "Начать игру")
 
+    # --- Валидация custom-ввода ---
+
+    @staticmethod
+    def _is_valid_size(text):
+        try:
+            value = int(text)
+        except ValueError:
+            return False
+        return MIN_MAP_SIZE <= value <= MAX_MAP_SIZE
+
+    def _custom_inputs_valid(self):
+        """True, если можно стартовать партию: либо выбран пресет,
+        либо оба custom-поля содержат корректное число в допустимых границах."""
+        if not self.custom_mode:
+            return True
+        return self._is_valid_size(self.width_input.text) and self._is_valid_size(self.height_input.text)
+
     # --- События ---
 
     def handle_event(self, event):
@@ -72,6 +89,10 @@ class NewGameScene(Scene):
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             self.obstacle_slider.dragging = False
         elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                from scene_main_menu import MainMenuScene
+                self.manager.switch_to(MainMenuScene(self.manager))
+                return
             self.width_input.handle_keydown(event)
             self.height_input.handle_keydown(event)
 
@@ -110,25 +131,20 @@ class NewGameScene(Scene):
             self.settings.player_count = min(MAX_PLAYERS, self.settings.player_count + 1)
             return
 
+        # Кнопка неактивна (enabled=False), пока custom-ввод некорректен —
+        # collidepoint сам вернёт False, дополнительная проверка не нужна.
         if self.start_button.collidepoint(pos):
             self._start_game()
 
     def _start_game(self):
         if self.custom_mode:
-            self.settings.map_width = self._parse_size(self.width_input.text)
-            self.settings.map_height = self._parse_size(self.height_input.text)
+            self.settings.map_width = int(self.width_input.text)
+            self.settings.map_height = int(self.height_input.text)
         self.settings.obstacle_percent = int(round(self.obstacle_slider.value))
         self.settings.clamp()
 
         from scene_gameplay import GameplayScene
         self.manager.push(GameplayScene(self.manager, self.settings))
-
-    @staticmethod
-    def _parse_size(text):
-        try:
-            return int(text)
-        except ValueError:
-            return MIN_MAP_SIZE
 
     # --- Отрисовка ---
 
@@ -150,8 +166,10 @@ class NewGameScene(Scene):
         self.custom_button.draw(screen, mouse_pos)
         if self.custom_mode:
             pygame.draw.rect(screen, SELECTED_BORDER_COLOR, self.custom_button.rect, 3, border_radius=4)
-            self.width_input.draw(screen)
-            self.height_input.draw(screen)
+            width_valid = self._is_valid_size(self.width_input.text)
+            height_valid = self._is_valid_size(self.height_input.text)
+            self.width_input.draw(screen, valid=width_valid)
+            self.height_input.draw(screen, valid=height_valid)
             x_surf = label_font.render("x", True, TEXT_COLOR)
             screen.blit(x_surf, x_surf.get_rect(center=(SCREEN_WIDTH // 2, 220)))
 
@@ -166,6 +184,7 @@ class NewGameScene(Scene):
         screen.blit(count_surf, count_surf.get_rect(center=(SCREEN_WIDTH // 2, 400 + 18)))
         self.player_plus_button.draw(screen, mouse_pos)
 
+        self.start_button.enabled = self._custom_inputs_valid()
         self.start_button.draw(screen, mouse_pos)
 
     @staticmethod
