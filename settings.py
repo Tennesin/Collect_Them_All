@@ -16,7 +16,20 @@ PATH_COLOR = (255, 80, 80)
 BLOCK_COLOR = (50, 50, 50)
 WALL_COLOR = (90, 90, 90)
 OBSTACLE_BORDER = (20, 20, 20)
+PREVIEW_COLOR = (255, 80, 80, 150)  # с альфа-каналом для полупрозрачного пунктира
 
 # Параметры камеры
 INITIAL_SCALE = 20
 MAX_SCALE = 50
+
+# Скорость игрока (клеток в секунду)
+PLAYER_SPEED = 5.0
+
+# Визуальные коэффициенты отрисовки (доля от текущего g.scale камеры)
+WALL_THICKNESS_RATIO = 0.35
+PATH_WIDTH_RATIO = 0.25
+PATH_GOAL_RADIUS_RATIO = 0.3
+PREVIEW_WIDTH_RATIO = 0.2
+PREVIEW_DASH_RATIO = 0.2
+PREVIEW_GAP_RATIO = 0.1
+PLAYER_RADIUS_RATIO = 0.3

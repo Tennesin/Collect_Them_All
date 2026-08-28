@@ -2,142 +2,110 @@ import pygame
 import math
 from settings import *
 
+
 class Renderer:
-    def __init__(self, game):
-        self.game = game
+    """Только отрисовка. Получает все зависимости явно, не лезет в Game."""
 
-    def project(self, x, y, z=0):
-        g = self.game
-        screen_x = x * g.scale + g.offset_x + g.center_x
-        screen_y = y * g.scale + g.offset_y + g.center_y
-        return screen_x, screen_y
+    def __init__(self, screen, camera, field, player, input_handler):
+        self.screen = screen
+        self.camera = camera
+        self.field = field
+        self.player = player
+        self.input_handler = input_handler
 
-    def screen_to_world(self, screen_x, screen_y):
-        g = self.game
-        world_x = (screen_x - g.offset_x - g.center_x) / g.scale
-        world_y = (screen_y - g.offset_y - g.center_y) / g.scale
-        return world_x, world_y
+    def draw(self):
+        self.draw_field()
+        self.draw_path()
+        self.draw_preview()
+        self.draw_player()
 
     def draw_field(self):
-        g = self.game
-        g.screen.fill(BG_COLOR)
+        self.screen.fill(BG_COLOR)
+        hovered_cell = self.input_handler.get_hovered_cell()
 
-        hovered_cell = None
-        if not g.player.moving and g.mouse_pos:
-            world = self.screen_to_world(*g.mouse_pos)
-            if world:
-                wx, wy = world
-                if 0 <= wx < g.field_width and 0 <= wy < g.field_height:
-                    cell = (int(wx), int(wy))
-                    if not g.field.obstacle_grid[cell[0]][cell[1]]:
-                        hovered_cell = cell
-
-        for x in range(g.field_width):
-            for y in range(g.field_height):
-                p1 = self.project(x, y)
-                p2 = self.project(x + 1, y)
-                p3 = self.project(x + 1, y + 1)
-                p4 = self.project(x, y + 1)
+        for x in range(self.field.width):
+            for y in range(self.field.height):
+                p1 = self.camera.project(x, y)
+                p2 = self.camera.project(x + 1, y)
+                p3 = self.camera.project(x + 1, y + 1)
+                p4 = self.camera.project(x, y + 1)
                 points = [p1, p2, p3, p4]
 
-                if g.field.obstacle_grid[x][y] and g.field.obstacle_type[x][y] == 'block':
-                    color = BLOCK_COLOR
-                    pygame.draw.polygon(g.screen, color, points)
-                    pygame.draw.polygon(g.screen, OBSTACLE_BORDER, points, 2)
+                if self.field.obstacle_grid[x][y] and self.field.obstacle_type[x][y] == 'block':
+                    pygame.draw.polygon(self.screen, BLOCK_COLOR, points)
+                    pygame.draw.polygon(self.screen, OBSTACLE_BORDER, points, 2)
                 else:
-                    if hovered_cell == (x, y):
-                        color = HOVER_COLOR
-                    else:
-                        color = FIELD_COLOR
-                    pygame.draw.polygon(g.screen, color, points)
-                    pygame.draw.polygon(g.screen, GRID_COLOR, points, 1)
+                    color = HOVER_COLOR if hovered_cell == (x, y) else FIELD_COLOR
+                    pygame.draw.polygon(self.screen, color, points)
+                    pygame.draw.polygon(self.screen, GRID_COLOR, points, 1)
 
         self.draw_walls()
 
     def draw_walls(self):
-        g = self.game
-        if not g.field.wall_segments:
+        if not self.field.wall_segments:
             return
-        # Для высокой точности не приводим к int при вычислении толщины
-        wall_thickness = max(2.0, 0.35 * g.scale)
+        wall_thickness = max(2.0, WALL_THICKNESS_RATIO * self.camera.scale)
         color = WALL_COLOR
 
-        for segment in g.field.wall_segments:
+        for segment in self.field.wall_segments:
             if len(segment) < 2:
                 continue
-            screen_points = []
-            for cell in segment:
-                cx = cell[0] + 0.5
-                cy = cell[1] + 0.5
-                screen_points.append(self.project(cx, cy))
+            screen_points = [self.camera.project(cx + 0.5, cy + 0.5) for cx, cy in segment]
 
-            # 1. Рисуем саму линию
-            pygame.draw.lines(g.screen, color, False, screen_points, int(wall_thickness))
-
-            # 2. Перекрываем узлы с помощью FRect (плавающая точка гарантирует точное попадание в центр)
+            pygame.draw.lines(self.screen, color, False, screen_points, int(wall_thickness))
             for pt in screen_points:
                 rect = pygame.Rect(0, 0, wall_thickness, wall_thickness)
                 rect.center = pt
-                pygame.draw.rect(g.screen, color, rect)
+                pygame.draw.rect(self.screen, color, rect)
 
-        # 3. Соединительные полоски к соседним блокам
-        for segment in g.field.wall_segments:
-            for cell in segment:
-                x, y = cell
+        for segment in self.field.wall_segments:
+            for x, y in segment:
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     nx, ny = x + dx, y + dy
-                    if 0 <= nx < g.field_width and 0 <= ny < g.field_height:
-                        if g.field.obstacle_grid[nx][ny] and g.field.obstacle_type[nx][ny] == 'block':
-                            cx1, cy1 = x + 0.5, y + 0.5
-                            cx2, ny_val = nx + 0.5, ny + 0.5
-                            screen1 = self.project(cx1, cy1)
-                            screen2 = self.project(cx2, ny_val)
-                            screen_mid = ((screen1[0] + screen2[0]) / 2, (screen1[1] + screen2[1]) / 2)
-                            pygame.draw.line(g.screen, color, screen1, screen_mid, int(wall_thickness))
+                    if (self.field.in_bounds(nx, ny)
+                            and self.field.obstacle_grid[nx][ny]
+                            and self.field.obstacle_type[nx][ny] == 'block'):
+                        screen1 = self.camera.project(x + 0.5, y + 0.5)
+                        screen2 = self.camera.project(nx + 0.5, ny + 0.5)
+                        screen_mid = ((screen1[0] + screen2[0]) / 2, (screen1[1] + screen2[1]) / 2)
+                        pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
 
     def draw_path(self):
-        g = self.game
-        if not g.player.moving or not g.player.path:
+        if not self.player.moving or not self.player.path:
             return
-        points = [(g.player.pos_x, g.player.pos_y)]
-        for cell in g.player.path:
-            cx = cell[0] + 0.5
-            cy = cell[1] + 0.5
-            points.append((cx, cy))
-        screen_points = [self.project(x, y) for x, y in points]
-        line_width = max(3, int(0.25 * g.scale))
-        circle_radius = max(4, int(0.3 * g.scale))
+        points = [(self.player.pos_x, self.player.pos_y)]
+        points += [(cx + 0.5, cy + 0.5) for cx, cy in self.player.path]
+        screen_points = [self.camera.project(x, y) for x, y in points]
+
+        line_width = max(3, int(PATH_WIDTH_RATIO * self.camera.scale))
+        circle_radius = max(4, int(PATH_GOAL_RADIUS_RATIO * self.camera.scale))
+
         if len(screen_points) >= 2:
-            pygame.draw.lines(g.screen, PATH_COLOR, False, screen_points, line_width)
+            pygame.draw.lines(self.screen, PATH_COLOR, False, screen_points, line_width)
         goal_screen = screen_points[-1]
-        pygame.draw.circle(g.screen, PATH_COLOR, (int(goal_screen[0]), int(goal_screen[1])), circle_radius)
+        pygame.draw.circle(self.screen, PATH_COLOR, (int(goal_screen[0]), int(goal_screen[1])), circle_radius)
 
     def draw_preview(self):
-        g = self.game
-        if not g.preview_path or g.player.moving:
+        preview_path = self.input_handler.preview_path
+        if not preview_path or self.player.moving:
             return
-        overlay = pygame.Surface((g.width, g.height), pygame.SRCALPHA)
-        color = (255, 80, 80, 150)
-        line_width = max(2, int(0.2 * g.scale))
-        dash_length = max(6, int(0.2 * g.scale))
-        gap_length = max(4, int(0.1 * g.scale))
-        points = [(g.player.pos_x, g.player.pos_y)]
-        for cell in g.preview_path:
-            cx = cell[0] + 0.5
-            cy = cell[1] + 0.5
-            points.append((cx, cy))
-        screen_points = [self.project(x, y) for x, y in points]
+
+        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA)
+        line_width = max(2, int(PREVIEW_WIDTH_RATIO * self.camera.scale))
+        dash_length = max(6, int(PREVIEW_DASH_RATIO * self.camera.scale))
+        gap_length = max(4, int(PREVIEW_GAP_RATIO * self.camera.scale))
+
+        points = [(self.player.pos_x, self.player.pos_y)]
+        points += [(cx + 0.5, cy + 0.5) for cx, cy in preview_path]
+        screen_points = [self.camera.project(x, y) for x, y in points]
+
         for i in range(len(screen_points) - 1):
             self._draw_dashed_line(
-                overlay,
-                color,
-                screen_points[i],
-                screen_points[i+1],
-                dash_length,
-                gap_length,
-                line_width
+                overlay, PREVIEW_COLOR,
+                screen_points[i], screen_points[i + 1],
+                dash_length, gap_length, line_width
             )
-        g.screen.blit(overlay, (0, 0))
+        self.screen.blit(overlay, (0, 0))
 
     def _draw_dashed_line(self, surface, color, start, end, dash_length, gap_length, width):
         x1, y1 = start
@@ -160,7 +128,6 @@ class Renderer:
             current += dash_length + gap_length
 
     def draw_player(self):
-        g = self.game
-        screen_pos = self.project(g.player.pos_x, g.player.pos_y)
-        radius = max(3, int(0.3 * g.scale))
-        pygame.draw.circle(g.screen, PLAYER_COLOR, (int(screen_pos[0]), int(screen_pos[1])), radius)
+        screen_pos = self.camera.project(self.player.pos_x, self.player.pos_y)
+        radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
+        pygame.draw.circle(self.screen, PLAYER_COLOR, (int(screen_pos[0]), int(screen_pos[1])), radius)

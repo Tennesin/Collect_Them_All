@@ -1,22 +1,31 @@
 import math
 
+
 class Player:
-    def __init__(self, game):
-        self.game = game
-        self.grid_x = 0
-        self.grid_y = 0
-        self.pos_x = 0.5
-        self.pos_y = 0.5
+    """Отвечает только за собственное состояние: позицию и движение по пути.
+    Ничего не знает ни про Game, ни про pygame, ни про камеру напрямую."""
+
+    def __init__(self, field, start_cell=(0, 0), speed=5.0):
+        self.field = field
+        self.grid_x, self.grid_y = start_cell
+        self.pos_x = self.grid_x + 0.5
+        self.pos_y = self.grid_y + 0.5
         self.path = []
         self.moving = False
-        self.speed = 5.0
+        self.speed = speed
+
+        # Внешний наблюдатель (например, Camera.center_on), вызывается при каждом изменении позиции.
+        self.on_move = None
 
     def set_goal(self, goal_cell):
-        start = (self.grid_x, self.grid_y)
-        self.path = self.game.field.find_path(start, goal_cell)
-        if self.path:
-            self.moving = True
-            self.game.center_on_player()
+        """Пытается проложить путь к goal_cell. Возвращает True, если движение началось."""
+        path = self.field.find_path((self.grid_x, self.grid_y), goal_cell)
+        if not path:
+            return False
+        self.path = path
+        self.moving = True
+        self._notify_move()
+        return True
 
     def update(self, dt):
         if not self.moving or not self.path:
@@ -39,3 +48,8 @@ class Player:
         else:
             self.pos_x += dx / dist * step
             self.pos_y += dy / dist * step
+        self._notify_move()
+
+    def _notify_move(self):
+        if self.on_move:
+            self.on_move(self.pos_x, self.pos_y)
