@@ -2,15 +2,15 @@ import pygame
 
 
 class InputHandler:
-    """Единая точка обработки мыши и клавиатуры.
-    Владеет UI-состоянием взаимодействия: drag, hover, предпросмотр пути."""
+    """Единая точка обработки мыши и клавиатуры внутри игрового поля.
+    Владеет UI-состоянием взаимодействия: drag, hover, предпросмотр пути.
+    Не читает очередь событий сама — получает их по одному от активной сцены."""
 
     def __init__(self, camera, field, player):
         self.camera = camera
         self.field = field
         self.player = player
 
-        self.running = True
         self.dragging = False
         self.last_mouse_pos = (0, 0)
         self.mouse_pos = None
@@ -18,18 +18,15 @@ class InputHandler:
         self.preview_path = None
         self.preview_goal = None
 
-    def process_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                self._on_mouse_down(event)
-            elif event.type == pygame.MOUSEBUTTONUP:
-                self._on_mouse_up(event)
-            elif event.type == pygame.MOUSEMOTION:
-                self._on_mouse_motion(event)
-            elif event.type == pygame.MOUSEWHEEL:
-                self._on_mouse_wheel(event)
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self._on_mouse_down(event)
+        elif event.type == pygame.MOUSEBUTTONUP:
+            self._on_mouse_up(event)
+        elif event.type == pygame.MOUSEMOTION:
+            self._on_mouse_motion(event)
+        elif event.type == pygame.MOUSEWHEEL:
+            self._on_mouse_wheel(event)
 
     def process_held_keys(self):
         keys = pygame.key.get_pressed()
@@ -90,11 +87,9 @@ class InputHandler:
             return
 
         if self.preview_goal == goal_cell:
-            # Повторный клик по той же клетке — стартуем движение
             self.player.set_goal(goal_cell)
             self._clear_preview()
         else:
-            # Первый клик — показываем предпросмотр
             path = self.field.find_path((self.player.grid_x, self.player.grid_y), goal_cell)
             if path:
                 self.preview_path = path

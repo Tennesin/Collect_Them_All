@@ -4,9 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="rect">
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="architecture building">
+      <change afterPath="$PROJECT_DIR$/game_config.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scene_gameplay.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scene_main_menu.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scene_new_game.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scene_pause.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scenes.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/widgets.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/objects.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -39,6 +46,9 @@
   &quot;associatedIndex&quot;: 6
 }</component>
   <component name="ProjectId" id="3IJtpWvqwJUJ0SrvOu5llwVz1Uk" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -128,7 +138,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787942669883</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="architecture building">
+      <option name="closed" value="true" />
+      <created>1787943301471</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1787943301471</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -144,6 +162,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="rect" />
-    <option name="LAST_COMMIT_MESSAGE" value="rect" />
+    <MESSAGE value="architecture building" />
+    <option name="LAST_COMMIT_MESSAGE" value="architecture building" />
   </component>
 </project>
