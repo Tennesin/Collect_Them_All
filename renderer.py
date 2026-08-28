@@ -76,7 +76,7 @@ class Renderer:
 
             # 2. Перекрываем узлы с помощью FRect (плавающая точка гарантирует точное попадание в центр)
             for pt in screen_points:
-                rect = pygame.FRect(0, 0, wall_thickness, wall_thickness)
+                rect = pygame.Rect(0, 0, wall_thickness, wall_thickness)
                 rect.center = pt
                 pygame.draw.rect(g.screen, color, rect)
 
