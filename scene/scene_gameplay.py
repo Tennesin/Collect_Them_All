@@ -38,7 +38,7 @@ class GameplayScene(Scene):
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
 
         # Динамика ресурсов (накопленное золото, текущее серебро) — отдельно от Field.
-        self.resource_manager = ResourceManager(self.field)
+        self.resource_manager = ResourceManager(self.field, settings.player_count)
 
         # Камере отдаём только ширину игровой зоны (без панели справа) —
         # так поле не залезает под PlayerPanel.
@@ -71,12 +71,17 @@ class GameplayScene(Scene):
 
     def _make_cell_reached_handler(self, player):
         """Собирает воедино всё, что должно произойти при входе игрока в
-        новую клетку: списание хода, сбор ресурсов и проверку победы."""
+        новую клетку: сбор ресурсов и проверку победы."""
+
         def handler():
-            self.turn_manager.consume_move()
             self.resource_manager.collect_at(player)
             if self.winner is None and self.resource_manager.check_win(player):
                 self.winner = player
+                return
+
+            self.turn_manager.consume_move()
+            player.warning_message = self.resource_manager.missing_requirements_message(player)
+
         return handler
 
     def _on_turn_change(self, new_player):

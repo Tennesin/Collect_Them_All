@@ -36,9 +36,13 @@ GOLD_CELL_YIELD = 2           # золота за один цикл ходов �
 GOLD_CELL_BOX_RADIUS = 2      # половина стороны короба (2 -> короб 5x5)
 
 # --- Серебряные клетки ---
-MIN_SILVER_CELLS = 15
-MAX_SILVER_CELLS = 45
-SILVER_CELL_VALUE = 1
+SILVER_CELL_BASE_DENSITY = 0.05          # доля свободных клеток при 1 игроке
+SILVER_CELL_DENSITY_PER_PLAYER = 0.01    # надбавка к доле за каждого игрока сверх первого
+MIN_SILVER_CELLS_ABSOLUTE = 1            # минимум кучек, даже если формула даёт меньше
+
+SILVER_PILE_MIN_VALUE = 15               # серебра в одной кучке — нижняя граница
+SILVER_PILE_MAX_VALUE = 45               # серебра в одной кучке — верхняя граница
+
 SILVER_RESPAWN_CYCLES = 2
 
 # --- Условия победы ---

@@ -23,10 +23,11 @@ class Player:
         self.gold = STARTING_GOLD
         self.silver = STARTING_SILVER
 
+        # Текст предупреждения ("Недостаточно N золота...")
+        self.warning_message = None
+
         # Внешний наблюдатель (например, Camera.center_on), вызывается при каждом изменении позиции.
         self.on_move = None
-        # Вызывается каждый раз, когда игрок полностью занял новую клетку
-        # (нужен TurnManager'у, чтобы списывать движения).
         self.on_cell_reached = None
 
     def set_goal(self, goal_cell):

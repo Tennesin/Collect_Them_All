@@ -3,6 +3,7 @@ from settings import *
 from widgets import get_font
 from game.image_manager import ImageManager
 
+
 class PlayerPanel:
     """Правая панель интерфейса. Размер (PANEL_WIDTH x SCREEN_HEIGHT) фиксирован
     и не зависит от размера или состояния игрового поля — панель знает только
@@ -19,6 +20,7 @@ class PlayerPanel:
         player = self.turn_manager.current_player
         padding = 18
         x = self.rect.x + padding
+        max_text_width = self.rect.width - padding * 2
         y = 24
 
         y = self._draw_line(screen, x, y, "Текущий ход:", HINT_TEXT_COLOR, FONT_SIZE_HINT)
@@ -45,9 +47,16 @@ class PlayerPanel:
         y = self._draw_icon_line(
             screen, x, y + 2, ICON_GOLD, str(player.gold), TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
-        self._draw_icon_line(
+        y = self._draw_icon_line(
             screen, x, y + 4, ICON_SILVER, str(player.silver), TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
+
+        if player.warning_message:
+            y += 18
+            self._draw_wrapped_text(
+                screen, x, y, player.warning_message,
+                WARNING_TEXT_COLOR, FONT_SIZE_HINT, max_text_width,
+            )
 
     @staticmethod
     def _draw_line(screen, x, y, text, color, font_size):
@@ -70,3 +79,28 @@ class PlayerPanel:
         screen.blit(surf, text_rect)
 
         return y + line_height
+
+    @staticmethod
+    def _draw_wrapped_text(screen, x, y, text, color, font_size, max_width):
+        """Переносит текст по словам, чтобы длинное предупреждение не вылезало
+        за границу узкой панели — сообщение о нехватке ресурсов может содержать
+        оба ресурса сразу ('и'), и на маленьких размерах шрифта это не всегда
+        влезает в одну строку."""
+        font = get_font(font_size)
+        words = text.split(" ")
+        line = ""
+        line_y = y
+        for word in words:
+            candidate = f"{line} {word}".strip()
+            if font.size(candidate)[0] > max_width and line:
+                surf = font.render(line, True, color)
+                screen.blit(surf, (x, line_y))
+                line_y += surf.get_height() + 2
+                line = word
+            else:
+                line = candidate
+        if line:
+            surf = font.render(line, True, color)
+            screen.blit(surf, (x, line_y))
+            line_y += surf.get_height()
+        return line_y
