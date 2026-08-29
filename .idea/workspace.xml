@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="scenes realise">
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="map size input fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/camera.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/game_config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,18 +23,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "Tennesin"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Tennesin&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Tennesin/Collect_Them_All",
-    "accountId": "5c70bd73-d930-4c68-af0d-79e4ba6dc6ed"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Tennesin/Collect_Them_All&quot;,
+    &quot;accountId&quot;: &quot;5c70bd73-d930-4c68-af0d-79e4ba6dc6ed&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -51,6 +51,7 @@
     "Python.main.executor": "Run",
     "Python.text_maker.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
@@ -147,7 +148,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787950820441</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="map size input fix">
+      <option name="closed" value="true" />
+      <created>1787951385905</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1787951385905</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -165,6 +174,7 @@
     <MESSAGE value="rect" />
     <MESSAGE value="architecture building" />
     <MESSAGE value="scenes realise" />
-    <option name="LAST_COMMIT_MESSAGE" value="scenes realise" />
+    <MESSAGE value="map size input fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="map size input fix" />
   </component>
 </project>

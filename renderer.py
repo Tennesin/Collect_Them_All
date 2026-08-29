@@ -1,23 +1,26 @@
 import pygame
 import math
 from settings import *
+from widgets import get_font
 
 
 class Renderer:
     """Только отрисовка. Получает все зависимости явно, не лезет в Game."""
 
-    def __init__(self, screen, camera, field, player, input_handler):
+    def __init__(self, screen, camera, field, players, turn_manager, input_handler):
         self.screen = screen
         self.camera = camera
         self.field = field
-        self.player = player
+        self.players = players
+        self.turn_manager = turn_manager
         self.input_handler = input_handler
 
     def draw(self):
         self.draw_field()
         self.draw_path()
         self.draw_preview()
-        self.draw_player()
+        self.draw_players()
+        self.draw_hud()
 
     def draw_field(self):
         self.screen.fill(BG_COLOR)
@@ -71,10 +74,11 @@ class Renderer:
                         pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
 
     def draw_path(self):
-        if not self.player.moving or not self.player.path:
+        player = self.turn_manager.current_player
+        if not player.moving or not player.path:
             return
-        points = [(self.player.pos_x, self.player.pos_y)]
-        points += [(cx + 0.5, cy + 0.5) for cx, cy in self.player.path]
+        points = [(player.pos_x, player.pos_y)]
+        points += [(cx + 0.5, cy + 0.5) for cx, cy in player.path]
         screen_points = [self.camera.project(x, y) for x, y in points]
 
         line_width = max(3, int(PATH_WIDTH_RATIO * self.camera.scale))
@@ -87,7 +91,8 @@ class Renderer:
 
     def draw_preview(self):
         preview_path = self.input_handler.preview_path
-        if not preview_path or self.player.moving:
+        player = self.turn_manager.current_player
+        if not preview_path or player.moving:
             return
 
         overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA)
@@ -95,7 +100,7 @@ class Renderer:
         dash_length = max(6, int(PREVIEW_DASH_RATIO * self.camera.scale))
         gap_length = max(4, int(PREVIEW_GAP_RATIO * self.camera.scale))
 
-        points = [(self.player.pos_x, self.player.pos_y)]
+        points = [(player.pos_x, player.pos_y)]
         points += [(cx + 0.5, cy + 0.5) for cx, cy in preview_path]
         screen_points = [self.camera.project(x, y) for x, y in points]
 
@@ -127,7 +132,85 @@ class Renderer:
             pygame.draw.line(surface, color, (sx, sy), (ex, ey), width)
             current += dash_length + gap_length
 
-    def draw_player(self):
-        screen_pos = self.camera.project(self.player.pos_x, self.player.pos_y)
+    # --- Игроки ---
+
+    def draw_players(self):
+        """Рисует всех игроков: тех, кто стоит на месте, — сгруппированными
+        по клеткам "слоями", а того, кто сейчас едет по пути, — отдельно,
+        на его реальной (дробной) позиции, поверх всего."""
+        current = self.turn_manager.current_player
+        moving_player = current if current.moving else None
+        stationary = [p for p in self.players if p is not moving_player]
+
+        groups = {}
+        for p in stationary:
+            cell = (p.grid_x, p.grid_y)
+            groups.setdefault(cell, []).append(p)
+
+        for group in groups.values():
+            self._draw_stack(group, current)
+
+        if moving_player:
+            radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
+            screen_pos = self.camera.project(moving_player.pos_x, moving_player.pos_y)
+            self._draw_circle(moving_player.color, screen_pos, radius, highlight=True)
+
+    def _draw_stack(self, group, current):
+        """Рисует игроков одной клетки "слоями" по диагонали: более ранние —
+        левее-выше и темнее, тот, чей сейчас ход, — правее-ниже (на переднем плане) и ярче."""
         radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
-        pygame.draw.circle(self.screen, PLAYER_COLOR, (int(screen_pos[0]), int(screen_pos[1])), radius)
+        step = STACK_OFFSET_RATIO * radius
+
+        others = [p for p in group if p is not current]
+        ordered = others + ([current] if current in group else [])
+        n = len(ordered)
+
+        grid_x, grid_y = ordered[0].grid_x, ordered[0].grid_y
+        base_x, base_y = self.camera.project(grid_x + 0.5, grid_y + 0.5)
+
+        for i, p in enumerate(ordered):
+            back_index = n - 1 - i  # 0 у переднего (последнего в списке) слоя
+            offset = back_index * step
+            screen_pos = (base_x - offset, base_y - offset)
+
+            is_current = p is current
+            color = p.color if is_current else self._dim_color(p.color)
+            self._draw_circle(color, screen_pos, radius, highlight=is_current)
+
+    def _draw_circle(self, color, screen_pos, radius, highlight=False):
+        center = (int(screen_pos[0]), int(screen_pos[1]))
+        pygame.draw.circle(self.screen, color, center, radius)
+        border_color = (255, 255, 255) if highlight else (20, 20, 20)
+        border_width = 2 if highlight else 1
+        pygame.draw.circle(self.screen, border_color, center, radius, border_width)
+
+    @staticmethod
+    def _dim_color(color):
+        return tuple(max(0, int(c * PLAYER_DIM_FACTOR)) for c in color)
+
+    # --- HUD (чей ход, движения, время) ---
+
+    def draw_hud(self):
+        player = self.turn_manager.current_player
+        font = get_font(FONT_SIZE_LABEL)
+        name = PLAYER_NAMES_RU[player.color_key]
+
+        lines = [
+            f"Ход: {name}",
+            f"Ходы: {self.turn_manager.moves_left}/{self.turn_manager.max_moves}",
+            f"Время: {self.turn_manager.time_left:.1f} с",
+        ]
+
+        padding = 10
+        line_height = font.get_height() + 4
+        box_w = 210
+        box_h = line_height * len(lines) + padding * 2
+
+        box = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+        box.fill((10, 10, 15, 170))
+        self.screen.blit(box, (10, 10))
+
+        for i, line in enumerate(lines):
+            color = player.color if i == 0 else TEXT_COLOR
+            surf = font.render(line, True, color)
+            self.screen.blit(surf, (10 + padding, 10 + padding + i * line_height))

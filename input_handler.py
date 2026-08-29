@@ -4,12 +4,14 @@ import pygame
 class InputHandler:
     """Единая точка обработки мыши и клавиатуры внутри игрового поля.
     Владеет UI-состоянием взаимодействия: drag, hover, предпросмотр пути.
-    Не читает очередь событий сама — получает их по одному от активной сцены."""
+    Работает не с фиксированным игроком, а всегда с тем, чей сейчас ход
+    (через turn_manager.current_player) — не читает очередь событий сама,
+    получает их по одному от активной сцены."""
 
-    def __init__(self, camera, field, player):
+    def __init__(self, camera, field, turn_manager):
         self.camera = camera
         self.field = field
-        self.player = player
+        self.turn_manager = turn_manager
 
         self.dragging = False
         self.last_mouse_pos = (0, 0)
@@ -17,6 +19,10 @@ class InputHandler:
 
         self.preview_path = None
         self.preview_goal = None
+
+    @property
+    def player(self):
+        return self.turn_manager.current_player
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -37,8 +43,9 @@ class InputHandler:
                 self.camera.zoom(0.98)
 
     def get_hovered_cell(self):
-        """Клетка под курсором, если она свободна и игрок сейчас не движется. Нужна рендереру."""
-        if self.player.moving or self.mouse_pos is None:
+        """Клетка под курсором, если она свободна и текущий игрок сейчас не движется."""
+        player = self.player
+        if player.moving or self.mouse_pos is None:
             return None
         wx, wy = self.camera.screen_to_world(*self.mouse_pos)
         if 0 <= wx < self.field.width and 0 <= wy < self.field.height:
@@ -75,7 +82,8 @@ class InputHandler:
             self.camera.zoom(0.9)
 
     def _handle_left_click(self):
-        if self.player.moving or self.mouse_pos is None:
+        player = self.player
+        if player.moving or self.mouse_pos is None:
             return
         wx, wy = self.camera.screen_to_world(*self.mouse_pos)
         if not (0 <= wx < self.field.width and 0 <= wy < self.field.height):
@@ -83,20 +91,33 @@ class InputHandler:
         goal_cell = (int(wx), int(wy))
         if not self.field.is_free(*goal_cell):
             return
-        if goal_cell == (self.player.grid_x, self.player.grid_y):
+        if goal_cell == (player.grid_x, player.grid_y):
             return
 
         if self.preview_goal == goal_cell:
-            self.player.set_goal(goal_cell)
-            self._clear_preview()
+            path = self._capped_path(player, goal_cell)
+            if path:
+                player.follow_path(path)
+            self.clear_preview()
         else:
-            path = self.field.find_path((self.player.grid_x, self.player.grid_y), goal_cell)
+            path = self._capped_path(player, goal_cell)
             if path:
                 self.preview_path = path
                 self.preview_goal = goal_cell
             else:
-                self._clear_preview()
+                self.clear_preview()
 
-    def _clear_preview(self):
+    def _capped_path(self, player, goal_cell):
+        """Ищет путь и обрезает его до количества оставшихся в этом черёде движений,
+        чтобы за один клик нельзя было потратить больше движений, чем осталось."""
+        limit = self.turn_manager.moves_left
+        if limit <= 0:
+            return []
+        path = self.field.find_path((player.grid_x, player.grid_y), goal_cell)
+        if not path:
+            return []
+        return path[:limit]
+
+    def clear_preview(self):
         self.preview_path = None
         self.preview_goal = None

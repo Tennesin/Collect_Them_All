@@ -1,11 +1,13 @@
 import math
+from settings import PLAYER_COLORS
 
 
 class Player:
-    """Отвечает только за собственное состояние: позицию и движение по пути.
-    Ничего не знает ни про Game, ни про pygame, ни про камеру напрямую."""
+    """Отвечает только за собственное состояние: позицию, цвет и движение по пути.
+    Ничего не знает ни про Game, ни про pygame, ни про камеру напрямую,
+    ни про очередь ходов — этим занимается TurnManager снаружи."""
 
-    def __init__(self, field, start_cell=(0, 0), speed=5.0):
+    def __init__(self, field, start_cell=(0, 0), speed=5.0, color_key="red"):
         self.field = field
         self.grid_x, self.grid_y = start_cell
         self.pos_x = self.grid_x + 0.5
@@ -14,15 +16,25 @@ class Player:
         self.moving = False
         self.speed = speed
 
+        self.color_key = color_key
+        self.color = PLAYER_COLORS[color_key]
+
         # Внешний наблюдатель (например, Camera.center_on), вызывается при каждом изменении позиции.
         self.on_move = None
+        # Вызывается каждый раз, когда игрок полностью занял новую клетку
+        # (нужен TurnManager'у, чтобы списывать движения).
+        self.on_cell_reached = None
 
     def set_goal(self, goal_cell):
-        """Пытается проложить путь к goal_cell. Возвращает True, если движение началось."""
+        """Ищет путь к goal_cell и сразу по нему идёт. Возвращает True, если движение началось."""
         path = self.field.find_path((self.grid_x, self.grid_y), goal_cell)
+        return self.follow_path(path)
+
+    def follow_path(self, path):
+        """Идёт по уже готовому (возможно, обрезанному снаружи) пути."""
         if not path:
             return False
-        self.path = path
+        self.path = list(path)
         self.moving = True
         self._notify_move()
         return True
@@ -45,6 +57,7 @@ class Player:
             self.path.pop(0)
             if not self.path:
                 self.moving = False
+            self._notify_cell_reached()
         else:
             self.pos_x += dx / dist * step
             self.pos_y += dy / dist * step
@@ -53,3 +66,7 @@ class Player:
     def _notify_move(self):
         if self.on_move:
             self.on_move(self.pos_x, self.pos_y)
+
+    def _notify_cell_reached(self):
+        if self.on_cell_reached:
+            self.on_cell_reached()

@@ -12,6 +12,10 @@ MIN_PLAYERS = 1
 MAX_PLAYERS = 5
 DEFAULT_PLAYERS = 1
 
+# --- Правила одного черёда хода ---
+TURN_MAX_MOVES = 8
+TURN_TIME_SECONDS = 30.0
+
 DEFAULT_MAP_SIZE = 12
 
 # (подпись кнопки, ширина, высота)
