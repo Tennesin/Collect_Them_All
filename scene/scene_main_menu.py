@@ -1,7 +1,7 @@
 import pygame
 from settings import *
 from widgets import Button, get_font
-from scenes import Scene
+from scene.scenes import Scene
 
 class MainMenuScene(Scene):
     """Главное меню: 'Играть' ведёт на экран настроек, 'Выйти' закрывает приложение."""

@@ -1,14 +1,12 @@
 import pygame
 import sys
 from settings import *
-from scenes import SceneManager
-from scene_main_menu import MainMenuScene
+from scene.scenes import SceneManager
+from scene.scene_main_menu import MainMenuScene
 
 
 class Application:
-    """Composition root уровня приложения: инициализация pygame, окно, часы,
-    SceneManager и главный цикл. Никакой игровой логики здесь нет —
-    вся она находится внутри конкретных сцен."""
+    """Composition root уровня приложения"""
 
     def __init__(self):
         pygame.init()

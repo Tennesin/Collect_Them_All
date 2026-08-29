@@ -1,13 +1,13 @@
 import pygame
 from settings import *
 from widgets import Button, Slider, TextInputBox, get_font
-from scenes import Scene
-from game_config import (
+from game.game_config import (
     GameSettings, MAP_SIZE_PRESETS,
     MIN_MAP_SIZE, MAX_MAP_SIZE,
     MIN_OBSTACLE_PERCENT, MAX_OBSTACLE_PERCENT,
     MIN_PLAYERS, MAX_PLAYERS,
 )
+from scene.scenes import Scene
 
 
 class NewGameScene(Scene):
@@ -90,7 +90,7 @@ class NewGameScene(Scene):
             self.obstacle_slider.dragging = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                from scene_main_menu import MainMenuScene
+                from scene.scene_main_menu import MainMenuScene
                 self.manager.switch_to(MainMenuScene(self.manager))
                 return
             self.width_input.handle_keydown(event)
@@ -98,7 +98,7 @@ class NewGameScene(Scene):
 
     def _handle_click(self, pos):
         if self.back_button.collidepoint(pos):
-            from scene_main_menu import MainMenuScene
+            from scene.scene_main_menu import MainMenuScene
             self.manager.switch_to(MainMenuScene(self.manager))
             return
 
@@ -143,7 +143,7 @@ class NewGameScene(Scene):
         self.settings.obstacle_percent = int(round(self.obstacle_slider.value))
         self.settings.clamp()
 
-        from scene_gameplay import GameplayScene
+        from scene.scene_gameplay import GameplayScene
         self.manager.push(GameplayScene(self.manager, self.settings))
 
     # --- Отрисовка ---

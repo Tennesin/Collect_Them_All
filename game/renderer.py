@@ -1,11 +1,11 @@
 import pygame
 import math
 from settings import *
-from widgets import get_font
 
 
 class Renderer:
-    """Только отрисовка. Получает все зависимости явно, не лезет в Game."""
+    """Только отрисовка игрового поля и фигур на нём. Правая панель интерфейса
+    рисуется отдельно (см. game.ui.PlayerPanel) — Renderer про неё не знает."""
 
     def __init__(self, screen, camera, field, players, turn_manager, input_handler):
         self.screen = screen
@@ -20,7 +20,6 @@ class Renderer:
         self.draw_path()
         self.draw_preview()
         self.draw_players()
-        self.draw_hud()
 
     def draw_field(self):
         self.screen.fill(BG_COLOR)
@@ -74,6 +73,7 @@ class Renderer:
                         pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
 
     def draw_path(self):
+        """Линия и точка цели текущего маршрута — цветом того игрока, который сейчас идёт."""
         player = self.turn_manager.current_player
         if not player.moving or not player.path:
             return
@@ -83,13 +83,15 @@ class Renderer:
 
         line_width = max(3, int(PATH_WIDTH_RATIO * self.camera.scale))
         circle_radius = max(4, int(PATH_GOAL_RADIUS_RATIO * self.camera.scale))
+        color = player.color
 
         if len(screen_points) >= 2:
-            pygame.draw.lines(self.screen, PATH_COLOR, False, screen_points, line_width)
+            pygame.draw.lines(self.screen, color, False, screen_points, line_width)
         goal_screen = screen_points[-1]
-        pygame.draw.circle(self.screen, PATH_COLOR, (int(goal_screen[0]), int(goal_screen[1])), circle_radius)
+        pygame.draw.circle(self.screen, color, (int(goal_screen[0]), int(goal_screen[1])), circle_radius)
 
     def draw_preview(self):
+        """Пунктирный предпросмотр ещё не подтверждённого пути — тоже цветом текущего игрока."""
         preview_path = self.input_handler.preview_path
         player = self.turn_manager.current_player
         if not preview_path or player.moving:
@@ -99,6 +101,7 @@ class Renderer:
         line_width = max(2, int(PREVIEW_WIDTH_RATIO * self.camera.scale))
         dash_length = max(6, int(PREVIEW_DASH_RATIO * self.camera.scale))
         gap_length = max(4, int(PREVIEW_GAP_RATIO * self.camera.scale))
+        preview_color = (*player.color, PREVIEW_ALPHA)
 
         points = [(player.pos_x, player.pos_y)]
         points += [(cx + 0.5, cy + 0.5) for cx, cy in preview_path]
@@ -106,7 +109,7 @@ class Renderer:
 
         for i in range(len(screen_points) - 1):
             self._draw_dashed_line(
-                overlay, PREVIEW_COLOR,
+                overlay, preview_color,
                 screen_points[i], screen_points[i + 1],
                 dash_length, gap_length, line_width
             )
@@ -135,9 +138,6 @@ class Renderer:
     # --- Игроки ---
 
     def draw_players(self):
-        """Рисует всех игроков: тех, кто стоит на месте, — сгруппированными
-        по клеткам "слоями", а того, кто сейчас едет по пути, — отдельно,
-        на его реальной (дробной) позиции, поверх всего."""
         current = self.turn_manager.current_player
         moving_player = current if current.moving else None
         stationary = [p for p in self.players if p is not moving_player]
@@ -156,8 +156,10 @@ class Renderer:
             self._draw_circle(moving_player.color, screen_pos, radius, highlight=True)
 
     def _draw_stack(self, group, current):
-        """Рисует игроков одной клетки "слоями" по диагонали: более ранние —
-        левее-выше и темнее, тот, чей сейчас ход, — правее-ниже (на переднем плане) и ярче."""
+        """Рисует игроков одной клетки "слоями", расходящимися по диагонали
+        в обе стороны от центра (чётные слои — ниже-правее, нечётные — выше-левее),
+        чтобы стопка не упиралась в один угол клетки. Тот, чей сейчас ход,
+        всегда рисуется без смещения и поверх всех остальных."""
         radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
         step = STACK_OFFSET_RATIO * radius
 
@@ -170,12 +172,23 @@ class Renderer:
 
         for i, p in enumerate(ordered):
             back_index = n - 1 - i  # 0 у переднего (последнего в списке) слоя
-            offset = back_index * step
-            screen_pos = (base_x - offset, base_y - offset)
+            offset_x, offset_y = self._stack_offset(back_index, step)
+            screen_pos = (base_x + offset_x, base_y + offset_y)
 
             is_current = p is current
             color = p.color if is_current else self._dim_color(p.color)
             self._draw_circle(color, screen_pos, radius, highlight=is_current)
+
+    @staticmethod
+    def _stack_offset(back_index, step):
+        """back_index=0 — без смещения (передний слой). Дальше слои поочерёдно
+        уходят по диагонали то влево-вверх, то вправо-вниз, с шагом,
+        растущим через каждые два слоя — так место клетки расходуется экономнее."""
+        if back_index == 0:
+            return 0.0, 0.0
+        magnitude = ((back_index + 1) // 2) * step
+        direction = -1 if back_index % 2 == 1 else 1
+        return direction * magnitude, direction * magnitude
 
     def _draw_circle(self, color, screen_pos, radius, highlight=False):
         center = (int(screen_pos[0]), int(screen_pos[1]))
@@ -187,30 +200,3 @@ class Renderer:
     @staticmethod
     def _dim_color(color):
         return tuple(max(0, int(c * PLAYER_DIM_FACTOR)) for c in color)
-
-    # --- HUD (чей ход, движения, время) ---
-
-    def draw_hud(self):
-        player = self.turn_manager.current_player
-        font = get_font(FONT_SIZE_LABEL)
-        name = PLAYER_NAMES_RU[player.color_key]
-
-        lines = [
-            f"Ход: {name}",
-            f"Ходы: {self.turn_manager.moves_left}/{self.turn_manager.max_moves}",
-            f"Время: {self.turn_manager.time_left:.1f} с",
-        ]
-
-        padding = 10
-        line_height = font.get_height() + 4
-        box_w = 210
-        box_h = line_height * len(lines) + padding * 2
-
-        box = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
-        box.fill((10, 10, 15, 170))
-        self.screen.blit(box, (10, 10))
-
-        for i, line in enumerate(lines):
-            color = player.color if i == 0 else TEXT_COLOR
-            surf = font.render(line, True, color)
-            self.screen.blit(surf, (10 + padding, 10 + padding + i * line_height))

@@ -1,14 +1,15 @@
 import pygame
 from settings import *
-from game_config import TURN_MAX_MOVES, TURN_TIME_SECONDS
-from camera import Camera
-from field import Field
-from obstacle_generator import ObstacleGenerator
-from player import Player
-from turn_manager import TurnManager
-from input_handler import InputHandler
-from renderer import Renderer
-from scenes import Scene
+from game.game_config import TURN_MAX_MOVES, TURN_TIME_SECONDS
+from game.camera import Camera
+from game.field import Field
+from game.obstacle_generator import ObstacleGenerator
+from game.player import Player
+from game.turn_manager import TurnManager
+from game.input_handler import InputHandler
+from game.renderer import Renderer
+from game.ui import PlayerPanel
+from scene.scenes import Scene
 
 class GameplayScene(Scene):
     """Сборка и цикл собственно игры на поле. Создаёт нужное количество
@@ -18,6 +19,7 @@ class GameplayScene(Scene):
     def __init__(self, manager, settings):
         super().__init__(manager)
         self.settings = settings
+        self.paused = False
         screen = self.manager.app.screen
 
         self.field = Field(settings.map_width, settings.map_height)
@@ -25,7 +27,9 @@ class GameplayScene(Scene):
         max_obstacle_cells = int(total_cells * settings.obstacle_fraction)
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
 
-        self.camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
+        # Камере отдаём только ширину игровой зоны (без панели справа) —
+        # так поле не залезает под PlayerPanel.
+        self.camera = Camera(GAME_AREA_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
                               INITIAL_SCALE, MAX_SCALE)
 
         # --- Игроки: все стартуют в одной клетке, поэтому сразу видно "слои" ---
@@ -45,6 +49,7 @@ class GameplayScene(Scene):
 
         self.input_handler = InputHandler(self.camera, self.field, self.turn_manager)
         self.renderer = Renderer(screen, self.camera, self.field, self.players, self.turn_manager, self.input_handler)
+        self.player_panel = PlayerPanel(self.turn_manager)
 
         self.camera.center_on(self.players[0].pos_x, self.players[0].pos_y)
 
@@ -54,14 +59,25 @@ class GameplayScene(Scene):
         self.input_handler.clear_preview()
         self.camera.center_on(new_player.pos_x, new_player.pos_y)
 
+    def on_pause(self):
+        """Сцена уходит под паузу (например, поверх положили PauseScene):
+        явно останавливаем игровое время и движение игрока."""
+        self.paused = True
+
+    def on_resume(self):
+        """Сцена снова становится верхней после снятия паузы."""
+        self.paused = False
+
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            from scene_pause import PauseScene
+            from scene.scene_pause import PauseScene
             self.manager.push(PauseScene(self.manager, self))
             return
         self.input_handler.handle_event(event)
 
     def update(self, dt):
+        if self.paused:
+            return
         self.input_handler.process_held_keys()
         self.turn_manager.update(dt)
 
@@ -71,3 +87,4 @@ class GameplayScene(Scene):
 
     def draw(self, screen):
         self.renderer.draw()
+        self.player_panel.draw(screen)

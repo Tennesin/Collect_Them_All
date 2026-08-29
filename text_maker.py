@@ -1,7 +1,6 @@
 import ast
 import os
 
-
 def analyze_python_file(filepath: str) -> tuple[int, list[str]]:
     """Возвращает количество строк и список имён всех классов в Python-файле."""
     try:
@@ -59,7 +58,7 @@ def main():
     base_target_dir = r"d:\Akmal\Personal\AI developed Mini-games\Collect Them All!\temporary"
     os.makedirs(base_target_dir, exist_ok=True)
 
-    allowed_subdirs = set()
+    allowed_subdirs = {"scene", "game"}
 
     # --- 1. Копирование .py → .txt ---
     for root, dirs, files in os.walk(main_dir):

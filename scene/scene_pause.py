@@ -1,11 +1,10 @@
 import pygame
 from settings import *
 from widgets import Button, get_font
-from scenes import Scene
+from scene.scenes import Scene
 
 class PauseScene(Scene):
-    """Оверлей паузы. Держит ссылку на GameplayScene, чтобы отрисовать
-    игровое поле под затемнением — без этого экран за паузой был бы чёрным."""
+    """Оверлей паузы"""
 
     def __init__(self, manager, gameplay_scene):
         super().__init__(manager)
@@ -24,7 +23,7 @@ class PauseScene(Scene):
             if self.resume_button.collidepoint(event.pos):
                 self.manager.pop()
             elif self.exit_button.collidepoint(event.pos):
-                from scene_main_menu import MainMenuScene
+                from scene.scene_main_menu import MainMenuScene
                 self.manager.switch_to(MainMenuScene(self.manager))
 
     def draw(self, screen):
