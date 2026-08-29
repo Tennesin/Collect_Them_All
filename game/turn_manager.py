@@ -14,6 +14,8 @@ class TurnManager:
 
         # Вызывается с новым текущим игроком, когда ход переходит к следующему.
         self.on_turn_change = None
+        # Вызывается, когда очередь хода возвращается к первому игроку.
+        self.on_cycle_complete = None
 
     @property
     def current_player(self):
@@ -41,7 +43,12 @@ class TurnManager:
             self._advance_turn()
 
     def _advance_turn(self):
-        self.current_index = (self.current_index + 1) % len(self.players)
+        self.current_index += 1
+        if self.current_index >= len(self.players):
+            self.current_index = 0
+            if self.on_cycle_complete:
+                self.on_cycle_complete()
+
         self.moves_left = self.max_moves
         self.time_left = self.turn_time
         if self.on_turn_change:

@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 from widgets import get_font
+from game.image_manager import ImageManager
 
 class PlayerPanel:
     """Правая панель интерфейса. Размер (PANEL_WIDTH x SCREEN_HEIGHT) фиксирован
@@ -25,18 +26,27 @@ class PlayerPanel:
         y += 26
 
         y = self._draw_line(screen, x, y, "Ходы", HINT_TEXT_COLOR, FONT_SIZE_HINT)
-        y = self._draw_line(
-            screen, x, y + 2,
+        y = self._draw_icon_line(
+            screen, x, y + 2, ICON_MOVE,
             f"{self.turn_manager.moves_left}/{self.turn_manager.max_moves}",
             TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
         y += 20
 
         y = self._draw_line(screen, x, y, "Время", HINT_TEXT_COLOR, FONT_SIZE_HINT)
-        self._draw_line(
-            screen, x, y + 2,
+        y = self._draw_icon_line(
+            screen, x, y + 2, ICON_TIME,
             f"{self.turn_manager.time_left:.1f} с",
             TEXT_COLOR, FONT_SIZE_LABEL + 2,
+        )
+        y += 26
+
+        y = self._draw_line(screen, x, y, "Бюджет", HINT_TEXT_COLOR, FONT_SIZE_HINT)
+        y = self._draw_icon_line(
+            screen, x, y + 2, ICON_GOLD, str(player.gold), TEXT_COLOR, FONT_SIZE_LABEL + 2,
+        )
+        self._draw_icon_line(
+            screen, x, y + 4, ICON_SILVER, str(player.silver), TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
 
     @staticmethod
@@ -44,3 +54,19 @@ class PlayerPanel:
         surf = get_font(font_size).render(text, True, color)
         screen.blit(surf, (x, y))
         return y + surf.get_height()
+
+    @staticmethod
+    def _draw_icon_line(screen, x, y, icon_name, text, color, font_size):
+        """Рисует иконку (см. ImageManager) и текст рядом с ней по вертикальному
+        центру одной строки. Возвращает y нижней границы строки."""
+        icon = ImageManager.get_scaled(icon_name, (PANEL_ICON_SIZE, PANEL_ICON_SIZE))
+        surf = get_font(font_size).render(text, True, color)
+        line_height = max(icon.get_height(), surf.get_height())
+
+        icon_rect = icon.get_rect(midleft=(x, y + line_height // 2))
+        screen.blit(icon, icon_rect)
+
+        text_rect = surf.get_rect(midleft=(icon_rect.right + 8, y + line_height // 2))
+        screen.blit(surf, text_rect)
+
+        return y + line_height

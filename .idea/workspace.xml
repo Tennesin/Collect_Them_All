@@ -4,8 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="bug fix and images">
-      <change beforePath="$PROJECT_DIR$/text_maker.py" beforeDir="false" afterPath="$PROJECT_DIR$/text_maker.py" afterDir="false" />
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="image manager support">
+      <change afterPath="$PROJECT_DIR$/game/gold_cell_generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/game/resource_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/field.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/field.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/game_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/game_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/obstacle_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/obstacle_generator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/player.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/player.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/renderer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/turn_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/turn_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/ui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scene/scene_gameplay.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_gameplay.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +72,7 @@
       <recent name="C:\Users\Tennesin\PycharmProjects\Mini-games\Collect Them All!\game" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.text_maker">
+  <component name="RunManager" selected="Python.main">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Collect Them All!" />
       <option name="ENV_FILES" value="" />
@@ -108,8 +119,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.text_maker" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.text_maker" />
       </list>
     </recent_temporary>
   </component>
@@ -185,7 +196,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788015379355</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="image manager support">
+      <option name="closed" value="true" />
+      <created>1788016053920</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1788016053920</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -207,6 +226,7 @@
     <MESSAGE value="more players integration" />
     <MESSAGE value="architecture impores and bug fixes" />
     <MESSAGE value="bug fix and images" />
-    <option name="LAST_COMMIT_MESSAGE" value="bug fix and images" />
+    <MESSAGE value="image manager support" />
+    <option name="LAST_COMMIT_MESSAGE" value="image manager support" />
   </component>
 </project>

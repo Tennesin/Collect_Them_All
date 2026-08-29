@@ -90,3 +90,17 @@ PANEL_BG_COLOR = (24, 24, 32)
 PANEL_BORDER_COLOR = (55, 55, 70)
 
 DEFAULT_SCROLL_SPEED = 20
+
+# --- Иконки (см. game.image_manager.ImageManager) ---
+ICON_GOLD = "gold.png"
+ICON_SILVER = "silver.png"
+ICON_SILVER_FIELD = "more_silvers.png"
+ICON_MOVE = "move.png"
+ICON_TIME = "time.png"
+
+PANEL_ICON_SIZE = 20
+FIELD_ICON_RATIO = 0.55  # доля клетки, которую занимает иконка ресурса на поле
+
+# --- Победная клетка ---
+WIN_CELL_COLOR = (255, 235, 130)
+WIN_CELL_BORDER_COLOR = (255, 180, 0)

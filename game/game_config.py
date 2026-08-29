@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 # --- Границы значений, которые задаются на экране настроек ---
-MIN_MAP_SIZE = 7
+MIN_MAP_SIZE = 11
 MAX_MAP_SIZE = 50
 
 MIN_OBSTACLE_PERCENT = 10
@@ -16,15 +16,34 @@ DEFAULT_PLAYERS = 1
 TURN_MAX_MOVES = 8
 TURN_TIME_SECONDS = 30.0
 
-DEFAULT_MAP_SIZE = 12
+DEFAULT_MAP_SIZE = 15
 
 # (подпись кнопки, ширина, высота)
 MAP_SIZE_PRESETS = [
-    ("12x12", 12, 12),
-    ("18x18", 18, 18),
-    ("25x25", 25, 25),
+    ("15x15", 15, 15),
+    ("22x22", 22, 22),
+    ("30x30", 30, 30),
 ]
 
+# --- Валюты игроков ---
+STARTING_GOLD = 0
+STARTING_SILVER = 0
+
+# --- Золотые клетки ---
+MIN_GOLD_CELLS = 4
+MAX_GOLD_CELLS = 8
+GOLD_CELL_YIELD = 2           # золота за один цикл ходов всех игроков
+GOLD_CELL_BOX_RADIUS = 2      # половина стороны короба (2 -> короб 5x5)
+
+# --- Серебряные клетки ---
+MIN_SILVER_CELLS = 15
+MAX_SILVER_CELLS = 45
+SILVER_CELL_VALUE = 1
+SILVER_RESPAWN_CYCLES = 2
+
+# --- Условия победы ---
+WIN_GOLD_REQUIRED = 25
+WIN_SILVER_REQUIRED = 125
 
 @dataclass
 class GameSettings:

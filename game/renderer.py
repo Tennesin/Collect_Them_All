@@ -1,22 +1,24 @@
 import pygame
 import math
 from settings import *
-
+from game.image_manager import ImageManager
 
 class Renderer:
     """Только отрисовка игрового поля и фигур на нём. Правая панель интерфейса
     рисуется отдельно (см. game.ui.PlayerPanel) — Renderer про неё не знает."""
 
-    def __init__(self, screen, camera, field, players, turn_manager, input_handler):
+    def __init__(self, screen, camera, field, players, turn_manager, input_handler, resource_manager):
         self.screen = screen
         self.camera = camera
         self.field = field
         self.players = players
         self.turn_manager = turn_manager
         self.input_handler = input_handler
+        self.resource_manager = resource_manager
 
     def draw(self):
         self.draw_field()
+        self.draw_resources()
         self.draw_path()
         self.draw_preview()
         self.draw_players()
@@ -36,6 +38,9 @@ class Renderer:
                 if self.field.obstacle_grid[x][y] and self.field.obstacle_type[x][y] == 'block':
                     pygame.draw.polygon(self.screen, BLOCK_COLOR, points)
                     pygame.draw.polygon(self.screen, OBSTACLE_BORDER, points, 2)
+                elif (x, y) == self.field.win_cell:
+                    pygame.draw.polygon(self.screen, WIN_CELL_COLOR, points)
+                    pygame.draw.polygon(self.screen, WIN_CELL_BORDER_COLOR, points, 3)
                 else:
                     color = HOVER_COLOR if hovered_cell == (x, y) else FIELD_COLOR
                     pygame.draw.polygon(self.screen, color, points)
@@ -71,6 +76,21 @@ class Renderer:
                         screen2 = self.camera.project(nx + 0.5, ny + 0.5)
                         screen_mid = ((screen1[0] + screen2[0]) / 2, (screen1[1] + screen2[1]) / 2)
                         pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
+
+    def draw_resources(self):
+        """Иконки золотых клеток (постоянные) и текущих кучек серебра
+        (появляются/исчезают по циклам — актуальный список берём у ResourceManager)."""
+        icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))
+        for gx, gy in self.field.gold_cell_positions:
+            self._draw_field_icon(ICON_GOLD, gx, gy, icon_size)
+        for sx, sy in self.resource_manager.silver_cells:
+            self._draw_field_icon(ICON_SILVER_FIELD, sx, sy, icon_size)
+
+    def _draw_field_icon(self, image_name, cell_x, cell_y, size):
+        icon = ImageManager.get_scaled(image_name, (size, size))
+        screen_pos = self.camera.project(cell_x + 0.5, cell_y + 0.5)
+        rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
+        self.screen.blit(icon, rect)
 
     def draw_path(self):
         """Линия и точка цели текущего маршрута — цветом того игрока, который сейчас идёт."""

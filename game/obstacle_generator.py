@@ -2,7 +2,9 @@ import random
 
 
 class ObstacleGenerator:
-    """Заполняет переданный Field блоками и стенами, гарантируя связность свободных клеток."""
+    """Заполняет переданный Field блоками и стенами, гарантируя связность свободных клеток.
+    Никогда не трогает клетки из field.reserved_cells (победная клетка, золотые клетки и их
+    защитные коробы) — они уже выставлены ДО вызова этого генератора, см. GoldCellGenerator."""
 
     def __init__(self, field, max_obstacle_cells):
         self.field = field
@@ -50,7 +52,8 @@ class ObstacleGenerator:
         field = self.field
         for dx in range(w):
             for dy in range(h):
-                if field.obstacle_grid[x + dx][y + dy]:
+                cx, cy = x + dx, y + dy
+                if field.obstacle_grid[cx][cy] or (cx, cy) in field.reserved_cells:
                     return True
         return False
 
@@ -71,7 +74,7 @@ class ObstacleGenerator:
         for _ in range(100):
             start_x = random.randint(0, field.width - 1)
             start_y = random.randint(0, field.height - 1)
-            if field.obstacle_grid[start_x][start_y]:
+            if field.obstacle_grid[start_x][start_y] or (start_x, start_y) in field.reserved_cells:
                 continue
 
             cells = self._build_wall_cells(shape, start_x, start_y, length)
@@ -102,21 +105,31 @@ class ObstacleGenerator:
             return self._build_zigzag(start_x, start_y, length)
         return None
 
-    def _build_straight(self, start_x, start_y, length):
+    def _blocked(self, x, y, cells):
+        """True, если клетку нельзя добавить в строящуюся стену: вне поля,
+        уже занята препятствием, зарезервирована (победная/золотая клетка)
+        или уже входит в эту же стену."""
         field = self.field
+        return (
+            not field.in_bounds(x, y)
+            or field.obstacle_grid[x][y]
+            or (x, y) in field.reserved_cells
+            or (x, y) in cells
+        )
+
+    def _build_straight(self, start_x, start_y, length):
         direction = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
         cells = [(start_x, start_y)]
         cx, cy = start_x, start_y
         for _ in range(length - 1):
             nx, ny = cx + direction[0], cy + direction[1]
-            if not field.in_bounds(nx, ny) or field.obstacle_grid[nx][ny] or (nx, ny) in cells:
+            if self._blocked(nx, ny, cells):
                 break
             cells.append((nx, ny))
             cx, cy = nx, ny
         return cells
 
     def _build_l_shape(self, start_x, start_y, length):
-        field = self.field
         first_dir = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
         second_dirs = [(1, 0), (-1, 0)] if first_dir[0] == 0 else [(0, 1), (0, -1)]
         second_dir = random.choice(second_dirs)
@@ -126,7 +139,7 @@ class ObstacleGenerator:
         cx, cy = start_x, start_y
         for _ in range(split):
             nx, ny = cx + first_dir[0], cy + first_dir[1]
-            if not field.in_bounds(nx, ny) or field.obstacle_grid[nx][ny] or (nx, ny) in cells:
+            if self._blocked(nx, ny, cells):
                 return cells
             cells.append((nx, ny))
             cx, cy = nx, ny
@@ -135,14 +148,13 @@ class ObstacleGenerator:
 
         for _ in range(length - split - 1):
             nx, ny = cx + second_dir[0], cy + second_dir[1]
-            if not field.in_bounds(nx, ny) or field.obstacle_grid[nx][ny] or (nx, ny) in cells:
+            if self._blocked(nx, ny, cells):
                 return cells
             cells.append((nx, ny))
             cx, cy = nx, ny
         return cells
 
     def _build_zigzag(self, start_x, start_y, length):
-        field = self.field
         direction = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
         cells = [(start_x, start_y)]
         cx, cy = start_x, start_y
@@ -153,7 +165,7 @@ class ObstacleGenerator:
                 if remaining <= 0:
                     break
                 nx, ny = cx + direction[0], cy + direction[1]
-                if not field.in_bounds(nx, ny) or field.obstacle_grid[nx][ny] or (nx, ny) in cells:
+                if self._blocked(nx, ny, cells):
                     break
                 cells.append((nx, ny))
                 cx, cy = nx, ny

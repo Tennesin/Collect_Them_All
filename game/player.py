@@ -1,6 +1,6 @@
 import math
 from settings import PLAYER_COLORS
-
+from game.game_config import STARTING_GOLD, STARTING_SILVER
 
 class Player:
     """Отвечает только за собственное состояние: позицию, цвет и движение по пути.
@@ -18,6 +18,10 @@ class Player:
 
         self.color_key = color_key
         self.color = PLAYER_COLORS[color_key]
+
+        # Личный бюджет игрока — собирается по всей карте.
+        self.gold = STARTING_GOLD
+        self.silver = STARTING_SILVER
 
         # Внешний наблюдатель (например, Camera.center_on), вызывается при каждом изменении позиции.
         self.on_move = None
