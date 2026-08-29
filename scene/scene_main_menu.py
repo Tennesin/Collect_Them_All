@@ -16,8 +16,7 @@ class MainMenuScene(Scene):
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.play_button.collidepoint(event.pos):
-                # Локальный импорт — избегаем цикла scene_main_menu <-> new_game_scene
-                from scene_new_game import NewGameScene
+                from scene.scene_new_game import NewGameScene
                 self.manager.push(NewGameScene(self.manager))
             elif self.quit_button.collidepoint(event.pos):
                 self.manager.app.quit()

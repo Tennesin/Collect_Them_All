@@ -4,27 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="more players integration">
-      <change afterPath="$PROJECT_DIR$/game/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/game/ui.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scene/__init__.py" afterDir="false" />
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="architecture impores and bug fixes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/camera.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/field.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/field.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/game_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/game_config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/input_handler.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/input_handler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/obstacle_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/obstacle_generator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/player.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/player.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/renderer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scene_gameplay.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_gameplay.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scene_main_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_main_menu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scene_new_game.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_new_game.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scene_pause.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_pause.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scenes.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scenes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/text_maker.py" beforeDir="false" afterPath="$PROJECT_DIR$/text_maker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/turn_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/turn_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scene/scene_main_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_main_menu.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,16 +46,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "Python.text_maker.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.text_maker.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Tennesin\PycharmProjects\Mini-games\Collect Them All!\scene" />
@@ -188,7 +170,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787997742833</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="architecture impores and bug fixes">
+      <option name="closed" value="true" />
+      <created>1788000592625</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1788000592625</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -208,6 +198,7 @@
     <MESSAGE value="scenes realise" />
     <MESSAGE value="map size input fix" />
     <MESSAGE value="more players integration" />
-    <option name="LAST_COMMIT_MESSAGE" value="more players integration" />
+    <MESSAGE value="architecture impores and bug fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="architecture impores and bug fixes" />
   </component>
 </project>
