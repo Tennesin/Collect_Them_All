@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="architecture impores and bug fixes">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scene/scene_main_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_main_menu.py" afterDir="false" />
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="bug fix and images">
+      <change beforePath="$PROJECT_DIR$/text_maker.py" beforeDir="false" afterPath="$PROJECT_DIR$/text_maker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +61,7 @@
       <recent name="C:\Users\Tennesin\PycharmProjects\Mini-games\Collect Them All!\game" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.text_maker">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Collect Them All!" />
       <option name="ENV_FILES" value="" />
@@ -109,8 +108,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main" />
         <item itemvalue="Python.text_maker" />
+        <item itemvalue="Python.main" />
       </list>
     </recent_temporary>
   </component>
@@ -178,7 +177,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788000592625</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="bug fix and images">
+      <option name="closed" value="true" />
+      <created>1788015379355</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1788015379355</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -199,6 +206,7 @@
     <MESSAGE value="map size input fix" />
     <MESSAGE value="more players integration" />
     <MESSAGE value="architecture impores and bug fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="architecture impores and bug fixes" />
+    <MESSAGE value="bug fix and images" />
+    <option name="LAST_COMMIT_MESSAGE" value="bug fix and images" />
   </component>
 </project>

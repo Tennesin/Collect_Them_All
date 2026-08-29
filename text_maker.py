@@ -1,6 +1,9 @@
 import ast
 import os
 
+# Допустимые расширения изображений
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".webp", ".ico", ".tiff"}
+
 def analyze_python_file(filepath: str) -> tuple[int, list[str]]:
     """Возвращает количество строк и список имён всех классов в Python-файле."""
     try:
@@ -21,16 +24,18 @@ def analyze_python_file(filepath: str) -> tuple[int, list[str]]:
             return 0, []
 
 
-def collect_statistics(main_dir: str, script_name: str, allowed_subdirs: set) -> tuple[int, int, int]:
+def collect_statistics(main_dir: str, script_name: str, allowed_subdirs: set) -> tuple[int, int, int, int]:
     """
     Собирает суммарную статистику по проекту:
     - total_loc: суммарное количество строк во всех .py файлах
     - total_classes: суммарное количество классов
     - total_dirs: количество внутренних папок (всех, кроме корневой)
+    - total_images: количество файлов изображений
     """
     total_loc = 0
     total_classes = 0
     total_dirs = 0
+    total_images = 0
 
     for root, dirs, files in os.walk(main_dir):
         # На верхнем уровне оставляем только разрешённые подпапки
@@ -48,8 +53,22 @@ def collect_statistics(main_dir: str, script_name: str, allowed_subdirs: set) ->
                 loc, classes = analyze_python_file(os.path.join(root, file))
                 total_loc += loc
                 total_classes += len(classes)
+            elif file.lower().endswith(tuple(IMAGE_EXTENSIONS)):
+                total_images += 1
 
-    return total_loc, total_classes, total_dirs
+    return total_loc, total_classes, total_dirs, total_images
+
+
+def get_file_size_str(path: str) -> str:
+    """Возвращает размер файла в удобочитаемом виде."""
+    size = os.path.getsize(path)
+    if size < 1024:
+        return f"{size} B"
+    elif size < 1024 * 1024:
+        return f"{size / 1024:.1f} KB"
+    else:
+        return f"{size / (1024 * 1024):.1f} MB"
+
 
 def main():
     main_dir = os.path.dirname(os.path.abspath(__file__))
@@ -58,9 +77,10 @@ def main():
     base_target_dir = r"d:\Akmal\Personal\AI developed Mini-games\Collect Them All!\temporary"
     os.makedirs(base_target_dir, exist_ok=True)
 
-    allowed_subdirs = {"scene", "game"}
+    allowed_subdirs = {"scene", "game", "images"}
+    image_base = os.path.join(main_dir, "images")
 
-    # --- 1. Копирование .py → .txt ---
+    # --- 1. Копирование .py → .txt и изображений ---
     for root, dirs, files in os.walk(main_dir):
         if root == main_dir:
             dirs[:] = [d for d in dirs if d in allowed_subdirs]
@@ -71,18 +91,31 @@ def main():
         for file in files:
             if root == main_dir and file == script_name:
                 continue
+
+            full_path = os.path.join(root, file)
+
             if file.endswith(".py"):
-                source_path = os.path.join(root, file)
+                # Копируем .py в .txt
                 target_filename = os.path.splitext(file)[0] + ".txt"
                 target_path = os.path.join(target_subdir, target_filename)
                 os.makedirs(target_subdir, exist_ok=True)
 
-                with open(source_path, "r", encoding="utf-8") as f_in:
+                with open(full_path, "r", encoding="utf-8") as f_in:
                     content = f_in.read()
                 with open(target_path, "w", encoding="utf-8") as f_out:
                     f_out.write(content)
 
                 print(f"Создан/перезаписан: {target_path}")
+
+            elif file.lower().endswith(tuple(IMAGE_EXTENSIONS)) and root.startswith(image_base):
+                # Копируем изображение в base_target_dir/images, сохраняя структуру
+                rel_from_images = os.path.relpath(root, image_base)
+                target_images_dir = os.path.join(base_target_dir, "images", rel_from_images)
+                os.makedirs(target_images_dir, exist_ok=True)
+                target_image_path = os.path.join(target_images_dir, file)
+                with open(full_path, "rb") as f_in, open(target_image_path, "wb") as f_out:
+                    f_out.write(f_in.read())
+                print(f"Скопировано изображение: {target_image_path}")
 
     # --- 2. Рекурсивное формирование файла-скелета ---
     def build_tree(
@@ -93,7 +126,8 @@ def main():
         show_lines: bool = False,
     ) -> list[str]:
         """Рекурсивно строит псевдографическое дерево.
-        При show_lines=True рядом с названиями файлов указывается количество строк и список классов.
+        При show_lines=True рядом с названиями .py файлов указывается количество строк и список классов,
+        а для изображений – размер файла.
         """
         lines = []
         name = os.path.basename(dir_path) or dir_path
@@ -106,24 +140,34 @@ def main():
 
         subdirs = []
         py_files = []
+        image_files = []
+
         try:
             for entry in os.listdir(dir_path):
                 full = os.path.join(dir_path, entry)
                 if os.path.isdir(full) and (dir_path != main_dir or entry in allowed_subdirs):
                     subdirs.append(entry)
-                elif os.path.isfile(full) and entry.endswith(".py"):
-                    if dir_path == main_dir and entry == script_name:
-                        continue
-                    py_files.append(entry)
+                elif os.path.isfile(full):
+                    if entry.endswith(".py"):
+                        if dir_path == main_dir and entry == script_name:
+                            continue
+                        py_files.append(entry)
+                    elif entry.lower().endswith(tuple(IMAGE_EXTENSIONS)):
+                        # Показываем изображения только внутри папки images
+                        if dir_path == image_base or dir_path.startswith(image_base + os.sep):
+                            image_files.append(entry)
         except PermissionError:
             pass
 
         subdirs.sort()
         py_files.sort()
+        image_files.sort()
 
         child_prefix = "" if is_root else prefix + ("    " if is_last else "│   ")
 
-        items = subdirs + py_files
+        # Сначала все подпапки, затем .py файлы, затем изображения
+        items = subdirs + py_files + image_files
+
         for i, item in enumerate(items):
             is_item_last = i == len(items) - 1
 
@@ -132,11 +176,16 @@ def main():
                 lines.extend(build_tree(sub_path, child_prefix, is_item_last, is_root=False, show_lines=show_lines))
             else:
                 file_connector = "└── " if is_item_last else "├── "
+                file_path = os.path.join(dir_path, item)
+
                 if show_lines:
-                    file_path = os.path.join(dir_path, item)
-                    loc, classes = analyze_python_file(file_path)
-                    classes_str = f" | Классы: {', '.join(classes)}" if classes else ""
-                    lines.append(f"{child_prefix}{file_connector}{item} [{loc} стр.{classes_str}]")
+                    if item in py_files:
+                        loc, classes = analyze_python_file(file_path)
+                        classes_str = f" | Классы: {', '.join(classes)}" if classes else ""
+                        lines.append(f"{child_prefix}{file_connector}{item} [{loc} стр.{classes_str}]")
+                    else:  # изображение
+                        size_str = get_file_size_str(file_path)
+                        lines.append(f"{child_prefix}{file_connector}{item} [{size_str}]")
                 else:
                     lines.append(f"{child_prefix}{file_connector}{item}")
 
@@ -152,13 +201,14 @@ def main():
     print(f"Файл-скелет создан: {skeleton_path}")
 
     # СКЕЛЕТ_ПРОДВИНУТЫЙ с суммарной статистикой в начале
-    total_loc, total_classes, total_dirs = collect_statistics(main_dir, script_name, allowed_subdirs)
+    total_loc, total_classes, total_dirs, total_images = collect_statistics(main_dir, script_name, allowed_subdirs)
 
     stats_header = [
         "СУММАРНЫЕ ДАННЫЕ:",
         f"Всего строк: {total_loc}",
         f"Всего классов: {total_classes}",
         f"Внутренних папок: {total_dirs}",
+        f"Количество изображений: {total_images}",
         ""  # пустая строка-разделитель
     ]
 
