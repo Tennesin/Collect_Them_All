@@ -1,19 +1,19 @@
 import random
-from game.game_config import MIN_GOLD_CELLS, MAX_GOLD_CELLS, GOLD_CELL_BOX_RADIUS, GOLD_CELL_BUFFER
+from game.game_config import GOLD_CELL_BOX_RADIUS, GOLD_CELL_BUFFER
 
 class GoldCellGenerator:
 
-    def __init__(self, field):
+    def __init__(self, field, count):
         self.field = field
-        self.radius = GOLD_CELL_BOX_RADIUS  # 2 -> короб 5x5
-        self.buffer = GOLD_CELL_BUFFER      # 1 -> минимум 1 свободная клетка вокруг
+        self.count = count
+        self.radius = GOLD_CELL_BOX_RADIUS
+        self.buffer = GOLD_CELL_BUFFER
 
     def generate(self):
-        count = random.randint(MIN_GOLD_CELLS, MAX_GOLD_CELLS)
         placed = 0
         attempts = 0
-        max_attempts = count * 200
-        while placed < count and attempts < max_attempts:
+        max_attempts = max(200, self.count * 200)
+        while placed < self.count and attempts < max_attempts:
             attempts += 1
             if self._try_place_one():
                 placed += 1

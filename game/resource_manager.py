@@ -3,14 +3,15 @@ from game.game_config import (
     GOLD_CELL_YIELD,
     SILVER_CELL_BASE_DENSITY, SILVER_CELL_DENSITY_PER_PLAYER, MIN_SILVER_CELLS_ABSOLUTE,
     SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE, SILVER_RESPAWN_CYCLES,
-    WIN_GOLD_REQUIRED, WIN_SILVER_REQUIRED,
 )
 
 class ResourceManager:
 
-    def __init__(self, field, player_count):
+    def __init__(self, field, player_count, win_gold_required, win_silver_required):
         self.field = field
         self.player_count = player_count
+        self.win_gold_required = win_gold_required
+        self.win_silver_required = win_silver_required
         self.gold_deposits = {pos: 0 for pos in field.gold_cell_positions}
         self.silver_cells = {}
         self._cycles_since_silver_respawn = 0
@@ -63,20 +64,19 @@ class ResourceManager:
             player.silver += self.silver_cells.pop(pos)
 
     def check_win(self, player):
-        """True, если игрок прямо сейчас выполняет условие победы."""
         pos = (player.grid_x, player.grid_y)
         return (
             pos == self.field.win_cell
-            and player.gold >= WIN_GOLD_REQUIRED
-            and player.silver >= WIN_SILVER_REQUIRED
+            and player.gold >= self.win_gold_required
+            and player.silver >= self.win_silver_required
         )
 
     def missing_requirements_message(self, player):
         if (player.grid_x, player.grid_y) != self.field.win_cell:
             return None
 
-        gold_missing = max(0, WIN_GOLD_REQUIRED - player.gold)
-        silver_missing = max(0, WIN_SILVER_REQUIRED - player.silver)
+        gold_missing = max(0, self.win_gold_required - player.gold)
+        silver_missing = max(0, self.win_silver_required - player.silver)
         if gold_missing <= 0 and silver_missing <= 0:
             return None
 

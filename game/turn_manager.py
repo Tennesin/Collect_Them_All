@@ -9,9 +9,9 @@ class TurnManager:
         self.moves_left = max_moves
         self.time_left = turn_time
 
-        # Вызывается с новым текущим игроком, когда ход переходит к следующему.
+        self.eliminated = set()
+
         self.on_turn_change = None
-        # Вызывается, когда очередь хода возвращается к первому игроку.
         self.on_cycle_complete = None
 
     @property
@@ -19,16 +19,21 @@ class TurnManager:
         return self.players[self.current_index]
 
     def update(self, dt):
-        """Вызывать каждый кадр, пока идёт геймплей (таймер тикает всегда,
-        даже если игрок ещё не начал двигаться в этом черёде)."""
         if self.time_left > 0:
             self.time_left = max(0.0, self.time_left - dt)
         self._maybe_advance()
 
     def consume_move(self):
-        """Вызывается игроком (через Player.on_cell_reached) при входе в новую клетку."""
         self.moves_left = max(0, self.moves_left - 1)
         self._maybe_advance()
+
+    def eliminate(self, player):
+        """Исключает игрока из дальнейшей очереди ходов (он уже финишировал)."""
+        self.eliminated.add(player)
+
+    def end_turn_early(self):
+        """Немедленно завершает текущий черёд, не дожидаясь исчерпания ходов/времени."""
+        self._advance_turn()
 
     def _maybe_advance(self):
         player = self.current_player
@@ -38,13 +43,19 @@ class TurnManager:
             self._advance_turn()
 
     def _advance_turn(self):
-        self.current_index += 1
-        if self.current_index >= len(self.players):
-            self.current_index = 0
-            if self.on_cycle_complete:
-                self.on_cycle_complete()
-
+        self._move_to_next_active_index()
         self.moves_left = self.max_moves
         self.time_left = self.turn_time
         if self.on_turn_change:
             self.on_turn_change(self.current_player)
+
+    def _move_to_next_active_index(self):
+        """Перебирает игроков по кругу, пропуская выбывших."""
+        for _ in range(len(self.players)):
+            self.current_index += 1
+            if self.current_index >= len(self.players):
+                self.current_index = 0
+                if self.on_cycle_complete:
+                    self.on_cycle_complete()
+            if self.current_player not in self.eliminated:
+                return

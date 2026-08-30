@@ -1,7 +1,9 @@
 import pygame
 from settings import *
 from widgets import get_font
-from game.game_config import TURN_MAX_MOVES, TURN_TIME_SECONDS, VISION_RADIUS
+from game.game_config import (
+    TURN_TIME_SECONDS, VISION_RADIUS, FINISH_MODE_INSTANT, FINISH_MODE_RANKED
+)
 from game.camera import Camera
 from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
@@ -22,17 +24,21 @@ class GameplayScene(Scene):
         self.settings = settings
         self.paused = False
         self.winner = None
+        self.placements = []  # порядок финиша: 1-е место первым
         screen = self.manager.app.screen
 
         self.field = Field(settings.map_width, settings.map_height)
 
-        GoldCellGenerator(self.field).generate()
+        GoldCellGenerator(self.field, settings.gold_cell_count).generate()
 
         total_cells = settings.map_width * settings.map_height
         max_obstacle_cells = int(total_cells * settings.obstacle_fraction)
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
 
-        self.resource_manager = ResourceManager(self.field, settings.player_count)
+        self.resource_manager = ResourceManager(
+            self.field, settings.player_count,
+            settings.win_gold_required, settings.win_silver_required,
+        )
 
         self.fog_of_war = FogOfWar(self.field, VISION_RADIUS)
         self.camera = Camera(GAME_AREA_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
@@ -50,7 +56,7 @@ class GameplayScene(Scene):
             self.players.append(player)
 
         # --- Очередь ходов ---
-        self.turn_manager = TurnManager(self.players, max_moves=TURN_MAX_MOVES, turn_time=TURN_TIME_SECONDS)
+        self.turn_manager = TurnManager(self.players, max_moves=settings.moves_per_turn, turn_time=TURN_TIME_SECONDS)
         self.turn_manager.on_turn_change = self._on_turn_change
         self.turn_manager.on_cycle_complete = self.resource_manager.on_cycle_complete
 
@@ -64,20 +70,40 @@ class GameplayScene(Scene):
         self.camera.center_on(self.players[0].pos_x, self.players[0].pos_y)
 
     def _make_cell_reached_handler(self, player):
-        """Собирает воедино всё, что должно произойти при входе игрока в
-        новую клетку: обновление видимости, сбор ресурсов и проверка победы"""
-
         def handler():
             self.fog_of_war.update_player(player)
             self.resource_manager.collect_at(player)
-            if self.winner is None and self.resource_manager.check_win(player):
-                self.winner = player
+
+            if self.winner is None and player not in self.placements and self.resource_manager.check_win(player):
+                self._handle_player_finish(player)
                 return
 
             self.turn_manager.consume_move()
             player.warning_message = self.resource_manager.missing_requirements_message(player)
 
         return handler
+
+    def _handle_player_finish(self, player):
+        """Игрок только что выполнил условие победы на финишной клетке."""
+        player.moving = False
+        player.path = []
+        self.placements.append(player)
+
+        if self.settings.finish_mode == FINISH_MODE_INSTANT:
+            self.winner = player
+            return
+
+        # Режим "до последнего": игрок выбывает, партия продолжается для остальных.
+        self.turn_manager.eliminate(player)
+        active_players = [p for p in self.players if p not in self.placements]
+
+        if len(active_players) <= 1:
+            if active_players:
+                self.placements.append(active_players[0])  # последнее место — автоматически
+            self.winner = self.placements[0]  # для совместимости с остальной логикой
+            return
+
+        self.turn_manager.end_turn_early()
 
     def _on_turn_change(self, new_player):
         self.input_handler.clear_preview()
@@ -124,9 +150,23 @@ class GameplayScene(Scene):
         overlay.fill(PAUSE_OVERLAY_COLOR)
         screen.blit(overlay, (0, 0))
 
-        name = PLAYER_NAMES_RU[self.winner.color_key]
-        title_surf = get_font(FONT_SIZE_TITLE - 8).render(f"Победил игрок: {name}", True, self.winner.color)
-        screen.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)))
+        if self.settings.finish_mode == FINISH_MODE_RANKED and len(self.placements) > 1:
+            self._draw_placements(screen)
+        else:
+            name = PLAYER_NAMES_RU[self.winner.color_key]
+            title_surf = get_font(FONT_SIZE_TITLE - 8).render(f"Победил игрок: {name}", True, self.winner.color)
+            screen.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)))
 
         hint_surf = get_font(FONT_SIZE_HINT + 4).render("Esc — выйти в меню", True, TEXT_COLOR)
-        screen.blit(hint_surf, hint_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 30)))
+        screen.blit(hint_surf, hint_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 140)))
+
+    def _draw_placements(self, screen):
+        title_surf = get_font(FONT_SIZE_TITLE - 14).render("Итоговые места", True, TEXT_COLOR)
+        screen.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 130)))
+
+        start_y = SCREEN_HEIGHT // 2 - 70
+        for i, place_player in enumerate(self.placements):
+            name = PLAYER_NAMES_RU[place_player.color_key]
+            line = f"{i + 1}. {name}"
+            surf = get_font(FONT_SIZE_LABEL + 4).render(line, True, place_player.color)
+            screen.blit(surf, surf.get_rect(center=(SCREEN_WIDTH // 2, start_y + i * 34)))
