@@ -20,6 +20,15 @@ MIN_TURN_MOVES = 4
 MAX_TURN_MOVES = 16
 DEFAULT_TURN_MOVES = TURN_MAX_MOVES
 
+MIN_TURN_TIME = 15
+MAX_TURN_TIME = 60
+TURN_TIME_STEP = 3
+DEFAULT_TURN_TIME = 30
+
+MIN_VISION_RADIUS = 3
+MAX_VISION_RADIUS = 10
+DEFAULT_VISION_RADIUS = 4
+
 DEFAULT_MAP_SIZE = 15
 
 # (подпись кнопки, ширина, высота)
@@ -80,9 +89,6 @@ def max_gold_cells_for_map(width, height):
 
 @dataclass
 class GameSettings:
-    """Параметры одной партии, собранные игроком на экране настроек.
-    Не хранит ничего игрового (позиции, поле и т.д.) — только конфигурацию."""
-
     map_width: int = DEFAULT_MAP_SIZE
     map_height: int = DEFAULT_MAP_SIZE
     obstacle_percent: int = DEFAULT_OBSTACLE_PERCENT
@@ -92,6 +98,8 @@ class GameSettings:
     gold_cell_count: int = DEFAULT_GOLD_CELLS
     finish_mode: str = DEFAULT_FINISH_MODE
     moves_per_turn: int = DEFAULT_TURN_MOVES
+    turn_time_seconds: int = DEFAULT_TURN_TIME
+    vision_radius: int = DEFAULT_VISION_RADIUS
 
     def clamp(self):
         self.map_width = max(MIN_MAP_SIZE, min(MAX_MAP_SIZE, self.map_width))
@@ -104,7 +112,6 @@ class GameSettings:
             self.win_silver_required, MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP
         )
 
-        # Число золотых клеток не должно превышать разумный предел для текущего размера карты.
         max_cells = max_gold_cells_for_map(self.map_width, self.map_height)
         self.gold_cell_count = max(MIN_GOLD_CELLS, min(max_cells, self.gold_cell_count))
 
@@ -112,6 +119,9 @@ class GameSettings:
             self.finish_mode = DEFAULT_FINISH_MODE
 
         self.moves_per_turn = max(MIN_TURN_MOVES, min(MAX_TURN_MOVES, self.moves_per_turn))
+        self.turn_time_seconds = int(
+            self._clamp_step(self.turn_time_seconds, MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP))
+        self.vision_radius = max(MIN_VISION_RADIUS, min(MAX_VISION_RADIUS, self.vision_radius))
 
     @staticmethod
     def _clamp_step(value, min_value, max_value, step):

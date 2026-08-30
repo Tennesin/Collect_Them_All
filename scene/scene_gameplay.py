@@ -1,9 +1,7 @@
 import pygame
 from settings import *
 from widgets import get_font
-from game.game_config import (
-    TURN_TIME_SECONDS, VISION_RADIUS, FINISH_MODE_INSTANT, FINISH_MODE_RANKED
-)
+from game.game_config import TURN_TIME_SECONDS, VISION_RADIUS
 from game.camera import Camera
 from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
@@ -40,7 +38,7 @@ class GameplayScene(Scene):
             settings.win_gold_required, settings.win_silver_required,
         )
 
-        self.fog_of_war = FogOfWar(self.field, VISION_RADIUS)
+        self.fog_of_war = FogOfWar(self.field, settings.vision_radius)
         self.camera = Camera(GAME_AREA_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
                              INITIAL_SCALE, MAX_SCALE)
 
@@ -56,7 +54,9 @@ class GameplayScene(Scene):
             self.players.append(player)
 
         # --- Очередь ходов ---
-        self.turn_manager = TurnManager(self.players, max_moves=settings.moves_per_turn, turn_time=TURN_TIME_SECONDS)
+        self.turn_manager = TurnManager(
+            self.players, max_moves=settings.moves_per_turn, turn_time=settings.turn_time_seconds
+        )
         self.turn_manager.on_turn_change = self._on_turn_change
         self.turn_manager.on_cycle_complete = self.resource_manager.on_cycle_complete
 
