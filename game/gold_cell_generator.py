@@ -1,11 +1,12 @@
 import random
-from game.game_config import MIN_GOLD_CELLS, MAX_GOLD_CELLS, GOLD_CELL_BOX_RADIUS
+from game.game_config import MIN_GOLD_CELLS, MAX_GOLD_CELLS, GOLD_CELL_BOX_RADIUS, GOLD_CELL_BUFFER
 
 class GoldCellGenerator:
 
     def __init__(self, field):
         self.field = field
         self.radius = GOLD_CELL_BOX_RADIUS  # 2 -> короб 5x5
+        self.buffer = GOLD_CELL_BUFFER      # 1 -> минимум 1 свободная клетка вокруг
 
     def generate(self):
         count = random.randint(MIN_GOLD_CELLS, MAX_GOLD_CELLS)
@@ -21,9 +22,10 @@ class GoldCellGenerator:
     def _try_place_one(self):
         field = self.field
         r = self.radius
-        min_coord = r
-        max_x = field.width - 1 - r
-        max_y = field.height - 1 - r
+        buffer = self.buffer
+        min_coord = r + buffer
+        max_x = field.width - 1 - r - buffer
+        max_y = field.height - 1 - r - buffer
         if max_x < min_coord or max_y < min_coord:
             return False
 
@@ -48,11 +50,12 @@ class GoldCellGenerator:
 
         field.wall_segments.extend(segments)
         field.add_gold_cell(gx, gy)
+        self._reserve_buffer_ring(gx, gy)
         return True
 
     def _area_is_clear(self, gx, gy):
         field = self.field
-        r = self.radius
+        r = self.radius + self.buffer
         for dx in range(-r, r + 1):
             for dy in range(-r, r + 1):
                 x, y = gx + dx, gy + dy
@@ -71,3 +74,15 @@ class GoldCellGenerator:
             arm_y = (corner_x, gy + sign_y * (r - 1))
             segments.append([arm_x, (corner_x, corner_y), arm_y])
         return segments
+
+    def _reserve_buffer_ring(self, gx, gy):
+        field = self.field
+        inner = self.radius
+        outer = self.radius + self.buffer
+        for dx in range(-outer, outer + 1):
+            for dy in range(-outer, outer + 1):
+                if max(abs(dx), abs(dy)) <= inner:
+                    continue
+                x, y = gx + dx, gy + dy
+                if field.in_bounds(x, y):
+                    field.reserve_cell(x, y)

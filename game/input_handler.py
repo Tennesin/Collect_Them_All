@@ -36,14 +36,14 @@ class InputHandler:
                 self.camera.zoom(0.98)
 
     def get_hovered_cell(self):
-        """Клетка под курсором, если она свободна и текущий игрок сейчас не движется."""
+        """Клетка под курсором, если она свободна, исследована и текущий игрок сейчас не движется."""
         player = self.player
         if player.moving or self.mouse_pos is None:
             return None
         wx, wy = self.camera.screen_to_world(*self.mouse_pos)
         if 0 <= wx < self.field.width and 0 <= wy < self.field.height:
             cell = (int(wx), int(wy))
-            if self.field.is_free(*cell):
+            if self.field.is_free(*cell) and cell in player.explored_cells:
                 return cell
         return None
 
@@ -84,6 +84,8 @@ class InputHandler:
         goal_cell = (int(wx), int(wy))
         if not self.field.is_free(*goal_cell):
             return
+        if goal_cell not in player.explored_cells:
+            return
         if goal_cell == (player.grid_x, player.grid_y):
             return
 
@@ -104,7 +106,10 @@ class InputHandler:
         limit = self.turn_manager.moves_left
         if limit <= 0:
             return []
-        path = self.field.find_path((player.grid_x, player.grid_y), goal_cell)
+        path = self.field.find_path(
+            (player.grid_x, player.grid_y), goal_cell,
+            allowed_cells=player.explored_cells,
+        )
         if not path:
             return []
         return path[:limit]

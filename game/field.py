@@ -65,11 +65,15 @@ class Field:
                 neighbors.append((nx, ny))
         return neighbors
 
-    def find_path(self, start, goal):
+    def find_path(self, start, goal, allowed_cells=None):
+        """Если передан allowed_cells — путь строится только через эти клетки."""
         if start == goal:
             return []
         if not self.is_free(*goal):
             return []
+        if allowed_cells is not None and goal not in allowed_cells:
+            return []
+
         queue = deque([start])
         visited = {start: None}
         while queue:
@@ -77,6 +81,8 @@ class Field:
             if current == goal:
                 break
             for neighbor in self.get_neighbors(*current):
+                if allowed_cells is not None and neighbor not in allowed_cells:
+                    continue
                 if neighbor not in visited:
                     visited[neighbor] = current
                     queue.append(neighbor)

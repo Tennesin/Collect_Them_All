@@ -34,6 +34,7 @@ MIN_GOLD_CELLS = 4
 MAX_GOLD_CELLS = 8
 GOLD_CELL_YIELD = 2           # золота за один цикл ходов всех игроков
 GOLD_CELL_BOX_RADIUS = 2      # половина стороны короба (2 -> короб 5x5)
+GOLD_CELL_BUFFER = 1          # минимум свободных клеток вокруг короба
 
 # --- Серебряные клетки ---
 SILVER_CELL_BASE_DENSITY = 0.05          # доля свободных клеток при 1 игроке
