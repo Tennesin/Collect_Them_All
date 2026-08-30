@@ -26,17 +26,20 @@ class ImageManager:
         return surf
 
     @staticmethod
-    def get_scaled(name, size):
+    def get_scaled(name, size, alpha=255):
         """Возвращает изображение, отмасштабированное под size=(w, h).
-        Результат тоже кэшируется по (name, size) — при частых повторных
-        запросах одного и того же размера (например, каждый кадр в панели)
-        масштабирование выполняется только один раз."""
+        Результат кэшируется по (name, size, alpha) — при частых повторных
+        запросах одного и того же размера/прозрачности (например, каждый кадр
+        в панели или на поле) масштабирование выполняется только один раз."""
         size = (max(1, int(size[0])), max(1, int(size[1])))
-        key = (name, size)
+        key = (name, size, alpha)
         surf = _scaled_cache.get(key)
         if surf is None:
             base = ImageManager.get(name)
             surf = pygame.transform.smoothscale(base, size)
+            if alpha != 255:
+                surf = surf.copy()
+                surf.set_alpha(alpha)
             _scaled_cache[key] = surf
         return surf
 

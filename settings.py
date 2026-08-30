@@ -101,7 +101,13 @@ ICON_TIME = "time.png"
 
 PANEL_ICON_SIZE = 20
 FIELD_ICON_RATIO = 0.55  # доля клетки, которую занимает иконка ресурса на поле
+GOLD_ICON_DIM_ALPHA = 90  # прозрачность иконки золота, когда клетка сейчас пуста (0-255)
+
+# --- Золотая клетка ---
+GOLD_CELL_COLOR = (196, 154, 42)
+GOLD_CELL_BORDER_COLOR = (255, 215, 0)
 
 # --- Победная клетка ---
-WIN_CELL_COLOR = (255, 235, 130)
-WIN_CELL_BORDER_COLOR = (255, 180, 0)
+WIN_CELL_COLOR = (210, 25, 25)
+WIN_CELL_BORDER_COLOR = (15, 15, 15)
+WIN_CELL_BORDER_COLOR_SECONDARY = (245, 245, 245)

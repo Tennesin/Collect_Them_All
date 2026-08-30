@@ -40,7 +40,11 @@ class Renderer:
                     pygame.draw.polygon(self.screen, OBSTACLE_BORDER, points, 2)
                 elif (x, y) == self.field.win_cell:
                     pygame.draw.polygon(self.screen, WIN_CELL_COLOR, points)
-                    pygame.draw.polygon(self.screen, WIN_CELL_BORDER_COLOR, points, 3)
+                    pygame.draw.polygon(self.screen, WIN_CELL_BORDER_COLOR, points, 4)
+                    pygame.draw.polygon(self.screen, WIN_CELL_BORDER_COLOR_SECONDARY, points, 2)
+                elif (x, y) in self.field.gold_cell_positions:
+                    pygame.draw.polygon(self.screen, GOLD_CELL_COLOR, points)
+                    pygame.draw.polygon(self.screen, GOLD_CELL_BORDER_COLOR, points, 3)
                 else:
                     color = HOVER_COLOR if hovered_cell == (x, y) else FIELD_COLOR
                     pygame.draw.polygon(self.screen, color, points)
@@ -81,13 +85,15 @@ class Renderer:
         """Иконки золотых клеток (постоянные) и текущих кучек серебра
         (появляются/исчезают по циклам — актуальный список берём у ResourceManager)."""
         icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))
-        for gx, gy in self.field.gold_cell_positions:
-            self._draw_field_icon(ICON_GOLD, gx, gy, icon_size)
+        for pos in self.field.gold_cell_positions:
+            has_gold = self.resource_manager.gold_deposits.get(pos, 0) > 0
+            alpha = 255 if has_gold else GOLD_ICON_DIM_ALPHA
+            self._draw_field_icon(ICON_GOLD, pos[0], pos[1], icon_size, alpha=alpha)
         for sx, sy in self.resource_manager.silver_cells:
             self._draw_field_icon(ICON_SILVER_FIELD, sx, sy, icon_size)
 
-    def _draw_field_icon(self, image_name, cell_x, cell_y, size):
-        icon = ImageManager.get_scaled(image_name, (size, size))
+    def _draw_field_icon(self, image_name, cell_x, cell_y, size, alpha=255):
+        icon = ImageManager.get_scaled(image_name, (size, size), alpha=alpha)
         screen_pos = self.camera.project(cell_x + 0.5, cell_y + 0.5)
         rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
         self.screen.blit(icon, rect)
