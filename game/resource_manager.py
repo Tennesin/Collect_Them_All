@@ -6,14 +6,7 @@ from game.game_config import (
     WIN_GOLD_REQUIRED, WIN_SILVER_REQUIRED,
 )
 
-
 class ResourceManager:
-    """Владеет ДИНАМИЧЕСКИМ состоянием ресурсов: сколько золота накопилось
-    в каждой золотой клетке и где прямо сейчас лежат кучки серебра (и сколько
-    в каждой). Field хранит только неизменную геометрию (где стоят золотые
-    клетки) — всё, что меняется по ходу партии, знает только этот класс.
-    Также умеет проверять условие победы и формировать текст предупреждения,
-    если игроку чего-то не хватает на финишной клетке."""
 
     def __init__(self, field, player_count):
         self.field = field
@@ -26,8 +19,6 @@ class ResourceManager:
     # --- Цикл ходов ---
 
     def on_cycle_complete(self):
-        """Вызывается TurnManager'ом, когда очередь снова доходит до первого
-        игрока — то есть все игроки уже сходили по разу в этом цикле."""
         for pos in self.gold_deposits:
             self.gold_deposits[pos] += GOLD_CELL_YIELD
 
@@ -37,9 +28,6 @@ class ResourceManager:
             self._respawn_silver()
 
     def _respawn_silver(self):
-        """Полностью пересобирает кучки серебра: количество кучек зависит от
-        доли свободных клеток карты и числа игроков, а размер каждой кучки —
-        случайное число в диапазоне SILVER_PILE_MIN_VALUE..MAX_VALUE."""
         self.silver_cells.clear()
         free_cells = self._collectible_free_cells()
         count = self._silver_cell_count(len(free_cells))
@@ -54,9 +42,6 @@ class ResourceManager:
         return min(count, free_cells_count)
 
     def _collectible_free_cells(self):
-        """Все проходимые клетки, кроме зарезервированных (золотые клетки,
-        победная клетка) — серебро туда не кладём, чтобы не путать со
-        стационарными ресурсами."""
         field = self.field
         return [
             (x, y)
@@ -68,11 +53,6 @@ class ResourceManager:
     # --- Сбор ресурсов ---
 
     def collect_at(self, player):
-        """Вызывать при каждом входе игрока в новую клетку — собирает
-        золото/серебро, если оно там есть. Золото после сбора затухает
-        до нуля именно в этой клетке (но копится заново со следующих циклов —
-        см. on_cycle_complete), а кучка серебра при сборе исчезает полностью
-        и не появится вновь до общего пересоздания серебра на карте."""
         pos = (player.grid_x, player.grid_y)
 
         if pos in self.gold_deposits and self.gold_deposits[pos] > 0:
@@ -92,9 +72,6 @@ class ResourceManager:
         )
 
     def missing_requirements_message(self, player):
-        """Возвращает текст предупреждения, если игрок стоит на победной
-        клетке, но условия победы ещё не выполнены ('Недостаточно N золота
-        и M серебра'), иначе None."""
         if (player.grid_x, player.grid_y) != self.field.win_cell:
             return None
 

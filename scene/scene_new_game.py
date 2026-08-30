@@ -131,8 +131,6 @@ class NewGameScene(Scene):
             self.settings.player_count = min(MAX_PLAYERS, self.settings.player_count + 1)
             return
 
-        # Кнопка неактивна (enabled=False), пока custom-ввод некорректен —
-        # collidepoint сам вернёт False, дополнительная проверка не нужна.
         if self.start_button.collidepoint(pos):
             self._start_game()
 

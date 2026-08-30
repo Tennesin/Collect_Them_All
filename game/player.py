@@ -3,9 +3,7 @@ from settings import PLAYER_COLORS
 from game.game_config import STARTING_GOLD, STARTING_SILVER
 
 class Player:
-    """Отвечает только за собственное состояние: позицию, цвет и движение по пути.
-    Ничего не знает ни про Game, ни про pygame, ни про камеру напрямую,
-    ни про очередь ходов — этим занимается TurnManager снаружи."""
+    """Отвечает только за собственное состояние: позицию, цвет и движение по пути."""
 
     def __init__(self, field, start_cell=(0, 0), speed=5.0, color_key="red"):
         self.field = field
@@ -23,8 +21,12 @@ class Player:
         self.gold = STARTING_GOLD
         self.silver = STARTING_SILVER
 
-        # Текст предупреждения ("Недостаточно N золота...")
+        # Текст предупреждения ("Недостаточно N золота...").
         self.warning_message = None
+
+        # Туман войны.
+        self.visible_cells = set()
+        self.explored_cells = set()
 
         # Внешний наблюдатель (например, Camera.center_on), вызывается при каждом изменении позиции.
         self.on_move = None

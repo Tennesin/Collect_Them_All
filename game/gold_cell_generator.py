@@ -1,22 +1,13 @@
 import random
 from game.game_config import MIN_GOLD_CELLS, MAX_GOLD_CELLS, GOLD_CELL_BOX_RADIUS
 
-
 class GoldCellGenerator:
-    """Расставляет золотые клетки вместе с защитными Г-образными коробами.
-    Обязательно вызывается ДО ObstacleGenerator — тогда обычные препятствия
-    просто не смогут перекрыть уже занятые/зарезервированные клетки коробов
-    (см. Field.reserved_cells)."""
 
     def __init__(self, field):
         self.field = field
         self.radius = GOLD_CELL_BOX_RADIUS  # 2 -> короб 5x5
 
     def generate(self):
-        """Возвращает фактически расставленное количество золотых клеток.
-        На очень маленьких или сильно застроенных картах реальное число
-        может оказаться меньше MIN_GOLD_CELLS — это ожидаемо: короба 5x5
-        физически не всегда помещаются нужное число раз без пересечений."""
         count = random.randint(MIN_GOLD_CELLS, MAX_GOLD_CELLS)
         placed = 0
         attempts = 0
@@ -49,9 +40,6 @@ class GoldCellGenerator:
             field.obstacle_grid[cx][cy] = True
             field.obstacle_type[cx][cy] = 'wall'
 
-        # is_connected() сама защищает клетку (0, 0): если стена случайно
-        # перекроет стартовую клетку игроков, проверка вернёт False и
-        # расстановка откатится — как и для обычных препятствий.
         if not field.is_connected():
             for cx, cy in wall_cells:
                 field.obstacle_grid[cx][cy] = False
@@ -63,9 +51,6 @@ class GoldCellGenerator:
         return True
 
     def _area_is_clear(self, gx, gy):
-        """Вся будущая зона 5x5 (короб + центр) должна быть свободна от
-        препятствий, других золотых клеток и зарезервированных клеток —
-        иначе короба будут пересекаться друг с другом или с победной клеткой."""
         field = self.field
         r = self.radius
         for dx in range(-r, r + 1):
@@ -78,9 +63,6 @@ class GoldCellGenerator:
         return True
 
     def _corner_segments(self, gx, gy):
-        """4 Г-образных сегмента — по одному на угол короба. Каждый сегмент —
-        путь из трёх клеток: конец одного плеча -> угол -> конец другого плеча
-        (порядок важен для Renderer'а, который рисует segment как ломаную)."""
         r = self.radius
         segments = []
         for sign_x, sign_y in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:

@@ -4,7 +4,6 @@ from settings import *
 from scene.scenes import SceneManager
 from scene.scene_main_menu import MainMenuScene
 
-
 class Application:
     """Composition root уровня приложения"""
 

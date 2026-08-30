@@ -111,3 +111,7 @@ GOLD_CELL_BORDER_COLOR = (255, 215, 0)
 WIN_CELL_COLOR = (210, 25, 25)
 WIN_CELL_BORDER_COLOR = (15, 15, 15)
 WIN_CELL_BORDER_COLOR_SECONDARY = (245, 245, 245)
+
+# --- Туман войны ---
+FOG_COLOR = (18, 18, 24)              # клетки, которые игрок вообще ещё не видел
+FOG_DIM_COLOR = (10, 10, 15, 150)     # видел раньше, но не видит сейчас (RGBA)

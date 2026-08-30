@@ -5,9 +5,6 @@ from game.image_manager import ImageManager
 
 
 class PlayerPanel:
-    """Правая панель интерфейса. Размер (PANEL_WIDTH x SCREEN_HEIGHT) фиксирован
-    и не зависит от размера или состояния игрового поля — панель знает только
-    про TurnManager, откуда берёт данные для отображения."""
 
     def __init__(self, turn_manager):
         self.turn_manager = turn_manager
@@ -66,8 +63,6 @@ class PlayerPanel:
 
     @staticmethod
     def _draw_icon_line(screen, x, y, icon_name, text, color, font_size):
-        """Рисует иконку (см. ImageManager) и текст рядом с ней по вертикальному
-        центру одной строки. Возвращает y нижней границы строки."""
         icon = ImageManager.get_scaled(icon_name, (PANEL_ICON_SIZE, PANEL_ICON_SIZE))
         surf = get_font(font_size).render(text, True, color)
         line_height = max(icon.get_height(), surf.get_height())
@@ -82,10 +77,6 @@ class PlayerPanel:
 
     @staticmethod
     def _draw_wrapped_text(screen, x, y, text, color, font_size, max_width):
-        """Переносит текст по словам, чтобы длинное предупреждение не вылезало
-        за границу узкой панели — сообщение о нехватке ресурсов может содержать
-        оба ресурса сразу ('и'), и на маленьких размерах шрифта это не всегда
-        влезает в одну строку."""
         font = get_font(font_size)
         words = text.split(" ")
         line = ""

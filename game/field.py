@@ -14,20 +14,13 @@ class Field:
         # Победная клетка — всегда правый нижний угол поля.
         self.win_cell = (width - 1, height - 1)
 
-        # Позиции золотых клеток; заполняются GoldCellGenerator'ом снаружи —
-        # Field ничего не знает про то, КАК их расставляют.
         self.gold_cell_positions = []
-
-        # Клетки, которые генераторы препятствий никогда не должны занимать:
-        # победная клетка + центры уже расставленных золотых клеток.
         self.reserved_cells = {self.win_cell}
 
     def reserve_cell(self, x, y):
         self.reserved_cells.add((x, y))
 
     def add_gold_cell(self, x, y):
-        """Регистрирует клетку (x, y) как золотую и сразу резервирует её,
-        чтобы следующие золотые клетки и обычные препятствия её не перекрыли."""
         self.gold_cell_positions.append((x, y))
         self.reserve_cell(x, y)
 

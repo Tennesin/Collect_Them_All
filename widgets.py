@@ -4,7 +4,6 @@ from settings import *
 
 _font_cache = {}
 
-
 def get_font(size, name=FONT_NAME):
     """Общий кэш шрифтов для всех виджетов, чтобы не пересоздавать Font на каждый кадр."""
     key = (name, size)

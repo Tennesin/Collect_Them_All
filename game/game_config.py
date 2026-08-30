@@ -45,6 +45,9 @@ SILVER_PILE_MAX_VALUE = 45               # серебра в одной кучк
 
 SILVER_RESPAWN_CYCLES = 2
 
+# --- Туман войны ---
+VISION_RADIUS = 4
+
 # --- Условия победы ---
 WIN_GOLD_REQUIRED = 25
 WIN_SILVER_REQUIRED = 125
@@ -60,8 +63,6 @@ class GameSettings:
     player_count: int = DEFAULT_PLAYERS
 
     def clamp(self):
-        """Подгоняет значения под допустимые границы. Вызывается перед стартом партии,
-        так как ручной ввод размера карты может быть некорректным."""
         self.map_width = max(MIN_MAP_SIZE, min(MAX_MAP_SIZE, self.map_width))
         self.map_height = max(MIN_MAP_SIZE, min(MAX_MAP_SIZE, self.map_height))
         self.obstacle_percent = max(MIN_OBSTACLE_PERCENT, min(MAX_OBSTACLE_PERCENT, self.obstacle_percent))

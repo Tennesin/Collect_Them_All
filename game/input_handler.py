@@ -1,12 +1,6 @@
 import pygame
 
 class InputHandler:
-    """Единая точка обработки мыши и клавиатуры внутри игрового поля.
-    Владеет UI-состоянием взаимодействия: drag, hover, предпросмотр пути.
-    Работает не с фиксированным игроком, а всегда с тем, чей сейчас ход
-    (через turn_manager.current_player) — не читает очередь событий сама,
-    получает их по одному от активной сцены."""
-
     def __init__(self, camera, field, turn_manager):
         self.camera = camera
         self.field = field
@@ -107,8 +101,6 @@ class InputHandler:
                 self.clear_preview()
 
     def _capped_path(self, player, goal_cell):
-        """Ищет путь и обрезает его до количества оставшихся в этом черёде движений,
-        чтобы за один клик нельзя было потратить больше движений, чем осталось."""
         limit = self.turn_manager.moves_left
         if limit <= 0:
             return []

@@ -1,10 +1,6 @@
 import random
 
-
 class ObstacleGenerator:
-    """Заполняет переданный Field блоками и стенами, гарантируя связность свободных клеток.
-    Никогда не трогает клетки из field.reserved_cells (победная клетка, золотые клетки и их
-    защитные коробы) — они уже выставлены ДО вызова этого генератора, см. GoldCellGenerator."""
 
     def __init__(self, field, max_obstacle_cells):
         self.field = field
@@ -106,9 +102,6 @@ class ObstacleGenerator:
         return None
 
     def _blocked(self, x, y, cells):
-        """True, если клетку нельзя добавить в строящуюся стену: вне поля,
-        уже занята препятствием, зарезервирована (победная/золотая клетка)
-        или уже входит в эту же стену."""
         field = self.field
         return (
             not field.in_bounds(x, y)

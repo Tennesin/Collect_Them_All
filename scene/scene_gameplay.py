@@ -1,12 +1,13 @@
 import pygame
 from settings import *
 from widgets import get_font
-from game.game_config import TURN_MAX_MOVES, TURN_TIME_SECONDS
+from game.game_config import TURN_MAX_MOVES, TURN_TIME_SECONDS, VISION_RADIUS
 from game.camera import Camera
 from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
 from game.gold_cell_generator import GoldCellGenerator
 from game.resource_manager import ResourceManager
+from game.fog_of_war import FogOfWar
 from game.player import Player
 from game.turn_manager import TurnManager
 from game.input_handler import InputHandler
@@ -15,9 +16,6 @@ from game.ui import PlayerPanel
 from scene.scenes import Scene
 
 class GameplayScene(Scene):
-    """Сборка и цикл собственно игры на поле. Создаёт нужное количество
-    игроков (Красный, Синий, Жёлтый, Оранжевый, Розовый — по очереди),
-    ботов пока нет: каждым по очереди управляет один и тот же человек."""
 
     def __init__(self, manager, settings):
         super().__init__(manager)
@@ -28,22 +26,17 @@ class GameplayScene(Scene):
 
         self.field = Field(settings.map_width, settings.map_height)
 
-        # Золотые клетки расставляем ДО обычных препятствий: их короба сразу
-        # резервируют себе место (Field.reserved_cells), и ObstacleGenerator
-        # их уже не тронет.
         GoldCellGenerator(self.field).generate()
 
         total_cells = settings.map_width * settings.map_height
         max_obstacle_cells = int(total_cells * settings.obstacle_fraction)
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
 
-        # Динамика ресурсов (накопленное золото, текущее серебро) — отдельно от Field.
         self.resource_manager = ResourceManager(self.field, settings.player_count)
 
-        # Камере отдаём только ширину игровой зоны (без панели справа) —
-        # так поле не залезает под PlayerPanel.
+        self.fog_of_war = FogOfWar(self.field, VISION_RADIUS)
         self.camera = Camera(GAME_AREA_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
-                              INITIAL_SCALE, MAX_SCALE)
+                             INITIAL_SCALE, MAX_SCALE)
 
         # --- Игроки: все стартуют в одной клетке, поэтому сразу видно "слои" ---
         start_cell = (0, 0)
@@ -53,6 +46,7 @@ class GameplayScene(Scene):
             player = Player(self.field, start_cell=start_cell, speed=PLAYER_SPEED, color_key=color_key)
             player.on_move = self.camera.center_on
             player.on_cell_reached = self._make_cell_reached_handler(player)
+            self.fog_of_war.update_player(player)  # видимость на старте, до первого хода
             self.players.append(player)
 
         # --- Очередь ходов ---
@@ -71,9 +65,10 @@ class GameplayScene(Scene):
 
     def _make_cell_reached_handler(self, player):
         """Собирает воедино всё, что должно произойти при входе игрока в
-        новую клетку: сбор ресурсов и проверку победы."""
+        новую клетку: обновление видимости, сбор ресурсов и проверка победы"""
 
         def handler():
+            self.fog_of_war.update_player(player)
             self.resource_manager.collect_at(player)
             if self.winner is None and self.resource_manager.check_win(player):
                 self.winner = player
@@ -85,14 +80,10 @@ class GameplayScene(Scene):
         return handler
 
     def _on_turn_change(self, new_player):
-        """Колбэк TurnManager'а: очищаем чужой предпросмотр пути и переносим
-        камеру на игрока, чей ход начался."""
         self.input_handler.clear_preview()
         self.camera.center_on(new_player.pos_x, new_player.pos_y)
 
     def on_pause(self):
-        """Сцена уходит под паузу (например, поверх положили PauseScene):
-        явно останавливаем игровое время и движение игрока."""
         self.paused = True
 
     def on_resume(self):

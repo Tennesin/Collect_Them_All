@@ -4,8 +4,7 @@ from settings import *
 from game.image_manager import ImageManager
 
 class Renderer:
-    """Только отрисовка игрового поля и фигур на нём. Правая панель интерфейса
-    рисуется отдельно (см. game.ui.PlayerPanel) — Renderer про неё не знает."""
+    """Только отрисовка игрового поля и фигур на нём."""
 
     def __init__(self, screen, camera, field, players, turn_manager, input_handler, resource_manager):
         self.screen = screen
@@ -26,6 +25,8 @@ class Renderer:
     def draw_field(self):
         self.screen.fill(BG_COLOR)
         hovered_cell = self.input_handler.get_hovered_cell()
+        viewer = self.turn_manager.current_player
+        explored = viewer.explored_cells
 
         for x in range(self.field.width):
             for y in range(self.field.height):
@@ -34,6 +35,10 @@ class Renderer:
                 p3 = self.camera.project(x + 1, y + 1)
                 p4 = self.camera.project(x, y + 1)
                 points = [p1, p2, p3, p4]
+
+                if (x, y) not in explored:
+                    pygame.draw.polygon(self.screen, FOG_COLOR, points)
+                    continue
 
                 if self.field.obstacle_grid[x][y] and self.field.obstacle_type[x][y] == 'block':
                     pygame.draw.polygon(self.screen, BLOCK_COLOR, points)
@@ -50,16 +55,17 @@ class Renderer:
                     pygame.draw.polygon(self.screen, color, points)
                     pygame.draw.polygon(self.screen, GRID_COLOR, points, 1)
 
-        self.draw_walls()
+        self.draw_walls(explored)
+        self._draw_fog_dimming(explored, viewer.visible_cells)
 
-    def draw_walls(self):
+    def draw_walls(self, explored):
         if not self.field.wall_segments:
             return
         wall_thickness = max(2.0, WALL_THICKNESS_RATIO * self.camera.scale)
         color = WALL_COLOR
 
         for segment in self.field.wall_segments:
-            if len(segment) < 2:
+            if len(segment) < 2 or not all(cell in explored for cell in segment):
                 continue
             screen_points = [self.camera.project(cx + 0.5, cy + 0.5) for cx, cy in segment]
 
@@ -70,10 +76,13 @@ class Renderer:
                 pygame.draw.rect(self.screen, color, rect)
 
         for segment in self.field.wall_segments:
+            if not all(cell in explored for cell in segment):
+                continue
             for x, y in segment:
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     nx, ny = x + dx, y + dy
                     if (self.field.in_bounds(nx, ny)
+                            and (nx, ny) in explored
                             and self.field.obstacle_grid[nx][ny]
                             and self.field.obstacle_type[nx][ny] == 'block'):
                         screen1 = self.camera.project(x + 0.5, y + 0.5)
@@ -81,15 +90,32 @@ class Renderer:
                         screen_mid = ((screen1[0] + screen2[0]) / 2, (screen1[1] + screen2[1]) / 2)
                         pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
 
+    def _draw_fog_dimming(self, explored, visible):
+        remembered = explored - visible
+        if not remembered:
+            return
+        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA)
+        for x, y in remembered:
+            p1 = self.camera.project(x, y)
+            p2 = self.camera.project(x + 1, y)
+            p3 = self.camera.project(x + 1, y + 1)
+            p4 = self.camera.project(x, y + 1)
+            pygame.draw.polygon(overlay, FOG_DIM_COLOR, [p1, p2, p3, p4])
+        self.screen.blit(overlay, (0, 0))
+
     def draw_resources(self):
-        """Иконки золотых клеток (постоянные) и текущих кучек серебра
-        (появляются/исчезают по циклам — актуальный список берём у ResourceManager)."""
         icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))
+        visible = self.turn_manager.current_player.visible_cells
+
         for pos in self.field.gold_cell_positions:
+            if pos not in visible:
+                continue
             has_gold = self.resource_manager.gold_deposits.get(pos, 0) > 0
             alpha = 255 if has_gold else GOLD_ICON_DIM_ALPHA
             self._draw_field_icon(ICON_GOLD, pos[0], pos[1], icon_size, alpha=alpha)
         for sx, sy in self.resource_manager.silver_cells:
+            if (sx, sy) not in visible:
+                continue
             self._draw_field_icon(ICON_SILVER_FIELD, sx, sy, icon_size)
 
     def _draw_field_icon(self, image_name, cell_x, cell_y, size, alpha=255):
@@ -165,8 +191,12 @@ class Renderer:
 
     def draw_players(self):
         current = self.turn_manager.current_player
+        visible = current.visible_cells
         moving_player = current if current.moving else None
-        stationary = [p for p in self.players if p is not moving_player]
+        stationary = [
+            p for p in self.players
+            if p is not moving_player and (p.grid_x, p.grid_y) in visible
+        ]
 
         groups = {}
         for p in stationary:
@@ -182,10 +212,6 @@ class Renderer:
             self._draw_circle(moving_player.color, screen_pos, radius, highlight=True)
 
     def _draw_stack(self, group, current):
-        """Рисует игроков одной клетки "слоями", расходящимися по диагонали
-        в обе стороны от центра (чётные слои — ниже-правее, нечётные — выше-левее),
-        чтобы стопка не упиралась в один угол клетки. Тот, чей сейчас ход,
-        всегда рисуется без смещения и поверх всех остальных."""
         radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
         step = STACK_OFFSET_RATIO * radius
 
@@ -207,9 +233,6 @@ class Renderer:
 
     @staticmethod
     def _stack_offset(back_index, step):
-        """back_index=0 — без смещения (передний слой). Дальше слои поочерёдно
-        уходят по диагонали то влево-вверх, то вправо-вниз, с шагом,
-        растущим через каждые два слоя — так место клетки расходуется экономнее."""
         if back_index == 0:
             return 0.0, 0.0
         magnitude = ((back_index + 1) // 2) * step

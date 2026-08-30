@@ -1,7 +1,4 @@
 class TurnManager:
-    """Управляет очередностью ходов между игроками одной партии.
-    Знает про лимит движений и времени в рамках одного черёда,
-    но ничего не знает про pygame и про то, как игроки рисуются."""
 
     def __init__(self, players, max_moves, turn_time):
         self.players = players
@@ -36,8 +33,6 @@ class TurnManager:
     def _maybe_advance(self):
         player = self.current_player
         if player.moving:
-            # Не прерываем анимацию посреди движения — дожидаемся,
-            # пока игрок физически остановится в клетке.
             return
         if self.moves_left <= 0 or self.time_left <= 0:
             self._advance_turn()
