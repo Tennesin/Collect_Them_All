@@ -65,20 +65,29 @@ class Renderer:
         color = WALL_COLOR
 
         for segment in self.field.wall_segments:
-            if len(segment) < 2 or not all(cell in explored for cell in segment):
+            if len(segment) < 2:
                 continue
-            screen_points = [self.camera.project(cx + 0.5, cy + 0.5) for cx, cy in segment]
 
-            pygame.draw.lines(self.screen, color, False, screen_points, int(wall_thickness))
-            for pt in screen_points:
+            for i in range(len(segment) - 1):
+                c1, c2 = segment[i], segment[i + 1]
+                if c1 not in explored or c2 not in explored:
+                    continue
+                p1 = self.camera.project(c1[0] + 0.5, c1[1] + 0.5)
+                p2 = self.camera.project(c2[0] + 0.5, c2[1] + 0.5)
+                pygame.draw.line(self.screen, color, p1, p2, int(wall_thickness))
+
+            for cell in segment:
+                if cell not in explored:
+                    continue
+                pt = self.camera.project(cell[0] + 0.5, cell[1] + 0.5)
                 rect = pygame.Rect(0, 0, wall_thickness, wall_thickness)
                 rect.center = pt
                 pygame.draw.rect(self.screen, color, rect)
 
         for segment in self.field.wall_segments:
-            if not all(cell in explored for cell in segment):
-                continue
             for x, y in segment:
+                if (x, y) not in explored:
+                    continue
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                     nx, ny = x + dx, y + dy
                     if (self.field.in_bounds(nx, ny)
