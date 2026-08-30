@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="new game settings upgraded">
-      <change beforePath="$PROJECT_DIR$/game/game_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/game_config.py" afterDir="false" />
-    </list>
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="new game settings ui improved" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -61,7 +59,7 @@
       <recent name="C:\Users\Tennesin\PycharmProjects\Mini-games\Collect Them All!\game" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.text_maker">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Collect Them All!" />
       <option name="ENV_FILES" value="" />
@@ -108,8 +106,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main" />
         <item itemvalue="Python.text_maker" />
+        <item itemvalue="Python.main" />
       </list>
     </recent_temporary>
   </component>
@@ -257,7 +255,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788086191971</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="new game settings ui improved">
+      <option name="closed" value="true" />
+      <created>1788087224514</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1788087224514</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -287,6 +293,7 @@
     <MESSAGE value="fog of war bug fixes" />
     <MESSAGE value="wall rendering bug fix" />
     <MESSAGE value="new game settings upgraded" />
-    <option name="LAST_COMMIT_MESSAGE" value="new game settings upgraded" />
+    <MESSAGE value="new game settings ui improved" />
+    <option name="LAST_COMMIT_MESSAGE" value="new game settings ui improved" />
   </component>
 </project>
