@@ -9,9 +9,8 @@ from game.game_config import (
     MIN_PLAYERS, MAX_PLAYERS,
     MIN_WIN_GOLD, MAX_WIN_GOLD, WIN_GOLD_STEP,
     MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP,
-    MIN_GOLD_CELLS, MAX_GOLD_CELLS,
-    FINISH_MODE_INSTANT, FINISH_MODE_RANKED,
-    MIN_TURN_MOVES, MAX_TURN_MOVES,
+    MIN_GOLD_CELLS, FINISH_MODE_INSTANT,
+    FINISH_MODE_RANKED, MIN_TURN_MOVES, MAX_TURN_MOVES,
     MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP,
     MIN_VISION_RADIUS, MAX_VISION_RADIUS,
     max_gold_cells_for_map,
@@ -211,9 +210,6 @@ class NewGameScene(Scene):
         if self.silver_win_slider.rect.collidepoint(pos):
             self.silver_win_slider.dragging = True
             self.silver_win_slider.set_from_mouse(pos[0])
-            return
-        if self.gold_cells_minus_button.collidepoint(pos):
-            self.settings.gold_cell_count = max(MIN_GOLD_CELLS, self.settings.gold_cell_count - 1)
             return
         if self.gold_cells_minus_button.collidepoint(pos):
             self.settings.gold_cell_count = max(MIN_GOLD_CELLS, self.settings.gold_cell_count - 1)

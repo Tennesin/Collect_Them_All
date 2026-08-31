@@ -89,10 +89,8 @@ class InputHandler:
         if goal_cell == (player.grid_x, player.grid_y):
             return
 
-        if self.preview_goal == goal_cell:
-            path = self._capped_path(player, goal_cell)
-            if path:
-                player.follow_path(path)
+        if self.preview_goal == goal_cell and self.preview_path:
+            player.follow_path(self.preview_path)
             self.clear_preview()
         else:
             path = self._capped_path(player, goal_cell)

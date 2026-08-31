@@ -39,13 +39,11 @@ class GoldCellGenerator:
         wall_cells = {cell for segment in segments for cell in segment}
 
         for cx, cy in wall_cells:
-            field.obstacle_grid[cx][cy] = True
-            field.obstacle_type[cx][cy] = 'wall'
+            field.set_obstacle(cx, cy, True, 'wall')
 
         if not field.is_connected():
             for cx, cy in wall_cells:
-                field.obstacle_grid[cx][cy] = False
-                field.obstacle_type[cx][cy] = None
+                field.set_obstacle(cx, cy, False)
             return False
 
         field.wall_segments.extend(segments)

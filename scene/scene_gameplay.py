@@ -27,6 +27,12 @@ class GameplayScene(Scene):
 
         self.field = Field(settings.map_width, settings.map_height)
 
+        placed_gold_cells = GoldCellGenerator(self.field, settings.gold_cell_count).generate()
+        if placed_gold_cells < settings.gold_cell_count:
+            print(
+                f"[GameplayScene] Не удалось разместить все золотые клетки: "
+                f"запрошено {settings.gold_cell_count}, размещено {placed_gold_cells}."
+            )
         GoldCellGenerator(self.field, settings.gold_cell_count).generate()
 
         total_cells = settings.map_width * settings.map_height

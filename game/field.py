@@ -10,6 +10,7 @@ class Field:
         self.obstacle_grid = [[False] * height for _ in range(width)]
         self.obstacle_type = [[None] * height for _ in range(width)]
         self.wall_segments = []
+        self._obstacle_count = 0
 
         # Победная клетка — всегда правый нижний угол поля.
         self.win_cell = (width - 1, height - 1)
@@ -30,8 +31,16 @@ class Field:
     def is_free(self, x, y):
         return not self.obstacle_grid[x][y]
 
+    def set_obstacle(self, x, y, value, kind=None):
+        """Единая точка изменения препятствий."""
+        current = self.obstacle_grid[x][y]
+        self.obstacle_grid[x][y] = value
+        self.obstacle_type[x][y] = kind if value else None
+        if current != value:
+            self._obstacle_count += 1 if value else -1
+
     def count_obstacles(self):
-        return sum(sum(row) for row in self.obstacle_grid)
+        return self._obstacle_count
 
     def is_connected(self):
         """Проверяет, что все свободные клетки поля образуют одну связную область."""
@@ -41,12 +50,7 @@ class Field:
         queue = deque([(0, 0)])
         visited[0][0] = True
         free_count = 0
-        total_free = sum(
-            1
-            for x in range(self.width)
-            for y in range(self.height)
-            if not self.obstacle_grid[x][y]
-        )
+        total_free = self.width * self.height - self._obstacle_count
         while queue:
             cx, cy = queue.popleft()
             free_count += 1

@@ -21,7 +21,6 @@ class ObstacleGenerator:
                 length = random.randint(3, 9)
                 if self._generate_wall(length):
                     occupied += length
-            attempts += 1
 
     # --- Прямоугольные блоки ---
 
@@ -57,8 +56,7 @@ class ObstacleGenerator:
         field = self.field
         for dx in range(w):
             for dy in range(h):
-                field.obstacle_grid[x + dx][y + dy] = value
-                field.obstacle_type[x + dx][y + dy] = kind
+                field.set_obstacle(x + dx, y + dy, value, kind)
 
     # --- Стены ---
 
@@ -80,16 +78,14 @@ class ObstacleGenerator:
                 continue
 
             for cx, cy in cells:
-                field.obstacle_grid[cx][cy] = True
-                field.obstacle_type[cx][cy] = 'wall'
+                field.set_obstacle(cx, cy, True, 'wall')
 
             if field.is_connected():
                 field.wall_segments.append(cells)
                 return True
 
             for cx, cy in cells:
-                field.obstacle_grid[cx][cy] = False
-                field.obstacle_type[cx][cy] = None
+                field.set_obstacle(cx, cy, False)
         return False
 
     def _build_wall_cells(self, shape, start_x, start_y, length):
@@ -152,21 +148,24 @@ class ObstacleGenerator:
         cells = [(start_x, start_y)]
         cx, cy = start_x, start_y
         remaining = length - 1
+
         while remaining > 0:
             segment_len = 2 if remaining >= 2 else 1
+            blocked = False
             for _ in range(segment_len):
-                if remaining <= 0:
-                    break
                 nx, ny = cx + direction[0], cy + direction[1]
                 if self._blocked(nx, ny, cells):
+                    blocked = True
                     break
                 cells.append((nx, ny))
                 cx, cy = nx, ny
                 remaining -= 1
-            if len(cells) != length and remaining > 0:
-                direction = random.choice([(0, 1), (0, -1)] if direction[0] != 0 else [(1, 0), (-1, 0)])
-            if len(cells) != length:
+
+            if blocked:
                 break
+            if remaining > 0:
+                direction = random.choice([(0, 1), (0, -1)] if direction[0] != 0 else [(1, 0), (-1, 0)])
+
         return cells
 
     def _wall_too_close(self, cells):

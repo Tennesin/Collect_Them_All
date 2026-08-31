@@ -61,9 +61,6 @@ SILVER_PILE_MAX_VALUE = 45
 
 SILVER_RESPAWN_CYCLES = 2
 
-# --- Туман войны ---
-VISION_RADIUS = 4
-
 # --- Условия победы (настраиваются на экране NewGameScene) ---
 MIN_WIN_GOLD = 10
 MAX_WIN_GOLD = 50

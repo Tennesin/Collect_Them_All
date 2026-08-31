@@ -41,7 +41,6 @@ class Camera:
         self.clamp_offset()
 
     def zoom(self, factor):
-        self.min_scale = max(self.width / self.field_width, self.height / self.field_height)
         new_scale = max(self.min_scale, min(self.max_scale, self.scale * factor))
         if new_scale == self.scale:
             return

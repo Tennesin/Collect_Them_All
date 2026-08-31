@@ -14,6 +14,8 @@ class Renderer:
         self.turn_manager = turn_manager
         self.input_handler = input_handler
         self.resource_manager = resource_manager
+        self._fog_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        self._preview_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 
     def draw(self):
         self.draw_field()
@@ -28,8 +30,10 @@ class Renderer:
         viewer = self.turn_manager.current_player
         explored = viewer.explored_cells
 
-        for x in range(self.field.width):
-            for y in range(self.field.height):
+        min_x, min_y, max_x, max_y = self._visible_cell_bounds()
+
+        for x in range(min_x, max_x):
+            for y in range(min_y, max_y):
                 p1 = self.camera.project(x, y)
                 p2 = self.camera.project(x + 1, y)
                 p3 = self.camera.project(x + 1, y + 1)
@@ -57,6 +61,16 @@ class Renderer:
 
         self.draw_walls(explored)
         self._draw_fog_dimming(explored, viewer.visible_cells)
+
+    def _visible_cell_bounds(self):
+        """Диапазон клеток поля, которые реально попадают на экран при текущих зуме/панораме."""
+        wx0, wy0 = self.camera.screen_to_world(0, 0)
+        wx1, wy1 = self.camera.screen_to_world(self.screen.get_width(), self.screen.get_height())
+        min_x = max(0, int(wx0) - 1)
+        min_y = max(0, int(wy0) - 1)
+        max_x = min(self.field.width, int(wx1) + 2)
+        max_y = min(self.field.height, int(wy1) + 2)
+        return min_x, min_y, max_x, max_y
 
     def draw_walls(self, explored):
         if not self.field.wall_segments:
@@ -103,7 +117,8 @@ class Renderer:
         remembered = explored - visible
         if not remembered:
             return
-        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA)
+        overlay = self._fog_overlay
+        overlay.fill((0, 0, 0, 0))
         for x, y in remembered:
             p1 = self.camera.project(x, y)
             p2 = self.camera.project(x + 1, y)
@@ -158,7 +173,8 @@ class Renderer:
         if not preview_path or player.moving:
             return
 
-        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA)
+        overlay = self._preview_overlay
+        overlay.fill((0, 0, 0, 0))
         line_width = max(2, int(PREVIEW_WIDTH_RATIO * self.camera.scale))
         dash_length = max(6, int(PREVIEW_DASH_RATIO * self.camera.scale))
         gap_length = max(4, int(PREVIEW_GAP_RATIO * self.camera.scale))

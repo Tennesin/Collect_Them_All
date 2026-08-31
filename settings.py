@@ -90,8 +90,6 @@ PAUSE_OVERLAY_COLOR = (10, 10, 15, 170)
 PANEL_BG_COLOR = (24, 24, 32)
 PANEL_BORDER_COLOR = (55, 55, 70)
 
-DEFAULT_SCROLL_SPEED = 20
-
 # --- Иконки (см. game.image_manager.ImageManager) ---
 ICON_GOLD = "gold.png"
 ICON_SILVER = "silver.png"

@@ -32,11 +32,6 @@ class Player:
         self.on_move = None
         self.on_cell_reached = None
 
-    def set_goal(self, goal_cell):
-        """Ищет путь к goal_cell и сразу по нему идёт. Возвращает True, если движение началось."""
-        path = self.field.find_path((self.grid_x, self.grid_y), goal_cell)
-        return self.follow_path(path)
-
     def follow_path(self, path):
         """Идёт по уже готовому (возможно, обрезанному снаружи) пути."""
         if not path:
