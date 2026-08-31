@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="new game settings ui improved">
+    <list default="true" id="05812388-2a9e-4a78-9608-ec1c46e80e3c" name="Changes" comment="import fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/fog_of_war.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/fog_of_war.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/gold_cell_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/gold_cell_generator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/game/ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/game/ui.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scene/scene_gameplay.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_gameplay.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scene/scene_new_game.py" beforeDir="false" afterPath="$PROJECT_DIR$/scene/scene_new_game.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -274,7 +278,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788087412222</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="import fix">
+      <option name="closed" value="true" />
+      <created>1788172214277</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1788172214277</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -305,6 +317,7 @@
     <MESSAGE value="wall rendering bug fix" />
     <MESSAGE value="new game settings upgraded" />
     <MESSAGE value="new game settings ui improved" />
-    <option name="LAST_COMMIT_MESSAGE" value="new game settings ui improved" />
+    <MESSAGE value="import fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="import fix" />
   </component>
 </project>

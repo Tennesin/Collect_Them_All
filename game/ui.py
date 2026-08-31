@@ -6,8 +6,9 @@ from game.image_manager import ImageManager
 
 class PlayerPanel:
 
-    def __init__(self, turn_manager):
+    def __init__(self, turn_manager, resource_manager):
         self.turn_manager = turn_manager
+        self.resource_manager = resource_manager
         self.rect = pygame.Rect(GAME_AREA_WIDTH, 0, PANEL_WIDTH, SCREEN_HEIGHT)
 
     def draw(self, screen):
@@ -17,6 +18,7 @@ class PlayerPanel:
         player = self.turn_manager.current_player
         padding = 18
         x = self.rect.x + padding
+        right_x = self.rect.x + self.rect.width // 2 + 6
         max_text_width = self.rect.width - padding * 2
         y = 24
 
@@ -24,21 +26,38 @@ class PlayerPanel:
         y = self._draw_line(screen, x, y + 2, PLAYER_NAMES_RU[player.color_key], player.color, FONT_SIZE_LABEL + 4)
         y += 26
 
-        y = self._draw_line(screen, x, y, "Ходы", HINT_TEXT_COLOR, FONT_SIZE_HINT)
-        y = self._draw_icon_line(
-            screen, x, y + 2, ICON_MOVE,
+        section_top = y
+
+        # --- Левая колонка: Ходы и Время ---
+        left_y = self._draw_line(screen, x, section_top, "Ходы", HINT_TEXT_COLOR, FONT_SIZE_HINT)
+        left_y = self._draw_icon_line(
+            screen, x, left_y + 2, ICON_MOVE,
             f"{self.turn_manager.moves_left}/{self.turn_manager.max_moves}",
             TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
-        y += 20
+        left_y += 20
 
-        y = self._draw_line(screen, x, y, "Время", HINT_TEXT_COLOR, FONT_SIZE_HINT)
-        y = self._draw_icon_line(
-            screen, x, y + 2, ICON_TIME,
+        left_y = self._draw_line(screen, x, left_y, "Время", HINT_TEXT_COLOR, FONT_SIZE_HINT)
+        left_y = self._draw_icon_line(
+            screen, x, left_y + 2, ICON_TIME,
             f"{self.turn_manager.time_left:.1f} с",
             TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
-        y += 26
+
+        # --- Правая колонка: Цель ---
+        right_y = self._draw_line(screen, right_x, section_top, "Цель", HINT_TEXT_COLOR, FONT_SIZE_HINT)
+        right_y = self._draw_icon_line(
+            screen, right_x, right_y + 2, ICON_GOLD,
+            str(self.resource_manager.win_gold_required),
+            TEXT_COLOR, FONT_SIZE_LABEL + 2,
+        )
+        right_y = self._draw_icon_line(
+            screen, right_x, right_y + 4, ICON_SILVER,
+            str(self.resource_manager.win_silver_required),
+            TEXT_COLOR, FONT_SIZE_LABEL + 2,
+        )
+
+        y = max(left_y, right_y) + 26
 
         y = self._draw_line(screen, x, y, "Бюджет", HINT_TEXT_COLOR, FONT_SIZE_HINT)
         y = self._draw_icon_line(

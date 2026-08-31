@@ -1,4 +1,5 @@
 import pygame
+import time
 from settings import *
 from widgets import Button, Slider, TextInputBox, get_font
 from game.game_config import (
@@ -13,17 +14,12 @@ from game.game_config import (
     MIN_TURN_MOVES, MAX_TURN_MOVES,
     MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP,
     MIN_VISION_RADIUS, MAX_VISION_RADIUS,
+    max_gold_cells_for_map,
 )
 from scene.scenes import Scene
 
-
 class NewGameScene(Scene):
-    """Экран настройки одной партии.
-
-    Расположение полей — по смысловым разделам:
-    левая колонка описывает "поле боя" (карта, игроки, видимость),
-    правая — "правила партии" (экономика победы, финиш, темп черёда).
-    """
+    """Экран настройки одной партии."""
 
     CX_LEFT = 190
     CX_RIGHT = 590
@@ -110,6 +106,7 @@ class NewGameScene(Scene):
             value=self.settings.turn_time_seconds,
             min_value=MIN_TURN_TIME, max_value=MAX_TURN_TIME, step=TURN_TIME_STEP,
         )
+        self._gold_cells_flash_until = 0.0
 
         # ================= СТАРТ =================
         start_w, start_h = 240, 48
@@ -129,6 +126,12 @@ class NewGameScene(Scene):
         if not self.custom_mode:
             return True
         return self._is_valid_size(self.width_input.text) and self._is_valid_size(self.height_input.text)
+
+    def _clamp_gold_cells_to_map(self):
+        """При смене размера карты не даём количеству золотых клеток остаться выше нового максимума."""
+        max_cells = max_gold_cells_for_map(self.settings.map_width, self.settings.map_height)
+        if self.settings.gold_cell_count > max_cells:
+            self.settings.gold_cell_count = max_cells
 
     # --- События ---
 
@@ -171,6 +174,7 @@ class NewGameScene(Scene):
                 self.settings.map_height = h
                 self.width_input.focused = False
                 self.height_input.focused = False
+                self._clamp_gold_cells_to_map()
                 return
         if self.custom_button.collidepoint(pos):
             self.custom_mode = True
@@ -211,8 +215,15 @@ class NewGameScene(Scene):
         if self.gold_cells_minus_button.collidepoint(pos):
             self.settings.gold_cell_count = max(MIN_GOLD_CELLS, self.settings.gold_cell_count - 1)
             return
+        if self.gold_cells_minus_button.collidepoint(pos):
+            self.settings.gold_cell_count = max(MIN_GOLD_CELLS, self.settings.gold_cell_count - 1)
+            return
         if self.gold_cells_plus_button.collidepoint(pos):
-            self.settings.gold_cell_count = min(MAX_GOLD_CELLS, self.settings.gold_cell_count + 1)
+            max_cells = max_gold_cells_for_map(self.settings.map_width, self.settings.map_height)
+            if self.settings.gold_cell_count >= max_cells:
+                self._gold_cells_flash_until = time.time() + 0.6
+            else:
+                self.settings.gold_cell_count += 1
             return
 
         # --- Финиш ---
@@ -316,7 +327,8 @@ class NewGameScene(Scene):
         self.silver_win_slider.draw(screen)
         self._draw_label(screen, hint_font, "Золотых клеток", (cx_right, 198))
         self.gold_cells_minus_button.draw(screen, mouse_pos)
-        cells_surf = label_font.render(str(self.settings.gold_cell_count), True, TEXT_COLOR)
+        cells_color = WARNING_TEXT_COLOR if time.time() < self._gold_cells_flash_until else TEXT_COLOR
+        cells_surf = label_font.render(str(self.settings.gold_cell_count), True, cells_color)
         screen.blit(cells_surf, cells_surf.get_rect(center=(cx_right, 232)))
         self.gold_cells_plus_button.draw(screen, mouse_pos)
 

@@ -5,6 +5,7 @@ class FogOfWar:
         self.radius = radius
         self.radius_sq = radius * radius
         self._gold_aura = self._build_gold_aura()
+        self._win_aura = self._build_win_aura()
 
     def update_player(self, player):
         visible = self.compute_visible(player.grid_x, player.grid_y)
@@ -14,6 +15,7 @@ class FogOfWar:
     def compute_visible(self, origin_x, origin_y):
         field = self.field
         visible = set(self._gold_aura)
+        visible |= self._win_aura
         visible.add((origin_x, origin_y))
 
         min_x = max(0, origin_x - self.radius)
@@ -31,6 +33,18 @@ class FogOfWar:
                     visible.add((x, y))
 
         return visible
+
+    def _build_win_aura(self):
+        field = self.field
+        wx, wy = field.win_cell
+        aura = {(wx, wy)}
+        for dx, dy in [(-1, -1), (0, -1), (1, -1),
+                       (-1, 0),           (1, 0),
+                       (-1, 1),  (0, 1),  (1, 1)]:
+            nx, ny = wx + dx, wy + dy
+            if field.in_bounds(nx, ny):
+                aura.add((nx, ny))
+        return aura
 
     # --- Внутреннее ---
 

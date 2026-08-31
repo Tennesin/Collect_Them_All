@@ -50,7 +50,7 @@ class GoldCellGenerator:
 
         field.wall_segments.extend(segments)
         field.add_gold_cell(gx, gy)
-        self._reserve_buffer_ring(gx, gy)
+        self._reserve_box(gx, gy)
         return True
 
     def _area_is_clear(self, gx, gy):
@@ -75,14 +75,11 @@ class GoldCellGenerator:
             segments.append([arm_x, (corner_x, corner_y), arm_y])
         return segments
 
-    def _reserve_buffer_ring(self, gx, gy):
+    def _reserve_box(self, gx, gy):
         field = self.field
-        inner = self.radius
         outer = self.radius + self.buffer
         for dx in range(-outer, outer + 1):
             for dy in range(-outer, outer + 1):
-                if max(abs(dx), abs(dy)) <= inner:
-                    continue
                 x, y = gx + dx, gy + dy
                 if field.in_bounds(x, y):
                     field.reserve_cell(x, y)

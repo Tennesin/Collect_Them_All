@@ -65,7 +65,7 @@ class GameplayScene(Scene):
             screen, self.camera, self.field, self.players,
             self.turn_manager, self.input_handler, self.resource_manager,
         )
-        self.player_panel = PlayerPanel(self.turn_manager)
+        self.player_panel = PlayerPanel(self.turn_manager, self.resource_manager)
 
         self.camera.center_on(self.players[0].pos_x, self.players[0].pos_y)
 
