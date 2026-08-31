@@ -1,7 +1,7 @@
 import pygame
 from settings import *
 from widgets import get_font
-from game.game_config import TURN_TIME_SECONDS, VISION_RADIUS
+from game.game_config import FINISH_MODE_INSTANT, FINISH_MODE_RANKED
 from game.camera import Camera
 from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
