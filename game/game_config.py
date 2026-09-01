@@ -77,6 +77,13 @@ FINISH_MODE_INSTANT = "instant"  # игра заканчивается для в
 FINISH_MODE_RANKED = "ranked"    # игроки выбывают по мере финиша, в конце — таблица мест
 DEFAULT_FINISH_MODE = FINISH_MODE_INSTANT
 
+# --- События ---
+EVENTS_DIR_NAME = "events"          # имя папки-реестра, на уровне корня проекта
+EVENT_RESPAWN_CYCLES = 3            # обновление раз в 3 цикла ходов, как и просили
+
+EVENT_BASE_DENSITY = 0.04
+EVENT_DENSITY_PER_PLAYER = 0.005
+MIN_EVENTS_ABSOLUTE = 1
 
 def max_gold_cells_for_map(width, height):
     """Верхняя граница количества золотых клеток, разумная для данного размера карты."""

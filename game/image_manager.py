@@ -10,21 +10,24 @@ _scaled_cache = {}
 class ImageManager:
 
     @staticmethod
-    def get(name):
-        surf = _raw_cache.get(name)
+    def get(name, base_dir=None):
+        base_dir = base_dir or IMAGES_DIR
+        key = (base_dir, name)
+        surf = _raw_cache.get(key)
         if surf is None:
-            path = os.path.join(IMAGES_DIR, name)
+            path = os.path.join(base_dir, name)
             surf = pygame.image.load(path).convert_alpha()
-            _raw_cache[name] = surf
+            _raw_cache[key] = surf
         return surf
 
     @staticmethod
-    def get_scaled(name, size, alpha=255):
+    def get_scaled(name, size, alpha=255, base_dir=None):
         size = (max(1, int(size[0])), max(1, int(size[1])))
-        key = (name, size, alpha)
+        base_dir = base_dir or IMAGES_DIR
+        key = (base_dir, name, size, alpha)
         surf = _scaled_cache.get(key)
         if surf is None:
-            base = ImageManager.get(name)
+            base = ImageManager.get(name, base_dir=base_dir)
             surf = pygame.transform.smoothscale(base, size)
             if alpha != 255:
                 surf = surf.copy()

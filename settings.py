@@ -96,6 +96,15 @@ ICON_SILVER = "silver.png"
 ICON_SILVER_FIELD = "more_silvers.png"
 ICON_MOVE = "move.png"
 ICON_TIME = "time.png"
+ICON_SELECT = "select.png"
+DICE_FACE_ICONS = {
+    1: "dice-six-faces-one.png",
+    2: "dice-six-faces-two.png",
+    3: "dice-six-faces-three.png",
+    4: "dice-six-faces-four.png",
+    5: "dice-six-faces-five.png",
+    6: "dice-six-faces-six.png",
+}
 
 PANEL_ICON_SIZE = 20
 FIELD_ICON_RATIO = 0.55  # доля клетки, которую занимает иконка ресурса на поле

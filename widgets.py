@@ -1,6 +1,7 @@
 import time
 import pygame
 from settings import *
+from game.image_manager import ImageManager
 
 _font_cache = {}
 
@@ -20,7 +21,9 @@ class Button:
         self.label = label
         self.enabled = enabled
 
-    def draw(self, surface, mouse_pos, font_size=None, colors=None):
+    def draw(self, surface, mouse_pos, font_size=None, colors=None, icon_name=None, icon_base_dir=None):
+        """icon_name — необязательная иконка, рисуется справа от текста (например,
+        кубик рядом с подписью "Да" на попапе события)."""
         font_size = font_size or FONT_SIZE_BUTTON
         colors = colors or {
             "normal": BUTTON_COLOR, "hover": BUTTON_HOVER_COLOR,
@@ -35,7 +38,21 @@ class Button:
 
         pygame.draw.rect(surface, bg, self.rect, border_radius=4)
         txt_surf = get_font(font_size).render(self.label, True, colors["text"])
-        surface.blit(txt_surf, txt_surf.get_rect(center=self.rect.center))
+
+        if icon_name is None:
+            surface.blit(txt_surf, txt_surf.get_rect(center=self.rect.center))
+            return
+
+        icon = ImageManager.get_scaled(icon_name, (font_size, font_size), base_dir=icon_base_dir)
+        gap = 6
+        total_w = txt_surf.get_width() + gap + icon.get_width()
+        start_x = self.rect.centerx - total_w // 2
+
+        text_rect = txt_surf.get_rect(midleft=(start_x, self.rect.centery))
+        icon_rect = icon.get_rect(midleft=(text_rect.right + gap, self.rect.centery))
+
+        surface.blit(txt_surf, text_rect)
+        surface.blit(icon, icon_rect)
 
     def collidepoint(self, *args):
         return self.enabled and self.rect.collidepoint(*args)
