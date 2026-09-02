@@ -13,6 +13,7 @@ from game.game_config import (
     FINISH_MODE_RANKED, MIN_TURN_MOVES, MAX_TURN_MOVES,
     MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP,
     MIN_VISION_RADIUS, MAX_VISION_RADIUS,
+    MIN_EVENT_DENSITY_PERCENT, MAX_EVENT_DENSITY_PERCENT, EVENT_DENSITY_PERCENT_STEP,
     max_gold_cells_for_map,
 )
 from scene.scenes import Scene
@@ -69,6 +70,14 @@ class NewGameScene(Scene):
         # --- Раздел "Видимость" (новое) ---
         self.vision_minus_button = Button((self.CX_LEFT - 76, 422, 32, 32), "-")
         self.vision_plus_button = Button((self.CX_LEFT + 44, 422, 32, 32), "+")
+
+        # --- Раздел "События" ---
+        self.events_density_slider = Slider(
+            (self.CX_LEFT - self.SLIDER_WIDTH // 2, 524, self.SLIDER_WIDTH, 16),
+            value=self.settings.event_density_percent,
+            min_value=MIN_EVENT_DENSITY_PERCENT, max_value=MAX_EVENT_DENSITY_PERCENT,
+            step=EVENT_DENSITY_PERCENT_STEP,
+        )
 
         # ================= ПРАВАЯ КОЛОНКА =================
         # --- Раздел "Победа" ---
@@ -140,6 +149,8 @@ class NewGameScene(Scene):
         elif event.type == pygame.MOUSEMOTION:
             if self.obstacle_slider.dragging:
                 self.obstacle_slider.set_from_mouse(event.pos[0])
+            if self.events_density_slider.dragging:
+                self.events_density_slider.set_from_mouse(event.pos[0])
             if self.gold_win_slider.dragging:
                 self.gold_win_slider.set_from_mouse(event.pos[0])
             if self.silver_win_slider.dragging:
@@ -148,6 +159,7 @@ class NewGameScene(Scene):
                 self.time_slider.set_from_mouse(event.pos[0])
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             self.obstacle_slider.dragging = False
+            self.events_density_slider.dragging = False
             self.gold_win_slider.dragging = False
             self.silver_win_slider.dragging = False
             self.time_slider.dragging = False
@@ -202,6 +214,12 @@ class NewGameScene(Scene):
             self.settings.vision_radius = min(MAX_VISION_RADIUS, self.settings.vision_radius + 1)
             return
 
+        # --- События ---
+        if self.events_density_slider.rect.collidepoint(pos):
+            self.events_density_slider.dragging = True
+            self.events_density_slider.set_from_mouse(pos[0])
+            return
+
         # --- Победа ---
         if self.gold_win_slider.rect.collidepoint(pos):
             self.gold_win_slider.dragging = True
@@ -253,6 +271,7 @@ class NewGameScene(Scene):
         self.settings.win_gold_required = int(round(self.gold_win_slider.value))
         self.settings.win_silver_required = int(round(self.silver_win_slider.value))
         self.settings.turn_time_seconds = int(round(self.time_slider.value))
+        self.settings.event_density_percent = int(round(self.events_density_slider.value))
         self.settings.clamp()
 
         from scene.scene_gameplay import GameplayScene
@@ -311,6 +330,12 @@ class NewGameScene(Scene):
         vision_surf = label_font.render(str(self.settings.vision_radius), True, TEXT_COLOR)
         screen.blit(vision_surf, vision_surf.get_rect(center=(cx_left, 438)))
         self.vision_plus_button.draw(screen, mouse_pos)
+
+        self._draw_divider(screen, cx_left, 466)
+        self._draw_section_header(screen, "СОБЫТИЯ", cx_left, 478)
+        density_val = int(round(self.events_density_slider.value))
+        self._draw_label(screen, hint_font, f"Плотность событий: {density_val}%", (cx_left, 506))
+        self.events_density_slider.draw(screen)
 
         # ============ ПРАВАЯ КОЛОНКА ============
 

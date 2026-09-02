@@ -81,10 +81,13 @@ DEFAULT_FINISH_MODE = FINISH_MODE_INSTANT
 EVENTS_DIR_NAME = "events"          # имя папки-реестра, на уровне корня проекта
 EVENT_RESPAWN_CYCLES = 3            # обновление раз в 3 цикла ходов, как и просили
 
-EVENT_BASE_DENSITY = 0.04
-EVENT_DENSITY_PER_PLAYER = 0.005
-MIN_EVENTS_ABSOLUTE = 1
+MIN_EVENT_DENSITY_PERCENT = 2
+MAX_EVENT_DENSITY_PERCENT = 10
+EVENT_DENSITY_PERCENT_STEP = 1
+DEFAULT_EVENT_DENSITY_PERCENT = 4   # эквивалент прежней константы EVENT_BASE_DENSITY
 
+EVENT_DENSITY_PER_PLAYER = 0.005    # доп. плотность за каждого игрока сверх первого — остаётся фиксированной
+MIN_EVENTS_ABSOLUTE = 1
 def max_gold_cells_for_map(width, height):
     """Верхняя граница количества золотых клеток, разумная для данного размера карты."""
     capacity = (width * height) // GOLD_CELL_AREA_PER_CELL
@@ -104,6 +107,7 @@ class GameSettings:
     moves_per_turn: int = DEFAULT_TURN_MOVES
     turn_time_seconds: int = DEFAULT_TURN_TIME
     vision_radius: int = DEFAULT_VISION_RADIUS
+    event_density_percent: int = DEFAULT_EVENT_DENSITY_PERCENT
 
     def clamp(self):
         self.map_width = max(MIN_MAP_SIZE, min(MAX_MAP_SIZE, self.map_width))
@@ -126,6 +130,9 @@ class GameSettings:
         self.turn_time_seconds = int(
             self._clamp_step(self.turn_time_seconds, MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP))
         self.vision_radius = max(MIN_VISION_RADIUS, min(MAX_VISION_RADIUS, self.vision_radius))
+        self.event_density_percent = max(
+            MIN_EVENT_DENSITY_PERCENT, min(MAX_EVENT_DENSITY_PERCENT, self.event_density_percent)
+        )
 
     @staticmethod
     def _clamp_step(value, min_value, max_value, step):
@@ -137,3 +144,8 @@ class GameSettings:
     def obstacle_fraction(self) -> float:
         """Доля препятствий в виде числа 0..1 — то, что реально нужно ObstacleGenerator."""
         return self.obstacle_percent / 100.0
+
+    @property
+    def event_density_fraction(self) -> float:
+        """Доля событий в виде числа 0..1 — то, что реально нужно EventManager."""
+        return self.event_density_percent / 100.0

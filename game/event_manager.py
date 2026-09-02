@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from game.game_config import (
     EVENTS_DIR_NAME, EVENT_RESPAWN_CYCLES,
-    EVENT_BASE_DENSITY, EVENT_DENSITY_PER_PLAYER, MIN_EVENTS_ABSOLUTE,
+    EVENT_DENSITY_PER_PLAYER, MIN_EVENTS_ABSOLUTE,
 )
 
 # Корень проекта = на уровень выше папки game/
@@ -78,9 +78,10 @@ class EventRegistry:
 
 
 class EventManager:
-    def __init__(self, field, player_count, registry=None):
+    def __init__(self, field, player_count, event_density, registry=None):
         self.field = field
         self.player_count = player_count
+        self.event_density = event_density
         self.registry = registry or EventRegistry()
 
         self.active_events = {}  # {(x, y): EventDefinition}
@@ -122,7 +123,7 @@ class EventManager:
             self.active_events[pos] = random.choice(available)
 
     def _event_count(self, free_cells_count):
-        density = EVENT_BASE_DENSITY + EVENT_DENSITY_PER_PLAYER * (self.player_count - 1)
+        density = self.event_density + EVENT_DENSITY_PER_PLAYER * (self.player_count - 1)
         count = int(round(free_cells_count * density))
         count = max(MIN_EVENTS_ABSOLUTE, count)
         return min(count, free_cells_count)

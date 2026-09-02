@@ -60,7 +60,7 @@ class GameplayScene(Scene):
             self.players.append(player)
 
         # --- События ---
-        self.event_manager = EventManager(self.field, settings.player_count)
+        self.event_manager = EventManager(self.field, settings.player_count, settings.event_density_fraction)
         self.event_manager.bind_dynamic_providers(
             occupied_provider=self._occupied_cells,
             currency_provider=self._currency_cells,

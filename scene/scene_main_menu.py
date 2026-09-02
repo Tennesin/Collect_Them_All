@@ -4,20 +4,25 @@ from widgets import Button, get_font
 from scene.scenes import Scene
 
 class MainMenuScene(Scene):
-    """Главное меню: 'Играть' ведёт на экран настроек, 'Выйти' закрывает приложение."""
+    """Главное меню: 'Играть' ведёт на экран настроек, 'Инструкция' — на экран
+    с описанием механик, 'Выйти' закрывает приложение."""
 
     def __init__(self, manager):
         super().__init__(manager)
         cx = SCREEN_WIDTH // 2
         btn_w, btn_h = 220, 56
         self.play_button = Button((cx - btn_w // 2, 260, btn_w, btn_h), "Играть")
-        self.quit_button = Button((cx - btn_w // 2, 340, btn_w, btn_h), "Выйти")
+        self.instruction_button = Button((cx - btn_w // 2, 340, btn_w, btn_h), "Инструкция")
+        self.quit_button = Button((cx - btn_w // 2, 420, btn_w, btn_h), "Выйти")
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.play_button.collidepoint(event.pos):
                 from scene.scene_new_game import NewGameScene
                 self.manager.push(NewGameScene(self.manager))
+            elif self.instruction_button.collidepoint(event.pos):
+                from scene.scene_instruction import InstructionScene
+                self.manager.push(InstructionScene(self.manager))
             elif self.quit_button.collidepoint(event.pos):
                 self.manager.app.quit()
 
@@ -30,4 +35,5 @@ class MainMenuScene(Scene):
 
         mouse_pos = pygame.mouse.get_pos()
         self.play_button.draw(screen, mouse_pos)
+        self.instruction_button.draw(screen, mouse_pos)
         self.quit_button.draw(screen, mouse_pos)
