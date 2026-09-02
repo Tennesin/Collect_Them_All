@@ -98,6 +98,21 @@ ICON_SILVER_FIELD = "more_silvers.png"
 ICON_MOVE = "move.png"
 ICON_TIME = "time.png"
 ICON_SELECT = "select.png"
+
+PANEL_ICON_SIZE = 20
+FIELD_ICON_RATIO = 0.55  # доля клетки, которую занимает иконка ресурса на поле
+GOLD_ICON_DIM_ALPHA = 90  # прозрачность иконки золота, когда клетка сейчас пуста (0-255)
+
+# --- Попап события ---
+EVENT_POPUP_BG_COLOR = (10, 10, 15, 190)
+EVENT_ICON_SIZE = 96
+EVENT_TEXT_MAX_WIDTH = 460
+
+# --- Кубик ---
+DICE_ICON_SIZE = 110
+DICE_ROLL_INTERVAL = 0.1          # как часто меняется грань во время анимации броска
+DICE_ROLL_MAX_DURATION = 3.0      # максимум, сколько крутится кубик, если не нажали "Стоп"
+DICE_RESULT_FREEZE_DURATION = 1.0 # сколько секунд показывается итоговая грань перед результатами
 DICE_FACE_ICONS = {
     1: "dice-six-faces-one.png",
     2: "dice-six-faces-two.png",
@@ -106,10 +121,6 @@ DICE_FACE_ICONS = {
     5: "dice-six-faces-five.png",
     6: "dice-six-faces-six.png",
 }
-
-PANEL_ICON_SIZE = 20
-FIELD_ICON_RATIO = 0.55  # доля клетки, которую занимает иконка ресурса на поле
-GOLD_ICON_DIM_ALPHA = 90  # прозрачность иконки золота, когда клетка сейчас пуста (0-255)
 
 # --- Золотая клетка ---
 GOLD_CELL_COLOR = (196, 154, 42)

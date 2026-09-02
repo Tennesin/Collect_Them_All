@@ -15,6 +15,29 @@ def get_font(size, name=FONT_NAME):
     return font
 
 
+def draw_wrapped_text_centered(surface, cx, y, text, color, font_size, max_width, line_spacing=4):
+    """Перенос текста по словам с центровкой каждой строки вокруг cx."""
+    font = get_font(font_size)
+    words = text.split(" ")
+    lines = []
+    line = ""
+    for word in words:
+        candidate = f"{line} {word}".strip()
+        if font.size(candidate)[0] > max_width and line:
+            lines.append(line)
+            line = word
+        else:
+            line = candidate
+    if line:
+        lines.append(line)
+
+    line_y = y
+    for line_text in lines:
+        surf = font.render(line_text, True, color)
+        surface.blit(surf, surf.get_rect(center=(cx, line_y + surf.get_height() // 2)))
+        line_y += surf.get_height() + line_spacing
+    return line_y
+
 class Button:
     def __init__(self, rect, label, enabled=True):
         self.rect = pygame.Rect(rect)
