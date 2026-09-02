@@ -12,7 +12,6 @@ from game.game_config import (
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EVENTS_ROOT = os.path.join(_PROJECT_ROOT, EVENTS_DIR_NAME)
 
-
 @dataclass
 class EventOutcome:
     """Один из шести возможных исходов броска кубика."""
@@ -20,7 +19,6 @@ class EventOutcome:
     gold_delta: int = 0
     silver_delta: int = 0
     moves_delta: int = 0
-
 
 class EventDefinition:
     """Базовый класс события. Каждый events/<id>/<id>.py должен объявить

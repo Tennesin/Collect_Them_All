@@ -7,6 +7,7 @@ GAME_TITLE = "Collect Them All!"
 # --- Правая панель интерфейса ---
 PANEL_WIDTH = 250
 GAME_AREA_WIDTH = SCREEN_WIDTH - PANEL_WIDTH  # ширина, доступная под игровое поле и камеру
+DEFAULT_SCROLL_SPEED = 20
 
 # --- Игровое поле и камера ---
 INITIAL_SCALE = 30

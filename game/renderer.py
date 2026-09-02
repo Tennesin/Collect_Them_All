@@ -6,7 +6,8 @@ from game.image_manager import ImageManager
 class Renderer:
     """Только отрисовка игрового поля и фигур на нём."""
 
-    def __init__(self, screen, camera, field, players, turn_manager, input_handler, resource_manager):
+    def __init__(self, screen, camera, field, players, turn_manager, input_handler,
+                 resource_manager, event_manager):
         self.screen = screen
         self.camera = camera
         self.field = field
@@ -14,12 +15,14 @@ class Renderer:
         self.turn_manager = turn_manager
         self.input_handler = input_handler
         self.resource_manager = resource_manager
+        self.event_manager = event_manager
         self._fog_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         self._preview_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 
     def draw(self):
         self.draw_field()
         self.draw_resources()
+        self.draw_events()
         self.draw_path()
         self.draw_preview()
         self.draw_players()
@@ -148,6 +151,21 @@ class Renderer:
         rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
         self.screen.blit(icon, rect)
 
+    def draw_events(self):
+        """Иконки активных событий — только те, что сейчас в зоне видимости игрока."""
+        icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))
+        visible = self.turn_manager.current_player.visible_cells
+
+        for pos, definition in self.event_manager.active_events.items():
+            if pos not in visible:
+                continue
+            icon = ImageManager.get_scaled(
+                definition.icon_file, (icon_size, icon_size), base_dir=definition.icon_dir
+            )
+            screen_pos = self.camera.project(pos[0] + 0.5, pos[1] + 0.5)
+            rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
+            self.screen.blit(icon, rect)
+
     def draw_path(self):
         """Линия и точка цели текущего маршрута — цветом того игрока, который сейчас идёт."""
         player = self.turn_manager.current_player
@@ -191,6 +209,18 @@ class Renderer:
                 dash_length, gap_length, line_width
             )
         self.screen.blit(overlay, (0, 0))
+
+        preview_goal = self.input_handler.preview_goal
+        if preview_goal is not None and self.event_manager.get_event_at(preview_goal) is not None:
+            self._draw_select_marker(preview_goal)
+
+    def _draw_select_marker(self, cell):
+        """Значок select.png вокруг клетки-цели, если на ней спрятано событие."""
+        size = max(6, int(FIELD_ICON_RATIO * self.camera.scale * 1.3))
+        icon = ImageManager.get_scaled(ICON_SELECT, (size, size))
+        screen_pos = self.camera.project(cell[0] + 0.5, cell[1] + 0.5)
+        rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
+        self.screen.blit(icon, rect)
 
     def _draw_dashed_line(self, surface, color, start, end, dash_length, gap_length, width):
         x1, y1 = start

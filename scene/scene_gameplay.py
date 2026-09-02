@@ -7,6 +7,7 @@ from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
 from game.gold_cell_generator import GoldCellGenerator
 from game.resource_manager import ResourceManager
+from game.event_manager import EventManager
 from game.fog_of_war import FogOfWar
 from game.player import Player
 from game.turn_manager import TurnManager
@@ -59,21 +60,44 @@ class GameplayScene(Scene):
             self.fog_of_war.update_player(player)  # видимость на старте, до первого хода
             self.players.append(player)
 
+        # --- События ---
+        self.event_manager = EventManager(self.field, settings.player_count)
+        self.event_manager.bind_dynamic_providers(
+            occupied_provider=self._occupied_cells,
+            currency_provider=self._currency_cells,
+        )
+        self.event_manager.respawn()  # первичная раскладка при старте партии
+
         # --- Очередь ходов ---
         self.turn_manager = TurnManager(
             self.players, max_moves=settings.moves_per_turn, turn_time=settings.turn_time_seconds
         )
         self.turn_manager.on_turn_change = self._on_turn_change
-        self.turn_manager.on_cycle_complete = self.resource_manager.on_cycle_complete
+        self.turn_manager.on_cycle_complete = self._on_cycle_complete
 
         self.input_handler = InputHandler(self.camera, self.field, self.turn_manager)
         self.renderer = Renderer(
             screen, self.camera, self.field, self.players,
             self.turn_manager, self.input_handler, self.resource_manager,
+            self.event_manager,
         )
         self.player_panel = PlayerPanel(self.turn_manager, self.resource_manager)
 
         self.camera.center_on(self.players[0].pos_x, self.players[0].pos_y)
+
+    def _occupied_cells(self):
+        """Клетки, которые сейчас заняты хотя бы одним игроком — событие на них не спавнится."""
+        return {(p.grid_x, p.grid_y) for p in self.players}
+
+    def _currency_cells(self):
+        """Клетки с золотом или серебром — на них тоже не может появиться событие."""
+        gold_cells = {pos for pos, amount in self.resource_manager.gold_deposits.items() if amount > 0}
+        silver_cells = set(self.resource_manager.silver_cells)
+        return gold_cells | silver_cells
+
+    def _on_cycle_complete(self):
+        self.resource_manager.on_cycle_complete()
+        self.event_manager.on_cycle_complete()
 
     def _make_cell_reached_handler(self, player):
         def handler():
@@ -87,7 +111,20 @@ class GameplayScene(Scene):
             self.turn_manager.consume_move()
             player.warning_message = self.resource_manager.missing_requirements_message(player)
 
+            event = self.event_manager.consume_at(player.grid_x, player.grid_y)
+            if event is not None:
+                self._trigger_event(player, event)
+
         return handler
+
+    def _trigger_event(self, player, event):
+        """Мгновенно обрывает оставшийся путь игрока."""
+        player.path = []
+        player.moving = False
+        self.input_handler.clear_preview()
+
+        from scene.scene_event import EventScene
+        self.manager.push(EventScene(self.manager, self, player, event))
 
     def _handle_player_finish(self, player):
         """Игрок только что выполнил условие победы на финишной клетке."""
@@ -114,6 +151,15 @@ class GameplayScene(Scene):
     def _on_turn_change(self, new_player):
         self.input_handler.clear_preview()
         self.camera.center_on(new_player.pos_x, new_player.pos_y)
+        self._cancel_active_event_if_any()
+
+    def _cancel_active_event_if_any(self):
+        """Если время хода истекло, пока был открыт попап события, закрываем его
+        принудительно — без применения исхода, то есть эквивалентно нажатию "Нет"."""
+        from scene.scene_event import EventScene
+        current = self.manager.current
+        if isinstance(current, EventScene) and current.gameplay_scene is self:
+            self.manager.pop()
 
     def on_pause(self):
         self.paused = True

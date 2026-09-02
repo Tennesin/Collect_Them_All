@@ -27,6 +27,11 @@ class TurnManager:
         self.moves_left = max(0, self.moves_left - 1)
         self._maybe_advance()
 
+    def adjust_moves(self, delta):
+        """Разовое изменение оставшихся ходов от внешнего источника (событие)."""
+        self.moves_left = max(0, self.moves_left + delta)
+        self._maybe_advance()
+
     def eliminate(self, player):
         """Исключает игрока из дальнейшей очереди ходов (он уже финишировал)."""
         self.eliminated.add(player)
