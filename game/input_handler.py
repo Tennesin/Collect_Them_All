@@ -26,6 +26,8 @@ class InputHandler:
             self._on_mouse_motion(event)
         elif event.type == pygame.MOUSEWHEEL:
             self._on_mouse_wheel(event)
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            self._on_space_pressed()
 
     def process_held_keys(self):
         keys = pygame.key.get_pressed()
@@ -73,6 +75,10 @@ class InputHandler:
             self.camera.zoom(1.1)
         elif event.y < 0:
             self.camera.zoom(0.9)
+
+    def _on_space_pressed(self):
+        if self.player.stop_movement():
+            self.clear_preview()
 
     def _handle_left_click(self):
         player = self.player

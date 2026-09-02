@@ -41,6 +41,17 @@ class Player:
         self._notify_move()
         return True
 
+    def stop_movement(self):
+        """Немедленно прерывает движение по нажатию SPACE."""
+        if not self.moving:
+            return False
+        self.path = []
+        self.moving = False
+        self.pos_x = self.grid_x + 0.5
+        self.pos_y = self.grid_y + 0.5
+        self._notify_move()
+        return True
+
     def update(self, dt):
         if not self.moving or not self.path:
             self.moving = False

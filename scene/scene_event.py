@@ -38,6 +38,12 @@ class EventScene(Scene):
         self.stop_button = Button((cx - btn_w // 2, 480, btn_w, btn_h), "Стоп")
         self.continue_button = Button((cx - 120, 500, 240, btn_h), "Продолжить")
 
+    def on_enter(self):
+        self.gameplay_scene.turn_manager.moves_trigger_suppressed = True
+
+    def on_exit(self):
+        self.gameplay_scene.turn_manager.moves_trigger_suppressed = False
+
     # --- события ввода ---
 
     def handle_event(self, event):

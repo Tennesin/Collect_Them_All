@@ -211,7 +211,11 @@ class Renderer:
         self.screen.blit(overlay, (0, 0))
 
         preview_goal = self.input_handler.preview_goal
-        if preview_goal is not None and self.event_manager.get_event_at(preview_goal) is not None:
+        if (
+                preview_goal is not None
+                and preview_goal in player.visible_cells
+                and self.event_manager.get_event_at(preview_goal) is not None
+        ):
             self._draw_select_marker(preview_goal)
 
     def _draw_select_marker(self, cell):

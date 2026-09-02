@@ -78,24 +78,21 @@ class EventRegistry:
 
 
 class EventManager:
-    """Рантайм-состояние: какие события сейчас лежат на карте и когда их обновлять.
-    По устройству — аналог ResourceManager, только для событий вместо ресурсов."""
-
     def __init__(self, field, player_count, registry=None):
         self.field = field
         self.player_count = player_count
         self.registry = registry or EventRegistry()
 
-        self.active_events = {}          # {(x, y): EventDefinition}
-        self._occupied_provider = None   # callable() -> set[(x, y)] клетки, занятые игроками
-        self._currency_provider = None   # callable() -> set[(x, y)] клетки с золотом/серебром
+        self.active_events = {}  # {(x, y): EventDefinition}
+        self._occupied_provider = None  # callable() -> set[(x, y)] клетки, занятые игроками
+        self._currency_provider = None  # callable() -> set[(x, y)] клетки с золотом/серебром
+        self._visible_provider = None  # callable() -> set[(x, y)] клетки, видимые игрокам прямо сейчас
         self._cycles_since_respawn = 0
 
-    def bind_dynamic_providers(self, occupied_provider, currency_provider):
-        """GameplayScene вызывает это один раз после создания players и resource_manager,
-        чтобы EventManager знал, какие клетки сейчас нельзя занимать под событие."""
+    def bind_dynamic_providers(self, occupied_provider, currency_provider, visible_provider=None):
         self._occupied_provider = occupied_provider
         self._currency_provider = currency_provider
+        self._visible_provider = visible_provider
 
     # --- Цикл ходов ---
 
@@ -106,16 +103,22 @@ class EventManager:
             self.respawn()
 
     def respawn(self):
-        """Полностью очищает карту от текущих (не сработавших) событий и раскладывает новые."""
-        self.active_events.clear()
         available = self.registry.all()
         if not available:
+            self.active_events.clear()
             return
 
-        free_cells = self._collectible_free_cells()
-        count = self._event_count(len(free_cells))
+        visible = self._visible_provider() if self._visible_provider else set()
+        kept = {pos: definition for pos, definition in self.active_events.items() if pos in visible}
+
+        free_cells = [pos for pos in self._collectible_free_cells() if pos not in kept]
+        total_pool = len(free_cells) + len(kept)
+        target_count = self._event_count(total_pool)
+        to_place = max(0, min(target_count - len(kept), len(free_cells)))
+
         random.shuffle(free_cells)
-        for pos in free_cells[:count]:
+        self.active_events = kept
+        for pos in free_cells[:to_place]:
             self.active_events[pos] = random.choice(available)
 
     def _event_count(self, free_cells_count):

@@ -15,7 +15,14 @@ class ResourceManager:
         self.gold_deposits = {pos: 0 for pos in field.gold_cell_positions}
         self.silver_cells = {}
         self._cycles_since_silver_respawn = 0
+        self._visible_provider = None  # клетки, видимые хотя бы одному игроку прямо сейчас
+        self._event_provider = None  # клетки, занятые активным событием
         self._respawn_silver()
+
+    def bind_dynamic_providers(self, visible_provider=None, event_provider=None):
+        """GameplayScene вызывает это один раз после создания players и event_manager."""
+        self._visible_provider = visible_provider
+        self._event_provider = event_provider
 
     # --- Цикл ходов ---
 
@@ -29,11 +36,17 @@ class ResourceManager:
             self._respawn_silver()
 
     def _respawn_silver(self):
-        self.silver_cells.clear()
-        free_cells = self._collectible_free_cells()
-        count = self._silver_cell_count(len(free_cells))
+        visible = self._visible_provider() if self._visible_provider else set()
+        kept = {pos: amount for pos, amount in self.silver_cells.items() if pos in visible}
+
+        free_cells = [pos for pos in self._collectible_free_cells() if pos not in kept]
+        total_pool = len(free_cells) + len(kept)
+        target_count = self._silver_cell_count(total_pool)
+        to_place = max(0, min(target_count - len(kept), len(free_cells)))
+
         random.shuffle(free_cells)
-        for pos in free_cells[:count]:
+        self.silver_cells = kept
+        for pos in free_cells[:to_place]:
             self.silver_cells[pos] = random.randint(SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE)
 
     def _silver_cell_count(self, free_cells_count):
@@ -44,11 +57,14 @@ class ResourceManager:
 
     def _collectible_free_cells(self):
         field = self.field
+        event_cells = self._event_provider() if self._event_provider else set()
         return [
             (x, y)
             for x in range(field.width)
             for y in range(field.height)
-            if field.is_free(x, y) and (x, y) not in field.reserved_cells
+            if field.is_free(x, y)
+            and (x, y) not in field.reserved_cells
+            and (x, y) not in event_cells
         ]
 
     # --- Сбор ресурсов ---

@@ -9,7 +9,7 @@ class Camera:
         self.field_height = field_height
 
         self.min_scale = max(screen_width / field_width, screen_height / field_height)
-        self.max_scale = max_scale
+        self.max_scale = max(max_scale, self.min_scale)
         self.scale = max(self.min_scale, min(self.max_scale, initial_scale))
 
         self.center_x = screen_width // 2

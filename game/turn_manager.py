@@ -10,6 +10,7 @@ class TurnManager:
         self.time_left = turn_time
 
         self.eliminated = set()
+        self.moves_trigger_suppressed = False  # пока открыт попап события, нехватка ходов сама по себе не завершает черёд
 
         self.on_turn_change = None
         self.on_cycle_complete = None
@@ -44,7 +45,8 @@ class TurnManager:
         player = self.current_player
         if player.moving:
             return
-        if self.moves_left <= 0 or self.time_left <= 0:
+        moves_exhausted = self.moves_left <= 0 and not self.moves_trigger_suppressed
+        if moves_exhausted or self.time_left <= 0:
             self._advance_turn()
 
     def _advance_turn(self):

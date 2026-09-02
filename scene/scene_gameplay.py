@@ -34,7 +34,6 @@ class GameplayScene(Scene):
                 f"[GameplayScene] Не удалось разместить все золотые клетки: "
                 f"запрошено {settings.gold_cell_count}, размещено {placed_gold_cells}."
             )
-        GoldCellGenerator(self.field, settings.gold_cell_count).generate()
 
         total_cells = settings.map_width * settings.map_height
         max_obstacle_cells = int(total_cells * settings.obstacle_fraction)
@@ -65,8 +64,14 @@ class GameplayScene(Scene):
         self.event_manager.bind_dynamic_providers(
             occupied_provider=self._occupied_cells,
             currency_provider=self._currency_cells,
+            visible_provider=self._visible_cells_union,
         )
         self.event_manager.respawn()  # первичная раскладка при старте партии
+
+        self.resource_manager.bind_dynamic_providers(
+            visible_provider=self._visible_cells_union,
+            event_provider=self._active_event_cells,
+        )
 
         # --- Очередь ходов ---
         self.turn_manager = TurnManager(
@@ -95,6 +100,17 @@ class GameplayScene(Scene):
         silver_cells = set(self.resource_manager.silver_cells)
         return gold_cells | silver_cells
 
+    def _active_event_cells(self):
+        """Клетки, где сейчас лежит активное событие — серебро не должно спавниться поверх."""
+        return set(self.event_manager.active_events)
+
+    def _visible_cells_union(self):
+        """Клетки, находящиеся в прямой видимости хотя бы одного игрока прямо сейчас."""
+        visible = set()
+        for p in self.players:
+            visible |= p.visible_cells
+        return visible
+
     def _on_cycle_complete(self):
         self.resource_manager.on_cycle_complete()
         self.event_manager.on_cycle_complete()
@@ -108,12 +124,12 @@ class GameplayScene(Scene):
                 self._handle_player_finish(player)
                 return
 
-            self.turn_manager.consume_move()
-            player.warning_message = self.resource_manager.missing_requirements_message(player)
-
             event = self.event_manager.consume_at(player.grid_x, player.grid_y)
             if event is not None:
                 self._trigger_event(player, event)
+
+            self.turn_manager.consume_move()
+            player.warning_message = self.resource_manager.missing_requirements_message(player)
 
         return handler
 
