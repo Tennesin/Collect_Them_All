@@ -9,7 +9,7 @@ class SilverMagnetEffect(Effect):
     DURATION_TURNS = 4
 
     def on_cell_reached(self, player, context):
-        context.resource_manager.collect_nearby_silver(player, self.RADIUS)
+        context.collect_nearby_silver(player, self.RADIUS)
 
 class BoxEvent(EventDefinition):
     id = "box"

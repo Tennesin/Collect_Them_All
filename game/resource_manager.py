@@ -95,6 +95,12 @@ class ResourceManager:
         for pos in nearby:
             player.silver += self.silver_cells.pop(pos)
 
+    def check_win(self, player):
+        """True, если игрок стоит на финишной клетке и набрал достаточно золота и серебра."""
+        if (player.grid_x, player.grid_y) != self.field.win_cell:
+            return False
+        return player.gold >= self.win_gold_required and player.silver >= self.win_silver_required
+
     def missing_requirements_message(self, player):
         if (player.grid_x, player.grid_y) != self.field.win_cell:
             return None

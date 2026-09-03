@@ -16,6 +16,7 @@ from game.turn_manager import TurnManager
 from game.input_handler import InputHandler
 from game.renderer import Renderer
 from game.ui import PlayerPanel
+from game.effect_context import EffectContext
 from scene.scenes import Scene
 
 class GameplayScene(Scene):
