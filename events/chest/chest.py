@@ -1,6 +1,18 @@
 from game.event_manager import EventDefinition, EventOutcome
-from game.image_manager import IMAGES_DIR
-from game.game_config import EFFECT_HALF_INCOME, CHEST_CURSE_DURATION_TURNS
+from game.effects import Effect
+
+
+class HalfIncomeCurseEffect(Effect):
+    """Собственная механика события 'Сундук': пока эффект активен, весь
+    собираемый игроком доход (золото и серебро) урезается вдвое."""
+
+    label = "Проклятие (половина дохода)"
+    warning = True
+    DURATION_TURNS = 3
+
+    def modify_income(self, player, resource_type, amount):
+        return amount // 2
+
 
 class ChestEvent(EventDefinition):
     id = "chest"
@@ -14,8 +26,7 @@ class ChestEvent(EventDefinition):
             "Сундук оскалился деревянной пастью — внутри прятался настоящий "
             "демон! Он проклял вашу удачу.",
             gold_delta=-15,
-            effect_type=EFFECT_HALF_INCOME,
-            effect_duration=CHEST_CURSE_DURATION_TURNS,
+            effect_factory=lambda: HalfIncomeCurseEffect(HalfIncomeCurseEffect.DURATION_TURNS),
         ),
         2: EventOutcome(
             "Сундук недовольно заскрипел и вытряс на вас пыль вместо сокровищ.",
@@ -38,9 +49,5 @@ class ChestEvent(EventDefinition):
             gold_delta=20, moves_delta=7,
         ),
     }
-
-    @property
-    def icon_dir(self):
-        return IMAGES_DIR
 
 EVENT = ChestEvent

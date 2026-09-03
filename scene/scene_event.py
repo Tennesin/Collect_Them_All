@@ -3,7 +3,6 @@ import pygame
 from settings import *
 from widgets import Button, get_font, draw_wrapped_text_centered
 from game.image_manager import ImageManager
-from game.game_config import EFFECT_HALF_INCOME, EFFECT_LABELS_RU
 from scene.scenes import Scene
 
 STAGE_PROMPT = "prompt"    # текст события + кнопки "Да"/"Нет"
@@ -110,8 +109,8 @@ class EventScene(Scene):
             self.gameplay_scene.turn_manager.adjust_moves(outcome.moves_delta)
         if outcome.displacement_cells:
             self.gameplay_scene.displace_player_randomly(self.player, outcome.displacement_cells)
-        if outcome.effect_type:
-            self.player.add_effect(outcome.effect_type, outcome.effect_duration)
+        if outcome.effect_factory:
+            self.player.add_effect(outcome.effect_factory())
 
     # --- отрисовка ---
 
@@ -184,13 +183,13 @@ class EventScene(Scene):
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34
 
-        if outcome.effect_type:
-            label = EFFECT_LABELS_RU.get(outcome.effect_type, outcome.effect_type)
-            color = WARNING_TEXT_COLOR if outcome.effect_type == EFFECT_HALF_INCOME else TEXT_COLOR
-            turns = outcome.effect_duration
+        if outcome.effect_factory:
+            preview_effect = outcome.effect_factory()
+            color = WARNING_TEXT_COLOR if preview_effect.warning else TEXT_COLOR
+            turns = preview_effect.duration_turns
             turns_word = "черёд" if turns == 1 else "черёда" if turns < 5 else "черёдов"
             surf = get_font(FONT_SIZE_LABEL + 4).render(
-                f"{label}: {turns} {turns_word}", True, color,
+                f"{preview_effect.label}: {turns} {turns_word}", True, color,
             )
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34

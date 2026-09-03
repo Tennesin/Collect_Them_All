@@ -2,10 +2,8 @@ import random
 import pygame
 from settings import *
 from widgets import get_font
-from game.game_config import (
-    FINISH_MODE_INSTANT, FINISH_MODE_RANKED,
-    EFFECT_MAGNET_SILVER, MAGNET_SILVER_RADIUS,
-)
+from game.game_config import FINISH_MODE_INSTANT, FINISH_MODE_RANKED
+from game.effect_reader import EffectReader
 from game.camera import Camera
 from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
@@ -125,8 +123,7 @@ class GameplayScene(Scene):
             self.fog_of_war.update_player(player)
             self.resource_manager.collect_at(player)
 
-            if player.has_effect(EFFECT_MAGNET_SILVER):
-                self.resource_manager.collect_nearby_silver(player, MAGNET_SILVER_RADIUS)
+            EffectReader.notify_cell_reached(player, EffectContext(self))
 
             if self.winner is None and player not in self.placements and self.resource_manager.check_win(player):
                 self._handle_player_finish(player)

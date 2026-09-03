@@ -1,6 +1,15 @@
 from game.event_manager import EventDefinition, EventOutcome
-from game.image_manager import IMAGES_DIR
-from game.game_config import EFFECT_MAGNET_SILVER, BOX_MAGNET_DURATION_TURNS
+from game.effects import Effect
+
+class SilverMagnetEffect(Effect):
+    """Собственная механика события 'Коробка'."""
+
+    label = "Магнит серебра"
+    RADIUS = 3
+    DURATION_TURNS = 4
+
+    def on_cell_reached(self, player, context):
+        context.resource_manager.collect_nearby_silver(player, self.RADIUS)
 
 class BoxEvent(EventDefinition):
     id = "box"
@@ -34,13 +43,8 @@ class BoxEvent(EventDefinition):
             "Внутри оказался странный гудящий артефакт — он словно сам "
             "притягивает к вам разбросанное вокруг серебро!",
             gold_delta=5,
-            effect_type=EFFECT_MAGNET_SILVER,
-            effect_duration=BOX_MAGNET_DURATION_TURNS,
+            effect_factory=lambda: SilverMagnetEffect(SilverMagnetEffect.DURATION_TURNS),
         ),
     }
-
-    @property
-    def icon_dir(self):
-        return IMAGES_DIR
 
 EVENT = BoxEvent

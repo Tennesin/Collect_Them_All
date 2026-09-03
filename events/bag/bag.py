@@ -1,5 +1,4 @@
 from game.event_manager import EventDefinition, EventOutcome
-from game.image_manager import IMAGES_DIR
 
 class BagEvent(EventDefinition):
     id = "bag"
@@ -35,9 +34,5 @@ class BagEvent(EventDefinition):
             gold_delta=20, silver_delta=50, moves_delta=4,
         ),
     }
-
-    @property
-    def icon_dir(self):
-        return IMAGES_DIR
 
 EVENT = BagEvent

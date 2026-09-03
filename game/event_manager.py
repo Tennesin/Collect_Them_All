@@ -2,7 +2,9 @@ import os
 import random
 import importlib.util
 from dataclasses import dataclass
+from typing import Callable, Optional
 
+from game.effects import Effect
 from game.game_config import (
     EVENTS_DIR_NAME, EVENT_RESPAWN_CYCLES,
     EVENT_DENSITY_PER_PLAYER, MIN_EVENTS_ABSOLUTE,
@@ -20,8 +22,7 @@ class EventOutcome:
     silver_delta: int = 0
     moves_delta: int = 0
     displacement_cells: int = 0   # мгновенное смещение игрока на N клеток в случайном направлении
-    effect_type: str = None       # None либо одна из констант EFFECT_* — временный статус-эффект
-    effect_duration: int = 0      # на сколько ближайших ходов (перемещений) активен эффект
+    effect_factory: Optional[Callable[[], Effect]] = None
 
 class EventDefinition:
     """Базовый класс события. Каждый events/<id>/<id>.py должен объявить

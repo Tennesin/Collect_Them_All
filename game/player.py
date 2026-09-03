@@ -25,7 +25,7 @@ class Player:
         self.warning_message = None
 
         # Активные временные эффекты от событий: {effect_type: осталось_ходов}.
-        self.active_effects = {}
+        self.active_effects = []
 
         # Туман войны.
         self.visible_cells = set()
@@ -89,21 +89,13 @@ class Player:
 
     # --- Временные эффекты от событий ---
 
-    def add_effect(self, effect_type, duration):
-        """Активирует эффект на заданное количество ближайших ходов игрока."""
-        if duration <= 0:
+    def add_effect(self, effect):
+        """Добавляет уже готовый экземпляр эффекта."""
+        if effect is None or effect.duration_turns <= 0:
             return
-        self.active_effects[effect_type] = duration
-
-    def has_effect(self, effect_type):
-        return effect_type in self.active_effects
+        self.active_effects.append(effect)
 
     def tick_effects(self):
-        """Уменьшает длительность всех активных эффектов на один черёд."""
-        expired = []
-        for effect_type, remaining in self.active_effects.items():
-            self.active_effects[effect_type] = remaining - 1
-            if self.active_effects[effect_type] <= 0:
-                expired.append(effect_type)
-        for effect_type in expired:
-            del self.active_effects[effect_type]
+        """Тикает длительность всех активных эффектов на один черёд."""
+        from game.effect_reader import EffectReader
+        EffectReader.tick(self)

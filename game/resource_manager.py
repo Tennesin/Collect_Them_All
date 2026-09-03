@@ -3,8 +3,8 @@ from game.game_config import (
     GOLD_CELL_YIELD,
     SILVER_CELL_BASE_DENSITY, SILVER_CELL_DENSITY_PER_PLAYER, MIN_SILVER_CELLS_ABSOLUTE,
     SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE, SILVER_RESPAWN_CYCLES,
-    EFFECT_HALF_INCOME,
 )
+from game.effect_reader import EffectReader
 
 class ResourceManager:
 
@@ -72,19 +72,16 @@ class ResourceManager:
 
     def collect_at(self, player):
         pos = (player.grid_x, player.grid_y)
-        half_income = player.has_effect(EFFECT_HALF_INCOME)
 
         if pos in self.gold_deposits and self.gold_deposits[pos] > 0:
             amount = self.gold_deposits[pos]
-            if half_income:
-                amount //= 2
+            amount = EffectReader.modify_income(player, "gold", amount)
             player.gold += amount
             self.gold_deposits[pos] = 0
 
         if pos in self.silver_cells:
             amount = self.silver_cells.pop(pos)
-            if half_income:
-                amount //= 2
+            amount = EffectReader.modify_income(player, "silver", amount)
             player.silver += amount
 
     def collect_nearby_silver(self, player, radius):
