@@ -14,6 +14,7 @@ class TurnManager:
 
         self.on_turn_change = None
         self.on_cycle_complete = None
+        self.on_player_turn_end = None  # вызывается с игроком, чей черёд только что завершился
 
     @property
     def current_player(self):
@@ -50,9 +51,12 @@ class TurnManager:
             self._advance_turn()
 
     def _advance_turn(self):
+        ending_player = self.current_player
         self._move_to_next_active_index()
         self.moves_left = self.max_moves
         self.time_left = self.turn_time
+        if self.on_player_turn_end:
+            self.on_player_turn_end(ending_player)
         if self.on_turn_change:
             self.on_turn_change(self.current_player)
 

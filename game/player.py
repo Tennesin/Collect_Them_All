@@ -24,6 +24,9 @@ class Player:
         # Текст предупреждения ("Недостаточно N золота...").
         self.warning_message = None
 
+        # Активные временные эффекты от событий: {effect_type: осталось_ходов}.
+        self.active_effects = {}
+
         # Туман войны.
         self.visible_cells = set()
         self.explored_cells = set()
@@ -83,3 +86,24 @@ class Player:
     def _notify_cell_reached(self):
         if self.on_cell_reached:
             self.on_cell_reached()
+
+    # --- Временные эффекты от событий ---
+
+    def add_effect(self, effect_type, duration):
+        """Активирует эффект на заданное количество ближайших ходов игрока."""
+        if duration <= 0:
+            return
+        self.active_effects[effect_type] = duration
+
+    def has_effect(self, effect_type):
+        return effect_type in self.active_effects
+
+    def tick_effects(self):
+        """Уменьшает длительность всех активных эффектов на один черёд."""
+        expired = []
+        for effect_type, remaining in self.active_effects.items():
+            self.active_effects[effect_type] = remaining - 1
+            if self.active_effects[effect_type] <= 0:
+                expired.append(effect_type)
+        for effect_type in expired:
+            del self.active_effects[effect_type]

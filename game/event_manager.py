@@ -19,6 +19,9 @@ class EventOutcome:
     gold_delta: int = 0
     silver_delta: int = 0
     moves_delta: int = 0
+    displacement_cells: int = 0   # мгновенное смещение игрока на N клеток в случайном направлении
+    effect_type: str = None       # None либо одна из констант EFFECT_* — временный статус-эффект
+    effect_duration: int = 0      # на сколько ближайших ходов (перемещений) активен эффект
 
 class EventDefinition:
     """Базовый класс события. Каждый events/<id>/<id>.py должен объявить

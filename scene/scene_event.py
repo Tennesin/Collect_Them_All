@@ -3,6 +3,7 @@ import pygame
 from settings import *
 from widgets import Button, get_font, draw_wrapped_text_centered
 from game.image_manager import ImageManager
+from game.game_config import EFFECT_HALF_INCOME, EFFECT_LABELS_RU
 from scene.scenes import Scene
 
 STAGE_PROMPT = "prompt"    # текст события + кнопки "Да"/"Нет"
@@ -107,6 +108,10 @@ class EventScene(Scene):
         self.player.silver = max(0, self.player.silver + outcome.silver_delta)
         if outcome.moves_delta:
             self.gameplay_scene.turn_manager.adjust_moves(outcome.moves_delta)
+        if outcome.displacement_cells:
+            self.gameplay_scene.displace_player_randomly(self.player, outcome.displacement_cells)
+        if outcome.effect_type:
+            self.player.add_effect(outcome.effect_type, outcome.effect_duration)
 
     # --- отрисовка ---
 
@@ -160,15 +165,33 @@ class EventScene(Scene):
 
         y += 30
         for label, value in (
-            ("Золото", outcome.gold_delta),
-            ("Серебро", outcome.silver_delta),
-            ("Ходы", outcome.moves_delta),
+                ("Золото", outcome.gold_delta),
+                ("Серебро", outcome.silver_delta),
+                ("Ходы", outcome.moves_delta),
         ):
             if value == 0:
                 continue
             sign = "+" if value > 0 else ""
             color = WARNING_TEXT_COLOR if value < 0 else TEXT_COLOR
             surf = get_font(FONT_SIZE_LABEL + 4).render(f"{label}: {sign}{value}", True, color)
+            screen.blit(surf, surf.get_rect(center=(cx, y)))
+            y += 34
+
+        if outcome.displacement_cells:
+            surf = get_font(FONT_SIZE_LABEL + 4).render(
+                f"Смещение: {outcome.displacement_cells} кл.", True, WARNING_TEXT_COLOR,
+            )
+            screen.blit(surf, surf.get_rect(center=(cx, y)))
+            y += 34
+
+        if outcome.effect_type:
+            label = EFFECT_LABELS_RU.get(outcome.effect_type, outcome.effect_type)
+            color = WARNING_TEXT_COLOR if outcome.effect_type == EFFECT_HALF_INCOME else TEXT_COLOR
+            turns = outcome.effect_duration
+            turns_word = "черёд" if turns == 1 else "черёда" if turns < 5 else "черёдов"
+            surf = get_font(FONT_SIZE_LABEL + 4).render(
+                f"{label}: {turns} {turns_word}", True, color,
+            )
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34
 

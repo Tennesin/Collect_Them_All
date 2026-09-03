@@ -2,7 +2,7 @@ import pygame
 from settings import *
 from widgets import get_font
 from game.image_manager import ImageManager
-
+from game.game_config import EFFECT_LABELS_RU, EFFECT_HALF_INCOME
 
 class PlayerPanel:
 
@@ -74,6 +74,10 @@ class PlayerPanel:
                 WARNING_TEXT_COLOR, FONT_SIZE_HINT, max_text_width,
             )
 
+        if player.active_effects:
+            y += 22
+            self._draw_active_effects(screen, x, y, player)
+
     @staticmethod
     def _draw_line(screen, x, y, text, color, font_size):
         surf = get_font(font_size).render(text, True, color)
@@ -114,3 +118,13 @@ class PlayerPanel:
             screen.blit(surf, (x, line_y))
             line_y += surf.get_height()
         return line_y
+
+    @staticmethod
+    def _draw_active_effects(screen, x, y, player):
+        for effect_type, remaining in player.active_effects.items():
+            label = EFFECT_LABELS_RU.get(effect_type, effect_type)
+            color = WARNING_TEXT_COLOR if effect_type == EFFECT_HALF_INCOME else TEXT_COLOR
+            turns_word = "черёд" if remaining == 1 else "черёда" if remaining < 5 else "черёдов"
+            surf = get_font(FONT_SIZE_HINT).render(f"{label}: {remaining} {turns_word}", True, color)
+            screen.blit(surf, (x, y))
+            y += surf.get_height() + 2

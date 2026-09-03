@@ -1,7 +1,11 @@
+import random
 import pygame
 from settings import *
 from widgets import get_font
-from game.game_config import FINISH_MODE_INSTANT, FINISH_MODE_RANKED
+from game.game_config import (
+    FINISH_MODE_INSTANT, FINISH_MODE_RANKED,
+    EFFECT_MAGNET_SILVER, MAGNET_SILVER_RADIUS,
+)
 from game.camera import Camera
 from game.field import Field
 from game.obstacle_generator import ObstacleGenerator
@@ -79,6 +83,7 @@ class GameplayScene(Scene):
         )
         self.turn_manager.on_turn_change = self._on_turn_change
         self.turn_manager.on_cycle_complete = self._on_cycle_complete
+        self.turn_manager.on_player_turn_end = self._on_player_turn_end
 
         self.input_handler = InputHandler(self.camera, self.field, self.turn_manager)
         self.renderer = Renderer(
@@ -120,6 +125,9 @@ class GameplayScene(Scene):
             self.fog_of_war.update_player(player)
             self.resource_manager.collect_at(player)
 
+            if player.has_effect(EFFECT_MAGNET_SILVER):
+                self.resource_manager.collect_nearby_silver(player, MAGNET_SILVER_RADIUS)
+
             if self.winner is None and player not in self.placements and self.resource_manager.check_win(player):
                 self._handle_player_finish(player)
                 return
@@ -141,6 +149,36 @@ class GameplayScene(Scene):
 
         from scene.scene_event import EventScene
         self.manager.push(EventScene(self.manager, self, player, event))
+
+    def displace_player_randomly(self, player, distance):
+        """Мгновенно смещает игрока на distance клеток в случайном направлении."""
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        random.shuffle(directions)
+        for dx, dy in directions:
+            landing = self._farthest_free_cell(player.grid_x, player.grid_y, dx, dy, distance)
+            if landing != (player.grid_x, player.grid_y):
+                self._teleport_player_to(player, landing)
+                return landing
+        return (player.grid_x, player.grid_y)  # со всех сторон блок — сместить некуда
+
+    def _farthest_free_cell(self, x, y, dx, dy, distance):
+        cx, cy = x, y
+        for _ in range(distance):
+            nx, ny = cx + dx, cy + dy
+            if not self.field.in_bounds(nx, ny) or not self.field.is_free(nx, ny):
+                break
+            cx, cy = nx, ny
+        return (cx, cy)
+
+    def _teleport_player_to(self, player, cell):
+        player.grid_x, player.grid_y = cell
+        player.pos_x = cell[0] + 0.5
+        player.pos_y = cell[1] + 0.5
+        player.path = []
+        player.moving = False
+        self.fog_of_war.update_player(player)
+        if player is self.turn_manager.current_player:
+            self.camera.center_on(player.pos_x, player.pos_y)
 
     def _handle_player_finish(self, player):
         """Игрок только что выполнил условие победы на финишной клетке."""
@@ -168,6 +206,10 @@ class GameplayScene(Scene):
         self.input_handler.clear_preview()
         self.camera.center_on(new_player.pos_x, new_player.pos_y)
         self._cancel_active_event_if_any()
+
+    def _on_player_turn_end(self, player):
+        """Черёд игрока завершился (по любой причине) — тикаем его временные эффекты."""
+        player.tick_effects()
 
     def _cancel_active_event_if_any(self):
         """Если время хода истекло, пока был открыт попап события, закрываем его

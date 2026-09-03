@@ -3,6 +3,7 @@ from game.game_config import (
     GOLD_CELL_YIELD,
     SILVER_CELL_BASE_DENSITY, SILVER_CELL_DENSITY_PER_PLAYER, MIN_SILVER_CELLS_ABSOLUTE,
     SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE, SILVER_RESPAWN_CYCLES,
+    EFFECT_HALF_INCOME,
 )
 
 class ResourceManager:
@@ -71,21 +72,31 @@ class ResourceManager:
 
     def collect_at(self, player):
         pos = (player.grid_x, player.grid_y)
+        half_income = player.has_effect(EFFECT_HALF_INCOME)
 
         if pos in self.gold_deposits and self.gold_deposits[pos] > 0:
-            player.gold += self.gold_deposits[pos]
+            amount = self.gold_deposits[pos]
+            if half_income:
+                amount //= 2
+            player.gold += amount
             self.gold_deposits[pos] = 0
 
         if pos in self.silver_cells:
-            player.silver += self.silver_cells.pop(pos)
+            amount = self.silver_cells.pop(pos)
+            if half_income:
+                amount //= 2
+            player.silver += amount
 
-    def check_win(self, player):
-        pos = (player.grid_x, player.grid_y)
-        return (
-            pos == self.field.win_cell
-            and player.gold >= self.win_gold_required
-            and player.silver >= self.win_silver_required
-        )
+    def collect_nearby_silver(self, player, radius):
+        """Забирает всё серебро в радиусе — используется эффектом "магнит" (события "Коробка")."""
+        px, py = player.grid_x, player.grid_y
+        radius_sq = radius * radius
+        nearby = [
+            pos for pos in self.silver_cells
+            if (pos[0] - px) ** 2 + (pos[1] - py) ** 2 <= radius_sq
+        ]
+        for pos in nearby:
+            player.silver += self.silver_cells.pop(pos)
 
     def missing_requirements_message(self, player):
         if (player.grid_x, player.grid_y) != self.field.win_cell:

@@ -149,3 +149,16 @@ class GameSettings:
     def event_density_fraction(self) -> float:
         """Доля событий в виде числа 0..1 — то, что реально нужно EventManager."""
         return self.event_density_percent / 100.0
+
+# --- Эффекты событий (временные баффы/дебаффы, тикающие по ходам игрока ---
+EFFECT_MAGNET_SILVER = "magnet_silver"
+EFFECT_HALF_INCOME = "half_income"
+
+MAGNET_SILVER_RADIUS = 3          # радиус авто-сбора серебра при эффекте "магнит"
+BOX_MAGNET_DURATION_TURNS = 4     # длительность эффекта из "Коробки", в черёдах игрока
+CHEST_CURSE_DURATION_TURNS = 3    # длительность эффекта из "Сундука", в черёдах игрока
+
+EFFECT_LABELS_RU = {
+    EFFECT_MAGNET_SILVER: "Магнит серебра",
+    EFFECT_HALF_INCOME: "Проклятие (половина дохода)",
+}
