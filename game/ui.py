@@ -31,7 +31,7 @@ class PlayerPanel:
         left_y = self._draw_line(screen, x, section_top, "Ходы", HINT_TEXT_COLOR, FONT_SIZE_HINT)
         left_y = self._draw_icon_line(
             screen, x, left_y + 2, ICON_MOVE,
-            f"{self.turn_manager.moves_left}/{self.turn_manager.max_moves}",
+            f"{self.turn_manager.moves_left}/{self.turn_manager.moves_cap}",
             TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
         left_y += 20

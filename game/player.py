@@ -87,6 +87,10 @@ class Player:
         if self.on_cell_reached:
             self.on_cell_reached()
 
+    @property
+    def ignores_obstacles(self):
+        return any(getattr(effect, "ignores_obstacles", False) for effect in self.active_effects)
+
     # --- Временные эффекты от событий ---
 
     def add_effect(self, effect):
@@ -95,7 +99,7 @@ class Player:
             return
         self.active_effects.append(effect)
 
-    def tick_effects(self):
+    def tick_effects(self, context=None):
         """Тикает длительность всех активных эффектов на один черёд."""
         from game.effect_reader import EffectReader
-        EffectReader.tick(self)
+        EffectReader.tick(self, context)

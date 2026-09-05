@@ -12,3 +12,6 @@ class EffectContext:
 
     def displace_player(self, player, distance):
         return self._scene.displace_player_randomly(player, distance)
+
+    def push_out_of_obstacle_if_needed(self, player):
+        self._scene.relocate_player_to_nearest_free_cell(player)

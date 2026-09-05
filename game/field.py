@@ -61,19 +61,18 @@ class Field:
                     queue.append((nx, ny))
         return free_count == total_free
 
-    def get_neighbors(self, x, y):
+    def get_neighbors(self, x, y, ignore_obstacles=False):
         neighbors = []
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nx, ny = x + dx, y + dy
-            if self.in_bounds(nx, ny) and self.is_free(nx, ny):
+            if self.in_bounds(nx, ny) and (ignore_obstacles or self.is_free(nx, ny)):
                 neighbors.append((nx, ny))
         return neighbors
 
-    def find_path(self, start, goal, allowed_cells=None):
-        """Если передан allowed_cells — путь строится только через эти клетки."""
+    def find_path(self, start, goal, allowed_cells=None, ignore_obstacles=False):
         if start == goal:
             return []
-        if not self.is_free(*goal):
+        if not ignore_obstacles and not self.is_free(*goal):
             return []
         if allowed_cells is not None and goal not in allowed_cells:
             return []
@@ -84,7 +83,7 @@ class Field:
             current = queue.popleft()
             if current == goal:
                 break
-            for neighbor in self.get_neighbors(*current):
+            for neighbor in self.get_neighbors(*current, ignore_obstacles=ignore_obstacles):
                 if allowed_cells is not None and neighbor not in allowed_cells:
                     continue
                 if neighbor not in visited:
@@ -99,3 +98,22 @@ class Field:
             current = visited[current]
         path.reverse()
         return path
+
+    def nearest_free_cell(self, x, y):
+        """BFS до ближайшей свободной клетки — используется, чтобы вытолкнуть игрока
+        со стены/блока, если эффект прохода сквозь препятствия истёк прямо на них."""
+        if self.is_free(x, y):
+            return (x, y)
+        visited = {(x, y)}
+        queue = deque([(x, y)])
+        while queue:
+            cx, cy = queue.popleft()
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = cx + dx, cy + dy
+                if not self.in_bounds(nx, ny) or (nx, ny) in visited:
+                    continue
+                visited.add((nx, ny))
+                if self.is_free(nx, ny):
+                    return (nx, ny)
+                queue.append((nx, ny))
+        return (x, y)  # запасной вариант, теоретически не должен сработать

@@ -6,7 +6,8 @@ class TurnManager:
         self.turn_time = turn_time
 
         self.current_index = 0
-        self.moves_left = max_moves
+        self.moves_cap = self._effective_max_moves(self.current_player)
+        self.moves_left = self.moves_cap
         self.time_left = turn_time
 
         self.eliminated = set()
@@ -34,6 +35,12 @@ class TurnManager:
         self.moves_left = max(0, self.moves_left + delta)
         self._maybe_advance()
 
+    def refill_moves(self, extra_cap=0):
+        """Полностью пополняет шаги текущего черёда; позволяет выйти за лимит
+        не более, чем на extra_cap шагов сверху (см. события с полным восстановлением)."""
+        self.moves_left = min(self.moves_left + self.moves_cap, self.moves_cap + extra_cap)
+        self._maybe_advance()
+
     def eliminate(self, player):
         """Исключает игрока из дальнейшей очереди ходов (он уже финишировал)."""
         self.eliminated.add(player)
@@ -53,7 +60,8 @@ class TurnManager:
     def _advance_turn(self):
         ending_player = self.current_player
         self._move_to_next_active_index()
-        self.moves_left = self.max_moves
+        self.moves_cap = self._effective_max_moves(self.current_player)
+        self.moves_left = self.moves_cap
         self.time_left = self.turn_time
         if self.on_player_turn_end:
             self.on_player_turn_end(ending_player)
@@ -70,3 +78,21 @@ class TurnManager:
                     self.on_cycle_complete()
             if self.current_player not in self.eliminated:
                 return
+
+    # --- Индивидуальные модификаторы лимита ходов от эффектов игрока ---
+
+    def _effective_max_moves(self, player):
+        base = self.max_moves
+        overrides = [
+            getattr(effect, "max_moves_override", None) for effect in player.active_effects
+        ]
+        overrides = [value for value in overrides if value is not None]
+        if overrides:
+            base = min(overrides)
+
+        for effect in player.active_effects:
+            multiplier = getattr(effect, "max_moves_multiplier", None)
+            if multiplier is not None:
+                base = int(round(base * multiplier))
+
+        return max(1, base)

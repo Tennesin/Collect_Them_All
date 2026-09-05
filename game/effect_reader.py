@@ -20,7 +20,7 @@ class EffectReader:
         return amount
 
     @staticmethod
-    def tick(player):
+    def tick(player, context=None):
         """Тикает длительность всех эффектов игрока, снимая истёкшие."""
         still_active = []
         for effect in player.active_effects:
@@ -28,10 +28,14 @@ class EffectReader:
                 print(f"[EffectReader] Пропущен эффект несовместимого типа: {effect!r}")
                 continue
             try:
-                if effect.tick():
-                    still_active.append(effect)
+                still_running = effect.tick()
             except Exception as exc:
                 print(f"[EffectReader] Эффект {effect!r} упал на tick(): {exc}")
+                continue
+            if still_running:
+                still_active.append(effect)
+            else:
+                EffectReader._safe_call(effect, "on_expire", player, context)
         player.active_effects = still_active
 
     # --- Внутреннее ---

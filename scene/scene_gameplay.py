@@ -178,6 +178,13 @@ class GameplayScene(Scene):
         if player is self.turn_manager.current_player:
             self.camera.center_on(player.pos_x, player.pos_y)
 
+    def relocate_player_to_nearest_free_cell(self, player):
+        cell = (player.grid_x, player.grid_y)
+        if self.field.is_free(*cell):
+            return
+        landing = self.field.nearest_free_cell(*cell)
+        self._teleport_player_to(player, landing)
+
     def _handle_player_finish(self, player):
         """Игрок только что выполнил условие победы на финишной клетке."""
         player.moving = False
@@ -207,7 +214,7 @@ class GameplayScene(Scene):
 
     def _on_player_turn_end(self, player):
         """Черёд игрока завершился (по любой причине) — тикаем его временные эффекты."""
-        player.tick_effects()
+        player.tick_effects(EffectContext(self))
 
     def _cancel_active_event_if_any(self):
         """Если время хода истекло, пока был открыт попап события, закрываем его

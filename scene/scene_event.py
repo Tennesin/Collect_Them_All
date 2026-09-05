@@ -107,10 +107,14 @@ class EventScene(Scene):
         self.player.silver = max(0, self.player.silver + outcome.silver_delta)
         if outcome.moves_delta:
             self.gameplay_scene.turn_manager.adjust_moves(outcome.moves_delta)
+        if outcome.refill_moves:
+            self.gameplay_scene.turn_manager.refill_moves(extra_cap=outcome.refill_extra_cap)
         if outcome.displacement_cells:
             self.gameplay_scene.displace_player_randomly(self.player, outcome.displacement_cells)
         if outcome.effect_factory:
             self.player.add_effect(outcome.effect_factory())
+        if outcome.skip_turn:
+            self.gameplay_scene.turn_manager.end_turn_early()
 
     # --- отрисовка ---
 
@@ -173,6 +177,16 @@ class EventScene(Scene):
             sign = "+" if value > 0 else ""
             color = WARNING_TEXT_COLOR if value < 0 else TEXT_COLOR
             surf = get_font(FONT_SIZE_LABEL + 4).render(f"{label}: {sign}{value}", True, color)
+            screen.blit(surf, surf.get_rect(center=(cx, y)))
+            y += 34
+
+        if outcome.skip_turn:
+            surf = get_font(FONT_SIZE_LABEL + 4).render("Черёд пропущен", True, WARNING_TEXT_COLOR)
+            screen.blit(surf, surf.get_rect(center=(cx, y)))
+            y += 34
+
+        if outcome.refill_moves:
+            surf = get_font(FONT_SIZE_LABEL + 4).render("Шаги полностью восстановлены", True, TEXT_COLOR)
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34
 

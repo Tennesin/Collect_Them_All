@@ -23,6 +23,9 @@ class EventOutcome:
     moves_delta: int = 0
     displacement_cells: int = 0   # мгновенное смещение игрока на N клеток в случайном направлении
     effect_factory: Optional[Callable[[], Effect]] = None
+    skip_turn: bool = False       # мгновенно завершает текущий черёд игрока
+    refill_moves: bool = False    # особое пополнение шагов текущего черёда (см. TurnManager.refill_moves)
+    refill_extra_cap: int = 0     # на сколько шагов сверх лимита разрешено выйти при refill_moves
 
 class EventDefinition:
     """Базовый класс события. Каждый events/<id>/<id>.py должен объявить
