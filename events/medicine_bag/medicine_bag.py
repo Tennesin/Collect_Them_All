@@ -22,7 +22,6 @@ class SupermanEffect(Effect):
     full_map_vision = True
     max_moves_multiplier = MOVES_MULTIPLIER
 
-
 class MedicineBagEvent(EventDefinition):
     id = "medicine_bag"
     icon_file = "medicine_bag.png"
