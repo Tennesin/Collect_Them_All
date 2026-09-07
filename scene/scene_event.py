@@ -29,6 +29,7 @@ class EventScene(Scene):
         self.freeze_timer = 0.0
         self.current_face = random.randint(1, 6)
         self.final_roll = None
+        self._outcome_applied = False
 
         cx = SCREEN_WIDTH // 2
         btn_w, btn_h = 200, 52
@@ -60,10 +61,8 @@ class EventScene(Scene):
                 self._freeze_roll()
         elif self.stage == STAGE_RESULT:
             if self.continue_button.collidepoint(event.pos):
-                self._apply_outcome()
                 if self.manager.current is self:
                     self.manager.pop()
-        # STAGE_FROZEN: клики игнорируются, ждём истечения таймера показа грани.
 
     # --- обновление ---
 
@@ -90,6 +89,9 @@ class EventScene(Scene):
         self.freeze_timer += dt
         if self.freeze_timer >= DICE_RESULT_FREEZE_DURATION:
             self.stage = STAGE_RESULT
+            if not self._outcome_applied:
+                self._outcome_applied = True
+                self._apply_outcome()
 
     def _start_rolling(self):
         self.stage = STAGE_ROLLING

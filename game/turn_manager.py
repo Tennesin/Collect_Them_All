@@ -36,9 +36,8 @@ class TurnManager:
         self._maybe_advance()
 
     def refill_moves(self, extra_cap=0):
-        """Полностью пополняет шаги текущего черёда; позволяет выйти за лимит
-        не более, чем на extra_cap шагов сверху (см. события с полным восстановлением)."""
-        self.moves_left = min(self.moves_left + self.moves_cap, self.moves_cap + extra_cap)
+        """Полностью пополняет шаги текущего черёда."""
+        self.moves_left = min(max(self.moves_left, self.moves_cap), self.moves_cap + extra_cap)
         self._maybe_advance()
 
     def eliminate(self, player):

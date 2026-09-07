@@ -14,7 +14,6 @@ def get_font(size, name=FONT_NAME):
         _font_cache[key] = font
     return font
 
-
 def draw_wrapped_text_centered(surface, cx, y, text, color, font_size, max_width, line_spacing=4):
     """Перенос текста по словам с центровкой каждой строки вокруг cx."""
     font = get_font(font_size)
@@ -80,7 +79,6 @@ class Button:
     def collidepoint(self, *args):
         return self.enabled and self.rect.collidepoint(*args)
 
-
 class TextInputBox:
     def __init__(self, rect, value="", max_len=24, digits_only=False, placeholder=""):
         self.rect = pygame.Rect(rect)
@@ -145,7 +143,6 @@ class TextInputBox:
             pygame.draw.line(surface, INPUT_TEXT_COLOR,
                              (cursor_x, self.rect.y + 6), (cursor_x, self.rect.bottom - 6), 1)
 
-
 class Slider:
     def __init__(self, rect, value=0.5, min_value=0.0, max_value=1.0, step=0.05):
         self.rect = pygame.Rect(rect)
@@ -178,11 +175,7 @@ class Slider:
         handle_rect.center = (self.rect.x + fill_w, self.rect.centery)
         pygame.draw.rect(surface, (240, 240, 240), handle_rect, border_radius=2)
 
-
 class ScrollArea:
-    """Пока не используется ни в одной сцене — пригодится, когда список
-    игроков/ботов на экране настроек перестанет помещаться целиком."""
-
     def __init__(self):
         self.offset = 0
         self.max_scroll = 0

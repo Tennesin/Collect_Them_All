@@ -68,7 +68,7 @@ class Renderer:
     def _visible_cell_bounds(self):
         """Диапазон клеток поля, которые реально попадают на экран при текущих зуме/панораме."""
         wx0, wy0 = self.camera.screen_to_world(0, 0)
-        wx1, wy1 = self.camera.screen_to_world(self.screen.get_width(), self.screen.get_height())
+        wx1, wy1 = self.camera.screen_to_world(self.camera.width, self.camera.height)
         min_x = max(0, int(wx0) - 1)
         min_y = max(0, int(wy0) - 1)
         max_x = min(self.field.width, int(wx1) + 2)
