@@ -32,3 +32,7 @@ class Effect:
     def on_expire(self, player, context):
         """Вызывается один раз, когда эффект истёк (сразу после последнего tick())."""
         pass
+
+    def on_apply(self, player):
+        """Вызывается сразу после наложения эффекта на игрока."""
+        pass

@@ -185,6 +185,12 @@ class GameplayScene(Scene):
         landing = self.field.nearest_free_cell(*cell)
         self._teleport_player_to(player, landing)
 
+    def refresh_effects_immediately(self, player):
+        """Применяет эффекты обзора и лимита ходов сразу после наложения."""
+        self.fog_of_war.update_player(player)
+        if player is self.turn_manager.current_player:
+            self.turn_manager.recompute_moves_cap()
+
     def _handle_player_finish(self, player):
         """Игрок только что выполнил условие победы на финишной клетке."""
         player.moving = False

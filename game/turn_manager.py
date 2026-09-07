@@ -40,6 +40,16 @@ class TurnManager:
         self.moves_left = min(max(self.moves_left, self.moves_cap), self.moves_cap + extra_cap)
         self._maybe_advance()
 
+    def recompute_moves_cap(self):
+        """Пересчитывает лимит ходов текущего игрока немедленно."""
+        player = self.current_player
+        old_cap = self.moves_cap
+        new_cap = self._effective_max_moves(player)
+        delta = new_cap - old_cap
+        self.moves_cap = new_cap
+        self.moves_left = max(0, min(new_cap, self.moves_left + delta))
+        self._maybe_advance()
+
     def eliminate(self, player):
         """Исключает игрока из дальнейшей очереди ходов (он уже финишировал)."""
         self.eliminated.add(player)

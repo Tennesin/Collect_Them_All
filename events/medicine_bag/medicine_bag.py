@@ -22,6 +22,12 @@ class SupermanEffect(Effect):
     full_map_vision = True
     max_moves_multiplier = MOVES_MULTIPLIER
 
+    def on_apply(self, player):
+        """Супермэн лечит от всего разом."""
+        player.active_effects = [
+            effect for effect in player.active_effects if not getattr(effect, "warning", False)
+        ]
+
 class MedicineBagEvent(EventDefinition):
     id = "medicine_bag"
     icon_file = "medicine_bag.png"

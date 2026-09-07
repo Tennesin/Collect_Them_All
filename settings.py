@@ -110,7 +110,7 @@ EVENT_TEXT_MAX_WIDTH = 460
 
 # --- Кубик ---
 DICE_ICON_SIZE = 110
-DICE_ROLL_INTERVAL = 0.1          # как часто меняется грань во время анимации броска
+DICE_ROLL_INTERVAL = 0.085        # как часто меняется грань во время анимации броска
 DICE_ROLL_MAX_DURATION = 3.0      # максимум, сколько крутится кубик, если не нажали "Стоп"
 DICE_RESULT_FREEZE_DURATION = 1.0 # сколько секунд показывается итоговая грань перед результатами
 DICE_FACE_ICONS = {

@@ -45,35 +45,37 @@ class NewGameScene(Scene):
         custom_rect = (start_x + 3 * (preset_w + gap), 110, preset_w, preset_h)
         self.custom_button = Button(custom_rect, "Свой")
 
-        input_w, input_h = 70, 34
+        input_w, input_h = 40, 30
+        inputs_cx = self.custom_button.rect.centerx
+        inputs_y = self.custom_button.rect.bottom + 8
         self.width_input = TextInputBox(
-            (self.CX_LEFT - input_w - 5, 150, input_w, input_h),
+            (inputs_cx - input_w - 4, inputs_y, input_w, input_h),
             value=str(self.settings.map_width), max_len=2, digits_only=True,
             placeholder=f"{MIN_MAP_SIZE}-{MAX_MAP_SIZE}",
         )
         self.height_input = TextInputBox(
-            (self.CX_LEFT + 5, 150, input_w, input_h),
+            (inputs_cx + 4, inputs_y, input_w, input_h),
             value=str(self.settings.map_height), max_len=2, digits_only=True,
             placeholder=f"{MIN_MAP_SIZE}-{MAX_MAP_SIZE}",
         )
 
         self.obstacle_slider = Slider(
-            (self.CX_LEFT - self.SLIDER_WIDTH // 2, 218, self.SLIDER_WIDTH, 16),
+            (self.CX_LEFT - self.SLIDER_WIDTH // 2, 198, self.SLIDER_WIDTH, 16),
             value=self.settings.obstacle_percent,
             min_value=MIN_OBSTACLE_PERCENT, max_value=MAX_OBSTACLE_PERCENT, step=1,
         )
 
         # --- Раздел "Игроки" ---
-        self.player_minus_button = Button((self.CX_LEFT - 76, 312, 32, 32), "-")
-        self.player_plus_button = Button((self.CX_LEFT + 44, 312, 32, 32), "+")
+        self.player_minus_button = Button((self.CX_LEFT - 76, 292, 32, 32), "-")
+        self.player_plus_button = Button((self.CX_LEFT + 44, 292, 32, 32), "+")
 
         # --- Раздел "Видимость" (новое) ---
-        self.vision_minus_button = Button((self.CX_LEFT - 76, 422, 32, 32), "-")
-        self.vision_plus_button = Button((self.CX_LEFT + 44, 422, 32, 32), "+")
+        self.vision_minus_button = Button((self.CX_LEFT - 76, 402, 32, 32), "-")
+        self.vision_plus_button = Button((self.CX_LEFT + 44, 402, 32, 32), "+")
 
         # --- Раздел "События" ---
         self.events_density_slider = Slider(
-            (self.CX_LEFT - self.SLIDER_WIDTH // 2, 524, self.SLIDER_WIDTH, 16),
+            (self.CX_LEFT - self.SLIDER_WIDTH // 2, 504, self.SLIDER_WIDTH, 16),
             value=self.settings.event_density_percent,
             min_value=MIN_EVENT_DENSITY_PERCENT, max_value=MAX_EVENT_DENSITY_PERCENT,
             step=EVENT_DENSITY_PERCENT_STEP,
@@ -310,31 +312,33 @@ class NewGameScene(Scene):
             self.width_input.draw(screen, valid=width_valid)
             self.height_input.draw(screen, valid=height_valid)
             x_surf = label_font.render("x", True, TEXT_COLOR)
-            screen.blit(x_surf, x_surf.get_rect(center=(cx_left, 167)))
+            screen.blit(x_surf, x_surf.get_rect(
+                center=(self.custom_button.rect.centerx, self.width_input.rect.centery)
+            ))
         obstacle_pct = int(round(self.obstacle_slider.value))
-        self._draw_label(screen, hint_font, f"Доля стен и камней: {obstacle_pct}%", (cx_left, 198))
+        self._draw_label(screen, hint_font, f"Доля стен и камней: {obstacle_pct}%", (cx_left, 178))
         self.obstacle_slider.draw(screen)
 
-        self._draw_divider(screen, cx_left, 254)
-        self._draw_section_header(screen, "ИГРОКИ", cx_left, 266)
-        self._draw_label(screen, hint_font, "Количество игроков", (cx_left, 294))
+        self._draw_divider(screen, cx_left, 234)
+        self._draw_section_header(screen, "ИГРОКИ", cx_left, 246)
+        self._draw_label(screen, hint_font, "Количество игроков", (cx_left, 274))
         self.player_minus_button.draw(screen, mouse_pos)
         count_surf = label_font.render(str(self.settings.player_count), True, TEXT_COLOR)
-        screen.blit(count_surf, count_surf.get_rect(center=(cx_left, 328)))
+        screen.blit(count_surf, count_surf.get_rect(center=(cx_left, 308)))
         self.player_plus_button.draw(screen, mouse_pos)
 
-        self._draw_divider(screen, cx_left, 364)
-        self._draw_section_header(screen, "ВИДИМОСТЬ", cx_left, 376)
-        self._draw_label(screen, hint_font, "Дальность обзора", (cx_left, 404))
+        self._draw_divider(screen, cx_left, 344)
+        self._draw_section_header(screen, "ВИДИМОСТЬ", cx_left, 356)
+        self._draw_label(screen, hint_font, "Дальность обзора", (cx_left, 384))
         self.vision_minus_button.draw(screen, mouse_pos)
         vision_surf = label_font.render(str(self.settings.vision_radius), True, TEXT_COLOR)
-        screen.blit(vision_surf, vision_surf.get_rect(center=(cx_left, 438)))
+        screen.blit(vision_surf, vision_surf.get_rect(center=(cx_left, 418)))
         self.vision_plus_button.draw(screen, mouse_pos)
 
-        self._draw_divider(screen, cx_left, 466)
-        self._draw_section_header(screen, "СОБЫТИЯ", cx_left, 478)
+        self._draw_divider(screen, cx_left, 446)
+        self._draw_section_header(screen, "СОБЫТИЯ", cx_left, 458)
         density_val = int(round(self.events_density_slider.value))
-        self._draw_label(screen, hint_font, f"Плотность событий: {density_val}%", (cx_left, 506))
+        self._draw_label(screen, hint_font, f"Плотность событий: {density_val}%", (cx_left, 486))
         self.events_density_slider.draw(screen)
 
         # ============ ПРАВАЯ КОЛОНКА ============

@@ -83,7 +83,12 @@ class EventScene(Scene):
         self.face_change_timer += dt
         if self.face_change_timer >= DICE_ROLL_INTERVAL:
             self.face_change_timer = 0.0
-            self.current_face = random.randint(1, 6)
+            self.current_face = self._next_different_face(self.current_face)
+
+    @staticmethod
+    def _next_different_face(previous):
+        """Гарантирует, что новая грань отличается от предыдущей."""
+        return random.choice([face for face in range(1, 7) if face != previous])
 
     def _update_frozen(self, dt):
         self.freeze_timer += dt
@@ -114,7 +119,9 @@ class EventScene(Scene):
         if outcome.displacement_cells:
             self.gameplay_scene.displace_player_randomly(self.player, outcome.displacement_cells)
         if outcome.effect_factory:
-            self.player.add_effect(outcome.effect_factory())
+            effect = outcome.effect_factory()
+            self.player.add_effect(effect)
+            self.gameplay_scene.refresh_effects_immediately(self.player)
         if outcome.skip_turn:
             self.gameplay_scene.turn_manager.end_turn_early()
 

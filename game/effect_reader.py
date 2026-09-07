@@ -10,6 +10,11 @@ class EffectReader:
             EffectReader._safe_call(effect, "on_cell_reached", player, context)
 
     @staticmethod
+    def notify_effect_applied(player, effect):
+        """Оповещает эффект о том, что он только что наложен на игрока."""
+        EffectReader._safe_call(effect, "on_apply", player)
+
+    @staticmethod
     def modify_income(player, resource_type, amount):
         """Пропускает amount через все активные эффекты игрока по цепочке."""
         for effect in list(player.active_effects):
