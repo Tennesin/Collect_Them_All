@@ -1,5 +1,5 @@
 from game.event_manager import EventDefinition, EventOutcome
-from game.effects import Effect
+from game.effects.effects import Effect
 
 class PhantomWalkEffect(Effect):
     """Эффект события 'Яма': пока активен, игрок строит путь сквозь любые препятствия.

@@ -1,5 +1,5 @@
 from game.event_manager import EventDefinition, EventOutcome
-from game.effects import Effect
+from game.effects.effects import Effect
 
 class ConfusionEffect(Effect):
     """Эффект события 'Аптечка' (ШИЗА): обзор и подвижность игрока падают до минимума."""

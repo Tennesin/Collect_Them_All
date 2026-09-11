@@ -1,4 +1,5 @@
 import random
+from settings import FIELD_COLOR_VARIANTS, FIELD_TEXTURE_COLOR_VARIANTS
 
 # Каждый вариант — список маленьких прямоугольников в относительных координатах
 # клетки (0.0-1.0 по x и y от левого верхнего угла клетки). Формат: (rel_x, rel_y, rel_w, rel_h).
@@ -18,10 +19,7 @@ CELL_TEXTURE_VARIANTS = [
     [(0.34, 0.34, 0.28, 0.26)],                                   # 11: одно крупное мягкое пятно
 ]
 
-
 class FieldTextureGenerator:
-    """Расставляет псевдо-текстуры по 'обычным' клеткам поля так, чтобы одна и та же
-    вариация никогда не встречалась у двух соседних клеток (включая диагонали)."""
 
     def __init__(self, field):
         self.field = field
@@ -29,15 +27,27 @@ class FieldTextureGenerator:
 
     def generate(self):
         field = self.field
-        # Построчно, сверху вниз, слева направо — важно для корректной проверки соседей.
         for y in range(field.height):
             for x in range(field.width):
                 if not self._needs_texture(x, y):
                     continue
-                forbidden = self._already_assigned_neighbor_variants(x, y)
+
+                field.color_variants[x][y] = self._pick_base_color(x, y)
+
+                forbidden = self._forbidden_neighbor_values(field.texture_variants, x, y)
                 choices = [v for v in range(self.variant_count) if v not in forbidden]
                 variant = random.choice(choices) if choices else random.randrange(self.variant_count)
                 field.texture_variants[x][y] = variant
+
+                shapes = CELL_TEXTURE_VARIANTS[variant]
+                field.texture_colors[x][y] = [
+                    random.choice(FIELD_TEXTURE_COLOR_VARIANTS) for _ in shapes
+                ]
+
+    def _pick_base_color(self, x, y):
+        forbidden = self._forbidden_neighbor_values(self.field.color_variants, x, y)
+        choices = [v for v in range(len(FIELD_COLOR_VARIANTS)) if v not in forbidden]
+        return random.choice(choices) if choices else random.randrange(len(FIELD_COLOR_VARIANTS))
 
     def _needs_texture(self, x, y):
         field = self.field
@@ -49,16 +59,15 @@ class FieldTextureGenerator:
             return False
         return True
 
-    def _already_assigned_neighbor_variants(self, x, y):
-        """Проверяем только те 4 соседних направления, которые уже обработаны раньше
-        в построчном обходе (верх-лево, верх, верх-право, лево). Остальные 4 соседа
-        проверят себя сами, когда дойдёт их очередь — тем самым покрываются все 8 направлений."""
+    def _forbidden_neighbor_values(self, grid, x, y):
+        """Универсальная версия старого _already_assigned_neighbor_variants —
+        работает с любым гридом (форма текстуры или базовый цвет клетки)."""
         field = self.field
         forbidden = set()
         for dx, dy in [(-1, -1), (0, -1), (1, -1), (-1, 0)]:
             nx, ny = x + dx, y + dy
             if field.in_bounds(nx, ny):
-                variant = field.texture_variants[nx][ny]
-                if variant is not None:
-                    forbidden.add(variant)
+                value = grid[nx][ny]
+                if value is not None:
+                    forbidden.add(value)
         return forbidden

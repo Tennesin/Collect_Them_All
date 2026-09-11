@@ -4,7 +4,7 @@ import importlib.util
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from game.effects import Effect
+from game.effects.effects import Effect
 from game.game_config import (
     EVENTS_DIR_NAME, EVENT_RESPAWN_CYCLES,
     EVENT_DENSITY_PER_PLAYER, MIN_EVENTS_ABSOLUTE,

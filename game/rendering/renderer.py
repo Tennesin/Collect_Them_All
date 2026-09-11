@@ -59,7 +59,12 @@ class Renderer:
                     pygame.draw.polygon(self.screen, GOLD_CELL_COLOR, points)
                     pygame.draw.polygon(self.screen, GOLD_CELL_BORDER_COLOR, points, 3)
                 else:
-                    color = HOVER_COLOR if hovered_cell == (x, y) else FIELD_COLOR
+                    if hovered_cell == (x, y):
+                        color = HOVER_COLOR
+                    else:
+                        variant_index = self.field.color_variants[x][y]
+                        color = FIELD_COLOR_VARIANTS[variant_index] if variant_index is not None else \
+                        FIELD_COLOR_VARIANTS[0]
                     pygame.draw.polygon(self.screen, color, points)
                     pygame.draw.polygon(self.screen, GRID_COLOR, points, 1)
                     self._draw_cell_texture(x, y)
@@ -154,16 +159,18 @@ class Renderer:
         self.screen.blit(icon, rect)
 
     def _draw_cell_texture(self, x, y):
-        """Рисует псевдо-текстуру клетки (маленькие пятна в форме эллипсов)."""
+        """Рисует псевдо-текстуру клетки — эллипсы разных оттенков из палитры."""
         variant = self.field.texture_variants[x][y]
         if variant is None:
             return
-        for rel_x, rel_y, rel_w, rel_h in CELL_TEXTURE_VARIANTS[variant]:
+        shapes = CELL_TEXTURE_VARIANTS[variant]
+        colors = self.field.texture_colors[x][y]
+        for (rel_x, rel_y, rel_w, rel_h), color in zip(shapes, colors):
             p1 = self.camera.project(x + rel_x, y + rel_y)
             p2 = self.camera.project(x + rel_x + rel_w, y + rel_y + rel_h)
             rect = pygame.Rect(0, 0, abs(p2[0] - p1[0]), abs(p2[1] - p1[1]))
             rect.topleft = (min(p1[0], p2[0]), min(p1[1], p2[1]))
-            pygame.draw.ellipse(self.screen, FIELD_TEXTURE_COLOR, rect)
+            pygame.draw.ellipse(self.screen, color, rect)
 
     def draw_events(self):
         """Иконки активных событий — только те, что сейчас в зоне видимости игрока."""

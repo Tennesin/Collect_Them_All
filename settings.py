@@ -16,13 +16,26 @@ PLAYER_SPEED = 5.0
 
 # Цвета игрового поля
 BG_COLOR = (135, 206, 235)
-FIELD_COLOR = (34, 139, 34)
-FIELD_TEXTURE_COLOR = (58, 168, 58)
 GRID_COLOR = (0, 100, 0)
 HOVER_COLOR = (80, 200, 80)
 BLOCK_COLOR = (50, 50, 50)
 WALL_COLOR = (90, 90, 90)
 OBSTACLE_BORDER = (20, 20, 20)
+FIELD_COLOR_VARIANTS = [
+    (34, 139, 34),
+    (40, 148, 40),
+    (30, 130, 46),
+    (46, 145, 30),
+]
+FIELD_TEXTURE_COLOR_VARIANTS = [
+    (58, 168, 58),
+    (70, 178, 70),
+    (50, 160, 50),
+    (65, 172, 90),
+    (48, 155, 65),
+    (75, 185, 60),
+    (55, 150, 80),
+]
 
 # Визуальные коэффициенты отрисовки (доля от текущего camera.scale)
 WALL_THICKNESS_RATIO = 0.35

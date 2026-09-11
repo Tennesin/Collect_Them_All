@@ -1,5 +1,5 @@
 """Единственная точка, через которую игра взаимодействует с эффектами событий."""
-from game.effects import Effect
+from game.effects.effects import Effect
 
 class EffectReader:
 
