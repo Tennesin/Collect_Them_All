@@ -12,6 +12,7 @@ from game.resource_manager import ResourceManager
 from game.event_manager import EventManager
 from game.fog_of_war import FogOfWar
 from game.player import Player
+from game.tween import Tween, ease_out_cubic
 from game.turn_manager import TurnManager
 from game.input_handler import InputHandler
 from game.renderer import Renderer
@@ -27,6 +28,8 @@ class GameplayScene(Scene):
         self.paused = False
         self.winner = None
         self.placements = []  # порядок финиша: 1-е место первым
+        self._victory_alpha = 0
+        self._victory_fade = None
         screen = self.manager.app.screen
 
         self.field = Field(settings.map_width, settings.map_height)
@@ -49,7 +52,7 @@ class GameplayScene(Scene):
 
         self.fog_of_war = FogOfWar(self.field, settings.vision_radius)
         self.camera = Camera(GAME_AREA_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
-                             INITIAL_SCALE, MAX_SCALE)
+                             INITIAL_SCALE, MAX_SCALE, smooth_speed=CAMERA_SMOOTH_SPEED)
 
         # --- Игроки: все стартуют в одной клетке, поэтому сразу видно "слои" ---
         start_cell = (0, 0)
@@ -92,7 +95,7 @@ class GameplayScene(Scene):
         )
         self.player_panel = PlayerPanel(self.turn_manager, self.resource_manager)
 
-        self.camera.center_on(self.players[0].pos_x, self.players[0].pos_y)
+        self.camera.center_on(self.players[0].pos_x, self.players[0].pos_y, instant=True)
 
     def _occupied_cells(self):
         """Клетки, которые сейчас заняты хотя бы одним игроком — событие на них не спавнится."""
@@ -251,9 +254,16 @@ class GameplayScene(Scene):
         self.input_handler.handle_event(event)
 
     def update(self, dt):
-        if self.paused or self.winner is not None:
+        if self.winner is not None:
+            if self._victory_fade is None:
+                self._victory_fade = Tween(0, 255, VICTORY_FADE_DURATION, ease_out_cubic)
+            self._victory_alpha = self._victory_fade.update(dt)
             return
+        if self.paused:
+            return
+
         self.input_handler.process_held_keys()
+        self.camera.update(dt)
         self.turn_manager.update(dt)
 
         current = self.turn_manager.current_player
@@ -267,19 +277,21 @@ class GameplayScene(Scene):
             self._draw_victory_overlay(screen)
 
     def _draw_victory_overlay(self, screen):
-        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-        overlay.fill(PAUSE_OVERLAY_COLOR)
-        screen.blit(overlay, (0, 0))
+        content = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        content.fill(PAUSE_OVERLAY_COLOR)
 
         if self.settings.finish_mode == FINISH_MODE_RANKED and len(self.placements) > 1:
-            self._draw_placements(screen)
+            self._draw_placements(content)
         else:
             name = PLAYER_NAMES_RU[self.winner.color_key]
             title_surf = get_font(FONT_SIZE_TITLE - 8).render(f"Победил игрок: {name}", True, self.winner.color)
-            screen.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)))
+            content.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)))
 
         hint_surf = get_font(FONT_SIZE_HINT + 4).render("Esc — выйти в меню", True, TEXT_COLOR)
-        screen.blit(hint_surf, hint_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 140)))
+        content.blit(hint_surf, hint_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 140)))
+
+        content.set_alpha(int(self._victory_alpha))
+        screen.blit(content, (0, 0))
 
     def _draw_placements(self, screen):
         title_surf = get_font(FONT_SIZE_TITLE - 14).render("Итоговые места", True, TEXT_COLOR)

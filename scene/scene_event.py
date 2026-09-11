@@ -3,6 +3,7 @@ import pygame
 from settings import *
 from widgets import Button, get_font, draw_wrapped_text_centered
 from game.image_manager import ImageManager
+from game.tween import Tween, ease_out_cubic
 from scene.scenes import Scene
 
 STAGE_PROMPT = "prompt"    # текст события + кнопки "Да"/"Нет"
@@ -31,6 +32,11 @@ class EventScene(Scene):
         self.final_roll = None
         self._outcome_applied = False
 
+        self._alpha = 0
+        self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
+        self._closing = False
+        self._pending_action = None
+
         cx = SCREEN_WIDTH // 2
         btn_w, btn_h = 200, 52
         gap = 20
@@ -41,13 +47,24 @@ class EventScene(Scene):
 
     def on_enter(self):
         self.gameplay_scene.turn_manager.moves_trigger_suppressed = True
+        self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
+        self._closing = False
 
     def on_exit(self):
         self.gameplay_scene.turn_manager.moves_trigger_suppressed = False
 
+    def _start_closing(self, action):
+        if self._closing:
+            return
+        self._closing = True
+        self._pending_action = action
+        self._fade = Tween(self._alpha, 0, FADE_POPUP_OUT_DURATION, ease_out_cubic)
+
     # --- события ввода ---
 
     def handle_event(self, event):
+        if self._closing:
+            return
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
             return
 
@@ -55,18 +72,27 @@ class EventScene(Scene):
             if self.yes_button.collidepoint(event.pos):
                 self._start_rolling()
             elif self.no_button.collidepoint(event.pos):
-                self.manager.pop()
+                self._start_closing(self.manager.pop)
         elif self.stage == STAGE_ROLLING:
             if self.stop_button.collidepoint(event.pos):
                 self._freeze_roll()
         elif self.stage == STAGE_RESULT:
             if self.continue_button.collidepoint(event.pos):
                 if self.manager.current is self:
-                    self.manager.pop()
+                    self._start_closing(self.manager.pop)
 
     # --- обновление ---
 
     def update(self, dt):
+        self._alpha = self._fade.update(dt)
+        if self._closing:
+            if self._fade.finished:
+                action = self._pending_action
+                self._pending_action = None
+                if action:
+                    action()
+            return
+
         if self.stage not in _TIMER_FROZEN_STAGES:
             self.gameplay_scene.turn_manager.update(dt)
 
@@ -130,17 +156,19 @@ class EventScene(Scene):
     def draw(self, screen):
         self.gameplay_scene.draw(screen)
 
-        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-        overlay.fill(EVENT_POPUP_BG_COLOR)
-        screen.blit(overlay, (0, 0))
+        content = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        content.fill(EVENT_POPUP_BG_COLOR)
 
         mouse_pos = pygame.mouse.get_pos()
         if self.stage == STAGE_PROMPT:
-            self._draw_prompt(screen, mouse_pos)
+            self._draw_prompt(content, mouse_pos)
         elif self.stage in (STAGE_ROLLING, STAGE_FROZEN):
-            self._draw_dice(screen, mouse_pos)
+            self._draw_dice(content, mouse_pos)
         elif self.stage == STAGE_RESULT:
-            self._draw_result(screen)
+            self._draw_result(content)
+
+        content.set_alpha(int(self._alpha))
+        screen.blit(content, (0, 0))
 
     def _draw_prompt(self, screen, mouse_pos):
         cx = SCREEN_WIDTH // 2
