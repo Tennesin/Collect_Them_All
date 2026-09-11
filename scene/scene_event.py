@@ -2,7 +2,7 @@ import random
 import pygame
 from settings import *
 from widgets import Button, get_font, draw_wrapped_text_centered
-from game.image_manager import ImageManager
+from game.rendering.image_manager import ImageManager
 from game.tween import Tween, ease_out_cubic
 from scene.scenes import Scene
 

@@ -97,11 +97,11 @@ class Player:
         """Добавляет уже готовый экземпляр эффекта."""
         if effect is None or effect.duration_turns <= 0:
             return
-        from game.effect_reader import EffectReader
+        from game.effects.effect_reader import EffectReader
         EffectReader.notify_effect_applied(self, effect)
         self.active_effects.append(effect)
 
     def tick_effects(self, context=None):
         """Тикает длительность всех активных эффектов на один черёд."""
-        from game.effect_reader import EffectReader
+        from game.effects.effect_reader import EffectReader
         EffectReader.tick(self, context)

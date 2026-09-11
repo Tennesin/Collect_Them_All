@@ -1,8 +1,8 @@
 import pygame
 import math
 from settings import *
-from game.image_manager import ImageManager
-from game.field_texture import CELL_TEXTURE_VARIANTS
+from game.rendering.image_manager import ImageManager
+from game.generation.field_texture import CELL_TEXTURE_VARIANTS
 
 class Renderer:
     """Только отрисовка игрового поля и фигур на нём."""
@@ -154,7 +154,7 @@ class Renderer:
         self.screen.blit(icon, rect)
 
     def _draw_cell_texture(self, x, y):
-        """Рисует псевдо-текстуру клетки (маленькие светлые пятна)."""
+        """Рисует псевдо-текстуру клетки (маленькие пятна в форме эллипсов)."""
         variant = self.field.texture_variants[x][y]
         if variant is None:
             return
@@ -163,7 +163,7 @@ class Renderer:
             p2 = self.camera.project(x + rel_x + rel_w, y + rel_y + rel_h)
             rect = pygame.Rect(0, 0, abs(p2[0] - p1[0]), abs(p2[1] - p1[1]))
             rect.topleft = (min(p1[0], p2[0]), min(p1[1], p2[1]))
-            pygame.draw.rect(self.screen, FIELD_TEXTURE_COLOR, rect)
+            pygame.draw.ellipse(self.screen, FIELD_TEXTURE_COLOR, rect)
 
     def draw_events(self):
         """Иконки активных событий — только те, что сейчас в зоне видимости игрока."""

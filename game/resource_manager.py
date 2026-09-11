@@ -4,7 +4,7 @@ from game.game_config import (
     SILVER_CELL_BASE_DENSITY, SILVER_CELL_DENSITY_PER_PLAYER, MIN_SILVER_CELLS_ABSOLUTE,
     SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE, SILVER_RESPAWN_CYCLES,
 )
-from game.effect_reader import EffectReader
+from game.effects.effect_reader import EffectReader
 
 class ResourceManager:
 

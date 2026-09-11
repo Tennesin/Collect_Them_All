@@ -1,7 +1,7 @@
 import time
 import pygame
 from settings import *
-from game.image_manager import ImageManager
+from game.rendering.image_manager import ImageManager
 
 _font_cache = {}
 

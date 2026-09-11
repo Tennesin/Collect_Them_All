@@ -3,12 +3,12 @@ import pygame
 from settings import *
 from widgets import get_font
 from game.game_config import FINISH_MODE_INSTANT, FINISH_MODE_RANKED
-from game.effect_reader import EffectReader
-from game.camera import Camera
+from game.effects.effect_reader import EffectReader
+from game.rendering.camera import Camera
 from game.field import Field
-from game.gold_cell_generator import GoldCellGenerator
-from game.obstacle_generator import ObstacleGenerator
-from game.field_texture import FieldTextureGenerator
+from game.generation.gold_cell_generator import GoldCellGenerator
+from game.generation.obstacle_generator import ObstacleGenerator
+from game.generation.field_texture import FieldTextureGenerator
 from game.resource_manager import ResourceManager
 from game.event_manager import EventManager
 from game.fog_of_war import FogOfWar
@@ -16,9 +16,9 @@ from game.player import Player
 from game.tween import Tween, ease_out_cubic
 from game.turn_manager import TurnManager
 from game.input_handler import InputHandler
-from game.renderer import Renderer
+from game.rendering.renderer import Renderer
 from game.ui import PlayerPanel
-from game.effect_context import EffectContext
+from game.effects.effect_context import EffectContext
 from scene.scenes import Scene
 
 class GameplayScene(Scene):

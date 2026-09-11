@@ -2,7 +2,7 @@ import os
 import pygame
 from settings import *
 from widgets import Button, ScrollArea, get_font
-from game.image_manager import ImageManager
+from game.rendering.image_manager import ImageManager
 from game.event_manager import EVENTS_ROOT
 from scene.scenes import Scene
 

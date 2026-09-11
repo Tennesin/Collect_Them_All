@@ -1,7 +1,7 @@
 import pygame
 from settings import *
 from widgets import get_font
-from game.image_manager import ImageManager
+from game.rendering.image_manager import ImageManager
 
 class PlayerPanel:
 
