@@ -6,8 +6,9 @@ from game.game_config import FINISH_MODE_INSTANT, FINISH_MODE_RANKED
 from game.effect_reader import EffectReader
 from game.camera import Camera
 from game.field import Field
-from game.obstacle_generator import ObstacleGenerator
 from game.gold_cell_generator import GoldCellGenerator
+from game.obstacle_generator import ObstacleGenerator
+from game.field_texture import FieldTextureGenerator
 from game.resource_manager import ResourceManager
 from game.event_manager import EventManager
 from game.fog_of_war import FogOfWar
@@ -27,7 +28,7 @@ class GameplayScene(Scene):
         self.settings = settings
         self.paused = False
         self.winner = None
-        self.placements = []  # порядок финиша: 1-е место первым
+        self.placements = []
         self._victory_alpha = 0
         self._victory_fade = None
         screen = self.manager.app.screen
@@ -44,6 +45,7 @@ class GameplayScene(Scene):
         total_cells = settings.map_width * settings.map_height
         max_obstacle_cells = int(total_cells * settings.obstacle_fraction)
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
+        FieldTextureGenerator(self.field).generate()
 
         self.resource_manager = ResourceManager(
             self.field, settings.player_count,

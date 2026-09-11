@@ -9,6 +9,7 @@ class Field:
         self.height = height
         self.obstacle_grid = [[False] * height for _ in range(width)]
         self.obstacle_type = [[None] * height for _ in range(width)]
+        self.texture_variants = [[None] * height for _ in range(width)]
         self.wall_segments = []
         self._obstacle_count = 0
 
