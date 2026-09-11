@@ -1,7 +1,10 @@
 import os
 import pygame
 
-IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "images")
+IMAGES_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "images",
+)
 
 # Общий модульный кэш — по аналогии с _font_cache в widgets.py.
 _raw_cache = {}
