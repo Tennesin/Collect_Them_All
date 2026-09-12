@@ -36,6 +36,7 @@ class EventScene(Scene):
         self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
         self._closing = False
         self._pending_action = None
+        self._pending_skip_turn = False
 
         cx = SCREEN_WIDTH // 2
         btn_w, btn_h = 200, 52
@@ -52,6 +53,13 @@ class EventScene(Scene):
 
     def on_exit(self):
         self.gameplay_scene.turn_manager.moves_trigger_suppressed = False
+
+    def _finish_and_close(self):
+        """Закрывает попап как обычно и только затем, если нужно, завершает
+        черёд игрока — чтобы результат события успел быть показан."""
+        self.manager.pop()
+        if self._pending_skip_turn:
+            self.gameplay_scene.turn_manager.end_turn_early()
 
     def _start_closing(self, action):
         if self._closing:
@@ -79,7 +87,7 @@ class EventScene(Scene):
         elif self.stage == STAGE_RESULT:
             if self.continue_button.collidepoint(event.pos):
                 if self.manager.current is self:
-                    self._start_closing(self.manager.pop)
+                    self._start_closing(self._finish_and_close)
 
     # --- обновление ---
 
@@ -149,7 +157,7 @@ class EventScene(Scene):
             self.player.add_effect(effect)
             self.gameplay_scene.refresh_effects_immediately(self.player)
         if outcome.skip_turn:
-            self.gameplay_scene.turn_manager.end_turn_early()
+            self._pending_skip_turn = True
 
     # --- отрисовка ---
 

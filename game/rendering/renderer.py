@@ -2,7 +2,6 @@ import pygame
 import math
 from settings import *
 from game.rendering.image_manager import ImageManager
-from game.generation.field_texture import CELL_TEXTURE_VARIANTS
 
 class Renderer:
     """Только отрисовка игрового поля и фигур на нём."""
@@ -67,7 +66,6 @@ class Renderer:
                         FIELD_COLOR_VARIANTS[0]
                     pygame.draw.polygon(self.screen, color, points)
                     pygame.draw.polygon(self.screen, GRID_COLOR, points, 1)
-                    self._draw_cell_texture(x, y)
 
         self.draw_walls(explored)
         self._draw_fog_dimming(explored, viewer.visible_cells)
@@ -157,20 +155,6 @@ class Renderer:
         screen_pos = self.camera.project(cell_x + 0.5, cell_y + 0.5)
         rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
         self.screen.blit(icon, rect)
-
-    def _draw_cell_texture(self, x, y):
-        """Рисует псевдо-текстуру клетки — эллипсы разных оттенков из палитры."""
-        variant = self.field.texture_variants[x][y]
-        if variant is None:
-            return
-        shapes = CELL_TEXTURE_VARIANTS[variant]
-        colors = self.field.texture_colors[x][y]
-        for (rel_x, rel_y, rel_w, rel_h), color in zip(shapes, colors):
-            p1 = self.camera.project(x + rel_x, y + rel_y)
-            p2 = self.camera.project(x + rel_x + rel_w, y + rel_y + rel_h)
-            rect = pygame.Rect(0, 0, abs(p2[0] - p1[0]), abs(p2[1] - p1[1]))
-            rect.topleft = (min(p1[0], p2[0]), min(p1[1], p2[1]))
-            pygame.draw.ellipse(self.screen, color, rect)
 
     def draw_events(self):
         """Иконки активных событий — только те, что сейчас в зоне видимости игрока."""
