@@ -73,11 +73,12 @@ class Player:
             self.path.pop(0)
             if not self.path:
                 self.moving = False
+            self._notify_move()
             self._notify_cell_reached()
         else:
             self.pos_x += dx / dist * step
             self.pos_y += dy / dist * step
-        self._notify_move()
+            self._notify_move()
 
     def _notify_move(self):
         if self.on_move:
