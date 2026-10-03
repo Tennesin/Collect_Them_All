@@ -95,7 +95,6 @@ class EventManager:
         self.field = field
         self.player_count = player_count
         self.event_density = event_density
-        self.registry = registry or EventRegistry()
 
         self.active_events = {}  # {(x, y): EventDefinition}
         self._occupied_provider = None  # callable() -> set[(x, y)] клетки, занятые игроками

@@ -136,3 +136,34 @@ class PlayerPanel:
             surf = get_font(FONT_SIZE_HINT).render(f"{effect.label}: {remaining:.1f} с", True, color)
             screen.blit(surf, (x, y))
             y += surf.get_height() + 2
+
+class NotificationFeed:
+    """Короткие сообщения в левом верхнем углу игрового поля (например, «бот открыл сундук»)."""
+
+    MAX_ITEMS = 4
+
+    def __init__(self):
+        self._items = []   # [текст, цвет, осталось секунд]
+
+    def add(self, text, color, duration=NOTIFICATION_DURATION):
+        self._items.append([text, color, duration])
+        del self._items[:-self.MAX_ITEMS]
+
+    def update(self, dt):
+        for item in self._items:
+            item[2] -= dt
+        self._items = [item for item in self._items if item[2] > 0]
+
+    def draw(self, screen):
+        font = get_font(FONT_SIZE_HINT)
+        pad = 6
+        y = 10
+        for text, color, remaining in self._items:
+            surf = font.render(text, True, color)
+            box = pygame.Surface((surf.get_width() + pad * 2, surf.get_height() + pad * 2), pygame.SRCALPHA)
+            box.fill(NOTIFICATION_BG_COLOR)
+            box.blit(surf, (pad, pad))
+            fade = min(1.0, remaining / NOTIFICATION_FADE)
+            box.set_alpha(int(255 * fade))
+            screen.blit(box, (10, y))
+            y += box.get_height() + 4

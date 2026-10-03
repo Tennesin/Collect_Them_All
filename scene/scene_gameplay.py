@@ -6,7 +6,7 @@ from game.world import GameWorld
 from game.tween import Tween, ease_out_cubic
 from game.input_handler import InputHandler
 from game.rendering.renderer import Renderer
-from game.ui import PlayerPanel
+from game.ui import PlayerPanel, NotificationFeed
 from scene.scenes import Scene
 from bot.bot_factory import create_bot_controller
 
@@ -33,6 +33,8 @@ class GameplayScene(Scene):
         self.camera = Camera(GAME_AREA_WIDTH, SCREEN_HEIGHT, settings.map_width, settings.map_height,
                              INITIAL_SCALE, MAX_SCALE, smooth_speed=CAMERA_SMOOTH_SPEED)
         self.world.on_event_triggered = self._on_event_triggered
+        self.notifications = NotificationFeed()
+        self.world.on_bot_event = self._on_bot_event
 
         self.input_handler = InputHandler(self.camera, self.field, self.human)
         self.renderer = Renderer(
@@ -46,6 +48,21 @@ class GameplayScene(Scene):
     def _on_event_triggered(self, player, event):
         from scene.scene_event import EventScene
         self.manager.push(EventScene(self.manager, self, player, event))
+
+    def _on_bot_event(self, player, event, outcome):
+        """Показываем только то, что человек видит своими глазами."""
+        if (player.grid_x, player.grid_y) not in self.human.visible_cells:
+            return
+        parts = []
+        if outcome.gold_delta:
+            parts.append(f"{outcome.gold_delta:+d} зол.")
+        if outcome.silver_delta:
+            parts.append(f"{outcome.silver_delta:+d} сер.")
+        if outcome.displacement_cells:
+            parts.append("отброшен")
+        title = EVENT_TITLES_RU.get(event.id, event.id)
+        result = ", ".join(parts) if parts else "без добычи"
+        self.notifications.add(f"{PLAYER_NAMES_RU[player.color_key]}: {title} ({result})", player.color)
 
     # --- Жизненный цикл сцены ---
 
@@ -82,6 +99,7 @@ class GameplayScene(Scene):
         if self.world.winner is not None:
             return
         self.world.update(dt)
+        self.notifications.update(dt)
         if self.camera.follow:
             self.camera.center_on(self.human.pos_x, self.human.pos_y)
         self.camera.update(dt)
@@ -90,6 +108,7 @@ class GameplayScene(Scene):
 
     def draw(self, screen):
         self.renderer.draw()
+        self.notifications.draw(screen)
         self.player_panel.draw(screen)
         if self.world.winner is not None:
             self._draw_victory_overlay(screen)

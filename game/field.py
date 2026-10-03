@@ -132,6 +132,36 @@ class Field:
             return []
         return self._restore_path(visited, start, goal)
 
+    def optimistic_tree(self, start, known_cells, avoid=None):
+        """Один BFS от start с оптимистичным допущением (как find_path_optimistic):
+        неизвестные клетки проходимы, известные препятствия нет. avoid - клетки,
+        которые нельзя проходить насквозь. Возвращает (расстояния, родители)."""
+        distances = {start: 0}
+        parents = {start: None}
+        queue = deque([start])
+        while queue:
+            current = queue.popleft()
+            cx, cy = current
+            next_distance = distances[current] + 1
+            for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                nxt = (cx + dx, cy + dy)
+                if nxt in distances or not self.in_bounds(*nxt):
+                    continue
+                if avoid and nxt in avoid:
+                    continue
+                if nxt in known_cells and not self.is_free(*nxt):
+                    continue
+                distances[nxt] = next_distance
+                parents[nxt] = current
+                queue.append(nxt)
+        return distances, parents
+
+    def path_from_tree(self, parents, start, goal):
+        """Путь до goal по дереву родителей из optimistic_tree (пустой, если цель недостижима)."""
+        if goal not in parents:
+            return []
+        return self._restore_path(parents, start, goal)
+
     def bfs_distances(self, source):
         """Расстояния (в шагах) от source до всех достижимых свободных клеток: {клетка: расстояние}."""
         distances = {source: 0}

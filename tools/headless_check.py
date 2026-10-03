@@ -4,7 +4,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from bot.bot_factory import create_bot_controller
+from bot.bot_factory import create_bot_controller as _factory
 from game.game_config import GameSettings
 from game.world import GameWorld
 from settings import PLAYER_COLORS, PLAYER_COLOR_ORDER
@@ -15,8 +15,21 @@ PALETTE = [(key, PLAYER_COLORS[key]) for key in PLAYER_COLOR_ORDER]
 def build_world(seed):
     settings = GameSettings(map_width=22, map_height=22, bot_count=4, bot_difficulty="hard", seed=seed)
     settings.clamp()
-    return GameWorld(settings, PALETTE, controller_factory=create_bot_controller)
+    return GameWorld(settings, PALETTE, controller_factory=_factory)
 
+def run_race(seed, difficulty, size=22, limit_seconds=900.0):
+    """Все 5 участников (включая «человека») управляются ботами. Возвращает (победитель, время)."""
+    settings = GameSettings(map_width=size, map_height=size, bot_count=4,
+                            bot_difficulty=difficulty, seed=seed)
+    settings.clamp()
+    world = GameWorld(settings, PALETTE, controller_factory=_factory)
+    for player in world.players:
+        if player.controller is None:   # «человек»: даём ему бота того же уровня
+            player.is_bot = True
+            player.controller = _factory(world, player, difficulty, 0, len(world.players))
+    while world.winner is None and world.clock.match_time < limit_seconds:
+        world.update(0.05)
+    return world.winner, world.clock.match_time
 
 def main():
     started = time.perf_counter()
@@ -38,6 +51,12 @@ def main():
     print("Игроков:", len(world.players), "| ботов:", sum(p.is_bot for p in world.players))
     print("pygame загружен:", "pygame" in sys.modules)
 
+    print("--- Гонки ботов, карта 22x22 ---")
+    for difficulty in ("easy", "normal", "hard"):
+        for seed in (1, 2, 3):
+            winner, seconds = run_race(seed, difficulty)
+            who = winner.color_key if winner else "никто (лимит времени)"
+            print(f"{difficulty:6} seed={seed}: {who}, {seconds:.0f} с")
 
 if __name__ == "__main__":
     main()

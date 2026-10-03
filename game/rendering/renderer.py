@@ -28,7 +28,7 @@ class Renderer:
         self.screen.fill(BG_COLOR)
         hovered_cell = self.input_handler.get_hovered_cell()
         viewer = self.viewer
-        explored = viewer.explored_cells
+        explored = viewer.known_cells
 
         min_x, min_y, max_x, max_y = self._visible_cell_bounds()
 
