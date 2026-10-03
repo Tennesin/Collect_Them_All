@@ -43,9 +43,19 @@ class EventRegistry:
     """Читает содержимое events/ один раз при создании. Ничего не знает
     про игровое поле, игроков или ход партии — чистый каталог доступных событий."""
 
+    _shared = None
+
+    @classmethod
+    def shared(cls):
+        """Один реестр на всё приложение: определения событий не хранят состояния партии."""
+        if cls._shared is None:
+            cls._shared = cls()
+        return cls._shared
+
     def __init__(self):
         self._definitions = {}
         self._load_all()
+        self.registry = registry or EventRegistry.shared()
 
     def _load_all(self):
         if not os.path.isdir(EVENTS_ROOT):

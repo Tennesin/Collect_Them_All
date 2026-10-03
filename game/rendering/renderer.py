@@ -34,11 +34,7 @@ class Renderer:
 
         for x in range(min_x, max_x):
             for y in range(min_y, max_y):
-                p1 = self.camera.project(x, y)
-                p2 = self.camera.project(x + 1, y)
-                p3 = self.camera.project(x + 1, y + 1)
-                p4 = self.camera.project(x, y + 1)
-                points = [p1, p2, p3, p4]
+                points = self._cell_points(x, y)
 
                 if (x, y) not in explored:
                     pygame.draw.polygon(self.screen, FOG_COLOR, points)
@@ -76,6 +72,12 @@ class Renderer:
         max_x = min(self.field.width, int(wx1) + 2)
         max_y = min(self.field.height, int(wy1) + 2)
         return min_x, min_y, max_x, max_y
+
+    def _cell_points(self, x, y):
+        """Четыре угла клетки на экране: считаем один угол и прибавляем scale."""
+        x0, y0 = self.camera.project(x, y)
+        s = self.camera.scale
+        return [(x0, y0), (x0 + s, y0), (x0 + s, y0 + s), (x0, y0 + s)]
 
     def draw_walls(self, explored):
         if not self.field.wall_segments:
@@ -119,18 +121,18 @@ class Renderer:
                         pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
 
     def _draw_fog_dimming(self, explored, visible):
-        remembered = explored - visible
-        if not remembered:
-            return
+        min_x, min_y, max_x, max_y = self._visible_cell_bounds()
         overlay = self._fog_overlay
         overlay.fill((0, 0, 0, 0))
-        for x, y in remembered:
-            p1 = self.camera.project(x, y)
-            p2 = self.camera.project(x + 1, y)
-            p3 = self.camera.project(x + 1, y + 1)
-            p4 = self.camera.project(x, y + 1)
-            pygame.draw.polygon(overlay, FOG_DIM_COLOR, [p1, p2, p3, p4])
-        self.screen.blit(overlay, (0, 0))
+        drawn = False
+        for x in range(min_x, max_x):
+            for y in range(min_y, max_y):
+                cell = (x, y)
+                if cell in explored and cell not in visible:
+                    pygame.draw.polygon(overlay, FOG_DIM_COLOR, self._cell_points(x, y))
+                    drawn = True
+        if drawn:
+            self.screen.blit(overlay, (0, 0))
 
     def draw_resources(self):
         icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))

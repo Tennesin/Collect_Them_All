@@ -8,7 +8,7 @@ class Player:
     """Отвечает за собственное состояние: позицию, движение по пути, ресурсы и эффекты."""
 
     def __init__(self, field, start_cell=(0, 0), base_speed=PLAYER_BASE_SPEED,
-                 color_key="red", color=(255, 255, 255)):
+                 color_key="red", color=(255, 255, 255), is_bot=False):
         self.field = field
         self.grid_x, self.grid_y = start_cell   # последняя достигнутая клетка
         self.pos_x = self.grid_x + 0.5
@@ -18,6 +18,8 @@ class Player:
 
         self.color_key = color_key
         self.color = color
+        self.is_bot = is_bot
+        self.controller = None   # у бота: объект с методом update(dt); у человека None (ввод идёт через InputHandler)
 
         self.gold = STARTING_GOLD
         self.silver = STARTING_SILVER
@@ -27,6 +29,7 @@ class Player:
 
         self.visible_cells = set()
         self.explored_cells = set()
+        self.known_cells = self.explored_cells   # что игрок "знает" сейчас: explored (+вся карта при полной видимости)
         self.vision_dirty = False  # True -> мир пересчитает обзор в ближайшем кадре
 
         self.on_cell_reached = None

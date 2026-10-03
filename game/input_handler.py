@@ -42,7 +42,7 @@ class InputHandler:
             return None
         player = self.player
         passable = player.ignores_obstacles or self.field.is_free(*cell)
-        if passable and cell in player.explored_cells:
+        if passable and cell in player.known_cells:
             return cell
         return None
 
@@ -81,13 +81,13 @@ class InputHandler:
         player = self.player
         if not player.ignores_obstacles and not self.field.is_free(*goal):
             return
-        if goal not in player.explored_cells:
+        if goal not in player.known_cells:
             return
 
         start = player.anchor_cell
         path = self.field.find_path(
             start, goal,
-            allowed_cells=player.explored_cells,
+            allowed_cells=player.known_cells,
             ignore_obstacles=player.ignores_obstacles,
         )
         if goal != start and not path:

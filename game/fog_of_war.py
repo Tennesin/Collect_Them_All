@@ -7,15 +7,21 @@ class FogOfWar:
         self._gold_aura = self._build_gold_aura()
         self._win_aura = self._build_win_aura()
         self._full_map_cache = None
+        self._block_grid = [
+            [field.obstacle_type[x][y] == 'block' for y in range(field.height)]
+            for x in range(field.width)
+        ]
 
     def update_player(self, player):
-        if self._has_full_map_vision(player):
-            visible = self._full_map_cells()
-        else:
-            radius = self._effective_radius(player)
-            visible = self.compute_visible(player.grid_x, player.grid_y, radius=radius)
-        player.visible_cells = visible
+        radius = self._effective_radius(player)
+        visible = self.compute_visible(player.grid_x, player.grid_y, radius=radius)
         player.explored_cells |= visible
+        if self._has_full_map_vision(player):
+            player.visible_cells = self._full_map_cells()
+            player.known_cells = player.visible_cells
+        else:
+            player.visible_cells = visible
+            player.known_cells = player.explored_cells
 
     def compute_visible(self, origin_x, origin_y, radius=None):
         field = self.field
@@ -87,22 +93,18 @@ class FogOfWar:
         return aura
 
     def _has_line_of_sight(self, x0, y0, x1, y1):
-        field = self.field
-        for cx, cy in self._bresenham_cells(x0, y0, x1, y1):
-            if field.obstacle_type[cx][cy] == 'block':
-                return False
-        return True
-
-    @staticmethod
-    def _bresenham_cells(x0, y0, x1, y1):
-        cells = []
+        """Брезенхэм без списка: проверяет клетки строго между началом и концом,
+        останавливается на первом блоке."""
+        if x0 == x1 and y0 == y1:
+            return True
+        blocks = self._block_grid
         dx = abs(x1 - x0)
         dy = -abs(y1 - y0)
         sx = 1 if x0 < x1 else -1
         sy = 1 if y0 < y1 else -1
         err = dx + dy
         x, y = x0, y0
-        while (x, y) != (x1, y1):
+        while True:
             e2 = 2 * err
             if e2 >= dy:
                 err += dy
@@ -110,6 +112,7 @@ class FogOfWar:
             if e2 <= dx:
                 err += dx
                 y += sy
-            if (x, y) != (x1, y1):
-                cells.append((x, y))
-        return cells
+            if x == x1 and y == y1:
+                return True
+            if blocks[x][y]:
+                return False

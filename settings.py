@@ -52,6 +52,12 @@ PLAYER_NAMES_RU = {
     "pink": "Розовый",
 }
 
+BOT_DIFFICULTY_NAMES_RU = {
+    "easy": "Лёгкий",
+    "normal": "Средний",
+    "hard": "Сложный",
+}
+
 # --- UI (меню, настройки, пауза, правая панель) ---
 FONT_NAME = None
 FONT_SIZE_TITLE = 48

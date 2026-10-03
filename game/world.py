@@ -20,11 +20,16 @@ from game.resource_manager import ResourceManager
 class GameWorld:
     """Игровой мир без отрисовки: поле, акторы, менеджеры, часы и правила партии."""
 
-    def __init__(self, settings, player_palette):
-        """player_palette: список (color_key, rgb) по порядку игроков."""
+    def __init__(self, settings, player_palette, controller_factory=None):
+        """player_palette: список (color_key, rgb) по порядку игроков.
+        controller_factory(world, player, difficulty, index, total) -> контроллер бота.
+        Мир ничего не знает про пакет bot/: фабрику передаёт тот, кто собирает партию."""
+        if settings.seed is not None:
+            random.seed(settings.seed)
         self.settings = settings
         self.winner = None
         self.on_event_triggered = None  # (player, event_definition)
+        self.on_bot_event = None  # (player, event_definition, outcome): бот разрешил событие (для всплывающих подсказок)
         self.event_popup_open = False  # True, пока у человека открыто окно события
 
         self._pending_event_players = []  # игроки, которых телепортировало на клетку с событием
@@ -63,6 +68,7 @@ class GameWorld:
         self.clock.every(GOLD_YIELD_INTERVAL, self.resource_manager.tick_gold_deposits)
         self.clock.every(SILVER_RESPAWN_INTERVAL, self.resource_manager.respawn_silver)
         self.clock.every(EVENT_RESPAWN_INTERVAL, self.event_manager.respawn)
+        self._attach_controllers(controller_factory)
 
     # --- Построение ---
 
@@ -85,12 +91,23 @@ class GameWorld:
             color_key, color = player_palette[i]
             player = Player(
                 self.field, start_cell=self.field.start_cell, base_speed=PLAYER_BASE_SPEED,
-                color_key=color_key, color=color,
+                color_key=color_key, color=color, is_bot=(i > 0),
             )
             player.on_cell_reached = self._make_cell_reached_handler(player)
             self.fog_of_war.update_player(player)
             players.append(player)
         return players
+
+    def _attach_controllers(self, factory):
+        """Подключает к ботам их контроллеры. Человек контроллера не имеет."""
+        bots = [p for p in self.players if p.is_bot]
+        if not bots:
+            return
+        if factory is None:
+            print("[GameWorld] Боты есть, а фабрики контроллеров нет - боты будут стоять на месте.")
+            return
+        for index, bot in enumerate(bots):
+            bot.controller = factory(self, bot, self.settings.bot_difficulty, index, len(bots))
 
     # --- Провайдеры для менеджеров ---
 
@@ -118,6 +135,8 @@ class GameWorld:
         self.clock.update(dt)
 
         for player in self.players:
+            if player.controller is not None:
+                player.controller.update(dt)
             EffectReader.update(player, dt, self.effect_context)
             EffectReader.tick(player, dt, self.effect_context)
             player.trim_blocked_path()
@@ -144,16 +163,18 @@ class GameWorld:
                 return
 
     def _flush_pending_events(self):
-        """Открывает событие под игроком, которого телепортировало на его клетку.
-        Откладываем, чтобы попап не открывался поверх другого попапа."""
-        if self.event_popup_open:
+        """Открывает события под игроками, которых телепортировало на их клетку.
+        Человеку событие откладывается, пока открыто другое окно; боты не ждут."""
+        if not self._pending_event_players:
             return
-        while self._pending_event_players:
-            player = self._pending_event_players.pop(0)
+        pending, self._pending_event_players = self._pending_event_players, []
+        for player in pending:
+            if not player.is_bot and self.event_popup_open:
+                self._pending_event_players.append(player)
+                continue
             event = self.event_manager.consume_at(player.grid_x, player.grid_y)
             if event is not None:
                 self._trigger_event(player, event)
-                return
 
     # --- Обработка клетки ---
 
@@ -178,8 +199,15 @@ class GameWorld:
             self._trigger_event(player, event)
 
     def _trigger_event(self, player, event):
-        """Обрывает маршрут и просит слой представления показать событие."""
+        """Обрывает маршрут. Человеку показывает окно, бот разрешает событие сразу."""
         player.path = []
+        if player.is_bot:
+            outcome, _effect = self.event_resolver.resolve_now(
+                player, event, self.event_resolver.roll()
+            )
+            if self.on_bot_event:
+                self.on_bot_event(player, event, outcome)
+            return
         if self.on_event_triggered:
             self.on_event_triggered(player, event)
 

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 # --- Границы значений, которые задаются на экране настроек ---
 MIN_MAP_SIZE = 11
@@ -8,9 +9,12 @@ MIN_OBSTACLE_PERCENT = 10
 MAX_OBSTACLE_PERCENT = 35
 DEFAULT_OBSTACLE_PERCENT = 20
 
-MIN_PLAYERS = 1
-MAX_PLAYERS = 1
-DEFAULT_PLAYERS = 1
+MIN_BOT_COUNT = 0
+MAX_BOT_COUNT = 4
+DEFAULT_BOT_COUNT = 0
+
+BOT_DIFFICULTY_ORDER = ["easy", "normal", "hard"]
+DEFAULT_BOT_DIFFICULTY = "normal"
 
 MIN_VISION_RADIUS = 3
 MAX_VISION_RADIUS = 10
@@ -87,19 +91,23 @@ def max_gold_cells_for_map(width, height):
 class GameSettings:
     map_width: int = DEFAULT_MAP_SIZE
     map_height: int = DEFAULT_MAP_SIZE
+    bot_count: int = DEFAULT_BOT_COUNT
+    bot_difficulty: str = DEFAULT_BOT_DIFFICULTY
     obstacle_percent: int = DEFAULT_OBSTACLE_PERCENT
-    player_count: int = DEFAULT_PLAYERS
     win_gold_required: int = DEFAULT_WIN_GOLD
     win_silver_required: int = DEFAULT_WIN_SILVER
     gold_cell_count: int = DEFAULT_GOLD_CELLS
     vision_radius: int = DEFAULT_VISION_RADIUS
     event_density_percent: int = DEFAULT_EVENT_DENSITY_PERCENT
+    seed: Optional[int] = None
 
     def clamp(self):
         self.map_width = max(MIN_MAP_SIZE, min(MAX_MAP_SIZE, self.map_width))
         self.map_height = max(MIN_MAP_SIZE, min(MAX_MAP_SIZE, self.map_height))
         self.obstacle_percent = max(MIN_OBSTACLE_PERCENT, min(MAX_OBSTACLE_PERCENT, self.obstacle_percent))
-        self.player_count = max(MIN_PLAYERS, min(MAX_PLAYERS, self.player_count))
+        self.bot_count = max(MIN_BOT_COUNT, min(MAX_BOT_COUNT, self.bot_count))
+        if self.bot_difficulty not in BOT_DIFFICULTY_ORDER:
+            self.bot_difficulty = DEFAULT_BOT_DIFFICULTY
 
         self.win_gold_required = self._clamp_step(self.win_gold_required, MIN_WIN_GOLD, MAX_WIN_GOLD, WIN_GOLD_STEP)
         self.win_silver_required = self._clamp_step(
@@ -124,6 +132,11 @@ class GameSettings:
     def obstacle_fraction(self) -> float:
         """Доля препятствий в виде числа 0..1 — то, что реально нужно ObstacleGenerator."""
         return self.obstacle_percent / 100.0
+
+    @property
+    def player_count(self) -> int:
+        """Всего участников партии: человек + боты (по этому числу растёт плотность ресурсов и событий)."""
+        return 1 + self.bot_count
 
     @property
     def event_density_fraction(self) -> float:

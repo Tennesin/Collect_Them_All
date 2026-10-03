@@ -8,9 +8,9 @@ from game.game_config import (
     MIN_OBSTACLE_PERCENT, MAX_OBSTACLE_PERCENT,
     MIN_WIN_GOLD, MAX_WIN_GOLD, WIN_GOLD_STEP,
     MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP,
-    MIN_GOLD_CELLS,
-    MIN_VISION_RADIUS, MAX_VISION_RADIUS,
+    MIN_GOLD_CELLS, MIN_VISION_RADIUS, MAX_VISION_RADIUS,
     MIN_EVENT_DENSITY_PERCENT, MAX_EVENT_DENSITY_PERCENT, EVENT_DENSITY_PERCENT_STEP,
+    MIN_BOT_COUNT, MAX_BOT_COUNT, BOT_DIFFICULTY_ORDER,
     max_gold_cells_for_map,
 )
 from scene.scenes import Scene
@@ -65,6 +65,18 @@ class NewGameScene(Scene):
         # --- Раздел "Видимость" (новое) ---
         self.vision_minus_button = Button((self.CX_LEFT - 76, 292, 32, 32), "-")
         self.vision_plus_button = Button((self.CX_LEFT + 44, 292, 32, 32), "+")
+
+        # --- Раздел "Боты" ---
+        self.bots_minus_button = Button((self.CX_LEFT - 76, 392, 32, 32), "-")
+        self.bots_plus_button = Button((self.CX_LEFT + 44, 392, 32, 32), "+")
+        diff_w, diff_h, diff_gap = 78, 34, 8
+        diff_count = len(BOT_DIFFICULTY_ORDER)
+        diff_total = diff_w * diff_count + diff_gap * (diff_count - 1)
+        diff_x = self.CX_LEFT - diff_total // 2
+        self.difficulty_buttons = []
+        for i, key in enumerate(BOT_DIFFICULTY_ORDER):
+            rect = (diff_x + i * (diff_w + diff_gap), 456, diff_w, diff_h)
+            self.difficulty_buttons.append((Button(rect, BOT_DIFFICULTY_NAMES_RU[key]), key))
 
         # --- Раздел "События" ---
         self.events_density_slider = Slider(
@@ -177,6 +189,18 @@ class NewGameScene(Scene):
             self.settings.vision_radius = min(MAX_VISION_RADIUS, self.settings.vision_radius + 1)
             return
 
+        # --- Боты ---
+        if self.bots_minus_button.collidepoint(pos):
+            self.settings.bot_count = max(MIN_BOT_COUNT, self.settings.bot_count - 1)
+            return
+        if self.bots_plus_button.collidepoint(pos):
+            self.settings.bot_count = min(MAX_BOT_COUNT, self.settings.bot_count + 1)
+            return
+        for button, key in self.difficulty_buttons:
+            if button.collidepoint(pos):
+                self.settings.bot_difficulty = key
+                return
+
         # --- События ---
         if self.events_density_slider.rect.collidepoint(pos):
             self.events_density_slider.dragging = True
@@ -266,6 +290,22 @@ class NewGameScene(Scene):
         vision_surf = label_font.render(str(self.settings.vision_radius), True, TEXT_COLOR)
         screen.blit(vision_surf, vision_surf.get_rect(center=(cx_left, 308)))
         self.vision_plus_button.draw(screen, mouse_pos)
+
+        self._draw_divider(screen, cx_left, 340)
+        self._draw_section_header(screen, "БОТЫ", cx_left, 352)
+        self._draw_label(screen, hint_font, "Количество ботов", (cx_left, 380))
+        self.bots_minus_button.draw(screen, mouse_pos)
+        bots_surf = label_font.render(str(self.settings.bot_count), True, TEXT_COLOR)
+        screen.blit(bots_surf, bots_surf.get_rect(center=(cx_left, 408)))
+        self.bots_plus_button.draw(screen, mouse_pos)
+
+        self._draw_label(screen, hint_font, "Сложность", (cx_left, 444))
+        bots_enabled = self.settings.bot_count > 0
+        for button, key in self.difficulty_buttons:
+            button.enabled = bots_enabled
+            button.draw(screen, mouse_pos, font_size=FONT_SIZE_HINT)
+            if bots_enabled and self.settings.bot_difficulty == key:
+                pygame.draw.rect(screen, SELECTED_BORDER_COLOR, button.rect, 3, border_radius=4)
 
         # ============ ПРАВАЯ КОЛОНКА ============
 

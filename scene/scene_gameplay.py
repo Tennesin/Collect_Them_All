@@ -8,6 +8,7 @@ from game.input_handler import InputHandler
 from game.rendering.renderer import Renderer
 from game.ui import PlayerPanel
 from scene.scenes import Scene
+from bot.bot_factory import create_bot_controller
 
 class GameplayScene(Scene):
     """Слой представления: камера, ввод, отрисовка, оверлеи. Правила живут в GameWorld."""
@@ -20,7 +21,7 @@ class GameplayScene(Scene):
         screen = self.manager.app.screen
 
         palette = [(key, PLAYER_COLORS[key]) for key in PLAYER_COLOR_ORDER]
-        self.world = GameWorld(settings, palette)
+        self.world = GameWorld(settings, palette, controller_factory=create_bot_controller)
         self.human = self.world.human
 
         # Алиасы, чтобы Renderer и сцены-оверлеи не менялись
@@ -99,7 +100,8 @@ class GameplayScene(Scene):
         content.fill(PAUSE_OVERLAY_COLOR)
 
         name = PLAYER_NAMES_RU[winner.color_key]
-        title_surf = get_font(FONT_SIZE_TITLE - 8).render(f"Победил игрок: {name}", True, winner.color)
+        kind = "бот" if winner.is_bot else "игрок"
+        title_surf = get_font(FONT_SIZE_TITLE - 8).render(f"Победил {kind}: {name}", True, winner.color)
         content.blit(title_surf, title_surf.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20)))
 
         hint_surf = get_font(FONT_SIZE_HINT + 4).render("Esc — выйти в меню", True, TEXT_COLOR)
