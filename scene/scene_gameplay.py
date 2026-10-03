@@ -73,6 +73,13 @@ class GameplayScene(Scene):
             return
 
         self.input_handler.process_held_keys()
+        self.update_world_only(dt)
+
+    def update_world_only(self, dt):
+        """Шаг мира и камеры без обработки ввода. Его же вызывают оверлеи
+        (окно события), чтобы время в мире не останавливалось."""
+        if self.world.winner is not None:
+            return
         self.world.update(dt)
         if self.camera.follow:
             self.camera.center_on(self.human.pos_x, self.human.pos_y)

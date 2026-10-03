@@ -29,6 +29,9 @@ class EventScene(Scene):
         self.final_roll = None
         self._outcome_applied = False
         self._result_lines = []   # [(текст, цвет)] — строится один раз при применении исхода
+        self._outcome = None          # исход, полученный в _apply_outcome
+        self._pending_effect = None   # эффект создан, но ещё не наложен
+        self._committed = False       # отложенная часть исхода уже применена (или отменена)
 
         self._alpha = 0
         self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
@@ -46,6 +49,10 @@ class EventScene(Scene):
     def on_enter(self):
         self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
         self._closing = False
+        self.world.event_popup_open = True
+
+    def on_exit(self):
+        self.world.event_popup_open = False
 
     def _start_closing(self, action):
         if self._closing:
@@ -53,6 +60,13 @@ class EventScene(Scene):
         self._closing = True
         self._pending_action = action
         self._fade = Tween(self._alpha, 0, FADE_POPUP_OUT_DURATION, ease_out_cubic)
+
+    def _commit_and_close(self):
+        """Окно закрыто игроком: теперь запускаем эффект и смещение."""
+        if not self._committed and self._outcome is not None:
+            self._committed = True
+            self.world.event_resolver.commit(self.player, self._outcome, self._pending_effect)
+        self.manager.pop()
 
     # --- события ввода ---
 
@@ -73,20 +87,30 @@ class EventScene(Scene):
         elif self.stage == STAGE_RESULT:
             if self.continue_button.collidepoint(event.pos):
                 if self.manager.current is self:
-                    self._start_closing(self.manager.pop)
+                    self._start_closing(self._commit_and_close)
 
     # --- обновление ---
 
     def update(self, dt):
         self._alpha = self._fade.update(dt)
-        if self._closing:
-            if self._fade.finished:
-                action = self._pending_action
-                self._pending_action = None
-                if action:
-                    action()
+
+        if self._closing and self._fade.finished:
+            action = self._pending_action
+            self._pending_action = None
+            if action:
+                action()
             return
 
+        self.gameplay_scene.update_world_only(dt)
+
+        # Партия закончилась, пока окно было открыто: закрываем без применения исхода.
+        if self.world.winner is not None and not self._closing:
+            self._committed = True
+            self._start_closing(self.manager.pop)
+            return
+
+        if self._closing:
+            return
         if self.stage == STAGE_ROLLING:
             self._update_rolling(dt)
         elif self.stage == STAGE_FROZEN:
@@ -128,6 +152,8 @@ class EventScene(Scene):
 
     def _apply_outcome(self):
         outcome, effect = self.world.event_resolver.resolve(self.player, self.event, self.final_roll)
+        self._outcome = outcome
+        self._pending_effect = effect
         lines = []
         for label, value in (("Золото", outcome.gold_delta), ("Серебро", outcome.silver_delta)):
             if value:

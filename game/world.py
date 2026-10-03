@@ -25,6 +25,7 @@ class GameWorld:
         self.settings = settings
         self.winner = None
         self.on_event_triggered = None  # (player, event_definition)
+        self.event_popup_open = False  # True, пока у человека открыто окно события
 
         self._pending_event_players = []  # игроки, которых телепортировало на клетку с событием
 
@@ -145,6 +146,8 @@ class GameWorld:
     def _flush_pending_events(self):
         """Открывает событие под игроком, которого телепортировало на его клетку.
         Откладываем, чтобы попап не открывался поверх другого попапа."""
+        if self.event_popup_open:
+            return
         while self._pending_event_players:
             player = self._pending_event_players.pop(0)
             event = self.event_manager.consume_at(player.grid_x, player.grid_y)
