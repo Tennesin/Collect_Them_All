@@ -21,6 +21,7 @@ class EventScene(Scene):
     def __init__(self, manager, gameplay_scene, player, event_definition):
         super().__init__(manager)
         self.gameplay_scene = gameplay_scene
+        self.world = gameplay_scene.world
         self.player = player
         self.event = event_definition
 
@@ -151,11 +152,11 @@ class EventScene(Scene):
         if outcome.refill_moves:
             self.gameplay_scene.turn_manager.refill_moves(extra_cap=outcome.refill_extra_cap)
         if outcome.displacement_cells:
-            self.gameplay_scene.displace_player_randomly(self.player, outcome.displacement_cells)
+            self.world.displace_player_randomly(self.player, outcome.displacement_cells)
         if outcome.effect_factory:
             effect = outcome.effect_factory()
             self.player.add_effect(effect)
-            self.gameplay_scene.refresh_effects_immediately(self.player)
+            self.world.refresh_effects_immediately(self.player)
         if outcome.skip_turn:
             self._pending_skip_turn = True
 

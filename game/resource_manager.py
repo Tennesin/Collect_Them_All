@@ -18,12 +18,14 @@ class ResourceManager:
         self._cycles_since_silver_respawn = 0
         self._visible_provider = None  # клетки, видимые хотя бы одному игроку прямо сейчас
         self._event_provider = None  # клетки, занятые активным событием
+        self._occupied_provider = None  # клетки, на которых стоят акторы
         self._respawn_silver()
 
-    def bind_dynamic_providers(self, visible_provider=None, event_provider=None):
-        """GameplayScene вызывает это один раз после создания players и event_manager."""
+    def bind_dynamic_providers(self, visible_provider=None, event_provider=None, occupied_provider=None):
+        """Вызывается один раз после создания игроков и event_manager."""
         self._visible_provider = visible_provider
         self._event_provider = event_provider
+        self._occupied_provider = occupied_provider
 
     # --- Цикл ходов ---
 
@@ -59,6 +61,7 @@ class ResourceManager:
     def _collectible_free_cells(self):
         field = self.field
         event_cells = self._event_provider() if self._event_provider else set()
+        occupied = self._occupied_provider() if self._occupied_provider else set()
         return [
             (x, y)
             for x in range(field.width)
@@ -66,6 +69,7 @@ class ResourceManager:
             if field.is_free(x, y)
             and (x, y) not in field.reserved_cells
             and (x, y) not in event_cells
+            and (x, y) not in occupied
         ]
 
     # --- Сбор ресурсов ---

@@ -68,7 +68,9 @@ class FogOfWar:
     def _full_map_cells(self):
         if self._full_map_cache is None:
             field = self.field
-            self._full_map_cache = {(x, y) for x in range(field.width) for y in range(field.height)}
+            self._full_map_cache = frozenset(
+                (x, y) for x in range(field.width) for y in range(field.height)
+            )
         return self._full_map_cache
 
     # --- Внутреннее ---

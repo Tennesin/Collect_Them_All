@@ -14,9 +14,10 @@ class Field:
 
         # Победная клетка — всегда правый нижний угол поля.
         self.win_cell = (width - 1, height - 1)
+        self.start_cell = (0, 0)
 
         self.gold_cell_positions = []
-        self.reserved_cells = {self.win_cell}
+        self.reserved_cells = {self.win_cell, self.start_cell}
 
     def reserve_cell(self, x, y):
         self.reserved_cells.add((x, y))
