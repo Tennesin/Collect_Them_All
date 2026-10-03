@@ -1,108 +1,132 @@
 import math
-from settings import PLAYER_COLORS
-from game.game_config import STARTING_GOLD, STARTING_SILVER
+from game.game_config import (
+    STARTING_GOLD, STARTING_SILVER, PLAYER_BASE_SPEED,
+    MIN_SPEED_MULTIPLIER, MAX_SPEED_MULTIPLIER,
+)
 
 class Player:
-    """Отвечает только за собственное состояние: позицию, цвет и движение по пути."""
+    """Отвечает за собственное состояние: позицию, движение по пути, ресурсы и эффекты."""
 
-    def __init__(self, field, start_cell=(0, 0), speed=5.0, color_key="red"):
+    def __init__(self, field, start_cell=(0, 0), base_speed=PLAYER_BASE_SPEED,
+                 color_key="red", color=(255, 255, 255)):
         self.field = field
-        self.grid_x, self.grid_y = start_cell
+        self.grid_x, self.grid_y = start_cell   # последняя достигнутая клетка
         self.pos_x = self.grid_x + 0.5
         self.pos_y = self.grid_y + 0.5
-        self.path = []
-        self.moving = False
-        self.speed = speed
+        self.path = []                           # path[0] - клетка, к которой игрок идёт прямо сейчас
+        self.base_speed = base_speed
 
         self.color_key = color_key
-        self.color = PLAYER_COLORS[color_key]
+        self.color = color
 
-        # Личный бюджет игрока — собирается по всей карте.
         self.gold = STARTING_GOLD
         self.silver = STARTING_SILVER
 
-        # Текст предупреждения ("Недостаточно N золота...").
         self.warning_message = None
+        self.active_effects = []   # список экземпляров Effect
 
-        # Активные временные эффекты от событий: {effect_type: осталось_ходов}.
-        self.active_effects = []
-
-        # Туман войны.
         self.visible_cells = set()
         self.explored_cells = set()
+        self.vision_dirty = False  # True -> мир пересчитает обзор в ближайшем кадре
 
-        # Внешний наблюдатель (например, Camera.center_on), вызывается при каждом изменении позиции.
-        self.on_move = None
         self.on_cell_reached = None
 
-    def follow_path(self, path):
-        """Идёт по уже готовому (возможно, обрезанному снаружи) пути."""
-        if not path:
-            return False
-        self.path = list(path)
-        self.moving = True
-        self._notify_move()
-        return True
+    # --- Состояние движения ---
 
-    def stop_movement(self):
-        """Немедленно прерывает движение по нажатию SPACE."""
-        if not self.moving:
-            return False
-        self.path = []
-        self.moving = False
-        self.pos_x = self.grid_x + 0.5
-        self.pos_y = self.grid_y + 0.5
-        self._notify_move()
-        return True
+    @property
+    def moving(self):
+        return bool(self.path)
 
-    def update(self, dt):
-        if not self.moving or not self.path:
-            self.moving = False
-            return
-        next_cell = self.path[0]
-        target_wx = next_cell[0] + 0.5
-        target_wy = next_cell[1] + 0.5
-        dx = target_wx - self.pos_x
-        dy = target_wy - self.pos_y
-        dist = math.hypot(dx, dy)
-        step = self.speed * dt
-        if dist <= step:
-            self.pos_x = target_wx
-            self.pos_y = target_wy
-            self.grid_x, self.grid_y = next_cell
-            self.path.pop(0)
-            if not self.path:
-                self.moving = False
-            self._notify_move()
-            self._notify_cell_reached()
-        else:
-            self.pos_x += dx / dist * step
-            self.pos_y += dy / dist * step
-            self._notify_move()
-
-    def _notify_move(self):
-        if self.on_move:
-            self.on_move(self.pos_x, self.pos_y)
-
-    def _notify_cell_reached(self):
-        if self.on_cell_reached:
-            self.on_cell_reached()
+    @property
+    def anchor_cell(self):
+        """Клетка, от которой надо строить новый маршрут: ближайшая цель
+        текущего движения либо текущая клетка, если игрок стоит."""
+        return self.path[0] if self.path else (self.grid_x, self.grid_y)
 
     @property
     def ignores_obstacles(self):
         return any(getattr(effect, "ignores_obstacles", False) for effect in self.active_effects)
 
-    # --- Временные эффекты от событий ---
+    @property
+    def speed_multiplier(self):
+        value = 1.0
+        for effect in self.active_effects:
+            value *= getattr(effect, "speed_multiplier", 1.0)
+        return max(MIN_SPEED_MULTIPLIER, min(MAX_SPEED_MULTIPLIER, value))
+
+    @property
+    def speed(self):
+        return self.base_speed * self.speed_multiplier
+
+    # --- Команды ---
+
+    def follow_path(self, path):
+        """path строится от anchor_cell. Если игрок уже идёт, он доходит до
+        anchor_cell и дальше следует новому маршруту (без отката назад)."""
+        if self.path:
+            self.path = [self.path[0]] + list(path)
+        else:
+            self.path = list(path)
+
+    def stop_movement(self):
+        """Дотормаживает до центра ближайшей клетки маршрута."""
+        if not self.path:
+            return False
+        self.path = self.path[:1]
+        return True
+
+    def trim_blocked_path(self):
+        """Если эффект «проход сквозь стены» закончился, обрезает маршрут перед
+        первой непроходимой клеткой."""
+        if self.ignores_obstacles or not self.path:
+            return
+        for i, (x, y) in enumerate(self.path):
+            if not self.field.is_free(x, y):
+                self.path = self.path[:i]
+                if i == 0:  # шли в стену, остановились между клетками - возвращаем в центр
+                    self.pos_x = self.grid_x + 0.5
+                    self.pos_y = self.grid_y + 0.5
+                return
+
+    # --- Кадр ---
+
+    def update(self, dt):
+        if not self.path:
+            return
+        budget = self.speed * dt
+        while self.path and budget > 0:
+            next_cell = self.path[0]
+            target_x = next_cell[0] + 0.5
+            target_y = next_cell[1] + 0.5
+            dx = target_x - self.pos_x
+            dy = target_y - self.pos_y
+            dist = math.hypot(dx, dy)
+            if dist <= budget:
+                budget -= dist
+                self.pos_x = target_x
+                self.pos_y = target_y
+                self.grid_x, self.grid_y = next_cell
+                self.path.pop(0)
+                # обработчик может оборвать маршрут (событие, телепорт, финиш)
+                if self.on_cell_reached:
+                    self.on_cell_reached()
+            else:
+                self.pos_x += dx / dist * budget
+                self.pos_y += dy / dist * budget
+                budget = 0
+
+    # --- Временные эффекты ---
 
     def add_effect(self, effect):
-        """Добавляет уже готовый экземпляр эффекта."""
-        if effect is None or effect.duration_turns <= 0:
+        """Эффект с тем же stack_key не накладывается второй раз, а продлевает действующий."""
+        if effect is None or effect.duration_seconds <= 0:
             return
         from game.effects.effect_reader import EffectReader
+        for existing in self.active_effects:
+            if existing.key == effect.key:
+                existing.duration_seconds = max(existing.duration_seconds, effect.duration_seconds)
+                EffectReader.notify_effect_applied(self, existing)
+                return
         EffectReader.notify_effect_applied(self, effect)
         self.active_effects.append(effect)
-
-    def tick_effects(self, context=None):
-        """Тикает длительность всех активных эффектов на один черёд."""
-        from game.effects.effect_reader import EffectReader
-        EffectReader.tick(self, context)
+        self.vision_dirty = True

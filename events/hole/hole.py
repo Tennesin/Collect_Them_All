@@ -7,7 +7,7 @@ class PhantomWalkEffect(Effect):
     свободную клетку (см. EffectContext.push_out_of_obstacle_if_needed)."""
 
     label = "Тайный проход"
-    DURATION_TURNS = 2
+    DURATION_SECONDS = 6.0
 
     ignores_obstacles = True
 
@@ -48,7 +48,7 @@ class HoleEvent(EventDefinition):
             "ТАЙНЫЙ ПРОХОД: яма оказалась входом в потайной тоннель — вы нашли золото "
             "и на время научились проходить сквозь любые стены.",
             gold_delta=15,
-            effect_factory=lambda: PhantomWalkEffect(PhantomWalkEffect.DURATION_TURNS),
+            effect_factory=lambda: PhantomWalkEffect(PhantomWalkEffect.DURATION_SECONDS),
         ),
     }
 

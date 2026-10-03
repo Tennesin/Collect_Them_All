@@ -8,7 +8,7 @@ class HalfIncomeCurseEffect(Effect):
 
     label = "Проклятие (половина дохода)"
     warning = True
-    DURATION_TURNS = 3
+    DURATION_SECONDS = 10.0
 
     def modify_income(self, player, resource_type, amount):
         return amount // 2
@@ -26,7 +26,7 @@ class ChestEvent(EventDefinition):
             "Сундук оскалился деревянной пастью — внутри прятался настоящий "
             "демон! Он проклял вашу удачу.",
             gold_delta=-15,
-            effect_factory=lambda: HalfIncomeCurseEffect(HalfIncomeCurseEffect.DURATION_TURNS),
+            effect_factory=lambda: HalfIncomeCurseEffect(HalfIncomeCurseEffect.DURATION_SECONDS),
         ),
         2: EventOutcome(
             "Сундук недовольно заскрипел и вытряс на вас пыль вместо сокровищ.",

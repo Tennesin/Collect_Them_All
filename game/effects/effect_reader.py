@@ -4,19 +4,22 @@ from game.effects.effects import Effect
 class EffectReader:
 
     @staticmethod
+    def update(player, dt, context):
+        """Покадровый хук on_update для всех активных эффектов игрока."""
+        for effect in list(player.active_effects):
+            EffectReader._safe_call(effect, "on_update", player, dt, context)
+
+    @staticmethod
     def notify_cell_reached(player, context):
-        """Оповещает все активные эффекты игрока, что он остановился на клетке."""
         for effect in list(player.active_effects):
             EffectReader._safe_call(effect, "on_cell_reached", player, context)
 
     @staticmethod
     def notify_effect_applied(player, effect):
-        """Оповещает эффект о том, что он только что наложен на игрока."""
         EffectReader._safe_call(effect, "on_apply", player)
 
     @staticmethod
     def modify_income(player, resource_type, amount):
-        """Пропускает amount через все активные эффекты игрока по цепочке."""
         for effect in list(player.active_effects):
             amount = EffectReader._safe_call(
                 effect, "modify_income", player, resource_type, amount,
@@ -25,23 +28,28 @@ class EffectReader:
         return amount
 
     @staticmethod
-    def tick(player, context=None):
-        """Тикает длительность всех эффектов игрока, снимая истёкшие."""
+    def tick(player, dt, context=None):
+        """Уменьшает длительность эффектов на dt секунд и снимает истёкшие.
+        Список активных эффектов обновляется ДО вызова on_expire, чтобы
+        истёкший эффект уже не влиял на проверки внутри on_expire."""
         still_active = []
+        expired = []
         for effect in player.active_effects:
             if not isinstance(effect, Effect):
                 print(f"[EffectReader] Пропущен эффект несовместимого типа: {effect!r}")
                 continue
             try:
-                still_running = effect.tick()
+                still_running = effect.tick(dt)
             except Exception as exc:
                 print(f"[EffectReader] Эффект {effect!r} упал на tick(): {exc}")
                 continue
-            if still_running:
-                still_active.append(effect)
-            else:
-                EffectReader._safe_call(effect, "on_expire", player, context)
-        player.active_effects = still_active
+            (still_active if still_running else expired).append(effect)
+
+        if len(still_active) != len(player.active_effects):
+            player.active_effects = still_active
+            player.vision_dirty = True  # обзор пересчитает мир (п. 3.2)
+        for effect in expired:
+            EffectReader._safe_call(effect, "on_expire", player, context)
 
     # --- Внутреннее ---
 

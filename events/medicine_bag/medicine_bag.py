@@ -2,28 +2,29 @@ from game.event_manager import EventDefinition, EventOutcome
 from game.effects.effects import Effect
 
 class ConfusionEffect(Effect):
-    """Эффект события 'Аптечка' (ШИЗА): обзор и подвижность игрока падают до минимума."""
+    """Эффект события 'Аптечка' (ШИЗА): обзор и скорость игрока падают."""
 
     label = "Шиза"
     warning = True
-    DURATION_TURNS = 3
-    RADIUS = 3
+    DURATION_SECONDS = 10.0
+    VISION_RADIUS = 3
+    SPEED_MULTIPLIER = 0.6
 
-    vision_radius_override = RADIUS
-    max_moves_override = RADIUS
+    vision_radius_override = VISION_RADIUS
+    speed_multiplier = SPEED_MULTIPLIER
 
 class SupermanEffect(Effect):
-    """Эффект события 'Аптечка' (СУПЕРМЭН): полная видимость карты и увеличенный лимит шагов."""
+    """Эффект события 'Аптечка' (СУПЕРМЭН): полная видимость карты и ускорение."""
 
     label = "Супермэн"
-    DURATION_TURNS = 3
-    MOVES_MULTIPLIER = 1.5
+    DURATION_SECONDS = 10.0
+    SPEED_MULTIPLIER = 1.5
 
     full_map_vision = True
-    max_moves_multiplier = MOVES_MULTIPLIER
+    speed_multiplier = SPEED_MULTIPLIER
 
     def on_apply(self, player):
-        """Супермэн лечит от всего разом."""
+        """Супермэн лечит от всего плохого разом."""
         player.active_effects = [
             effect for effect in player.active_effects if not getattr(effect, "warning", False)
         ]
@@ -43,7 +44,7 @@ class MedicineBagEvent(EventDefinition):
             "ШИЗА: препарат оказался просроченным — сознание помутилось, обзор "
             "и подвижность резко упали.",
             silver_delta=-20,
-            effect_factory=lambda: ConfusionEffect(ConfusionEffect.DURATION_TURNS),
+            effect_factory=lambda: ConfusionEffect(ConfusionEffect.DURATION_SECONDS),
         ),
         2: EventOutcome(
             "Рвота: организм не принял находку — пришлось потратить время, приходя в себя.",
@@ -64,7 +65,7 @@ class MedicineBagEvent(EventDefinition):
         6: EventOutcome(
             "СУПЕРМЭН: чудо-состав пробудил нечеловеческие силы — вы видите всю карту "
             "и способны пройти намного больше обычного!",
-            effect_factory=lambda: SupermanEffect(SupermanEffect.DURATION_TURNS),
+            effect_factory=lambda: SupermanEffect(SupermanEffect.DURATION_SECONDS),
         ),
     }
 

@@ -11,10 +11,6 @@ STAGE_ROLLING = "rolling"  # кубик крутится
 STAGE_FROZEN = "frozen"    # кубик остановился, 1 секунда показа итоговой грани
 STAGE_RESULT = "result"    # текст исхода + награды/штрафы + кнопка "Продолжить"
 
-# Стадии, в которых внешнее время хода замораживается ("процесс броска кубика").
-_TIMER_FROZEN_STAGES = (STAGE_ROLLING, STAGE_FROZEN)
-
-
 class EventScene(Scene):
     """Оверлей одного случайного события: подтверждение -> бросок кубика -> результат."""
 
@@ -37,7 +33,6 @@ class EventScene(Scene):
         self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
         self._closing = False
         self._pending_action = None
-        self._pending_skip_turn = False
 
         cx = SCREEN_WIDTH // 2
         btn_w, btn_h = 200, 52
@@ -48,19 +43,8 @@ class EventScene(Scene):
         self.continue_button = Button((cx - 120, 500, 240, btn_h), "Продолжить")
 
     def on_enter(self):
-        self.gameplay_scene.turn_manager.moves_trigger_suppressed = True
         self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
         self._closing = False
-
-    def on_exit(self):
-        self.gameplay_scene.turn_manager.moves_trigger_suppressed = False
-
-    def _finish_and_close(self):
-        """Закрывает попап как обычно и только затем, если нужно, завершает
-        черёд игрока — чтобы результат события успел быть показан."""
-        self.manager.pop()
-        if self._pending_skip_turn:
-            self.gameplay_scene.turn_manager.end_turn_early()
 
     def _start_closing(self, action):
         if self._closing:
@@ -88,7 +72,7 @@ class EventScene(Scene):
         elif self.stage == STAGE_RESULT:
             if self.continue_button.collidepoint(event.pos):
                 if self.manager.current is self:
-                    self._start_closing(self._finish_and_close)
+                    self._start_closing(self.manager.pop)
 
     # --- обновление ---
 
@@ -101,9 +85,6 @@ class EventScene(Scene):
                 if action:
                     action()
             return
-
-        if self.stage not in _TIMER_FROZEN_STAGES:
-            self.gameplay_scene.turn_manager.update(dt)
 
         if self.stage == STAGE_ROLLING:
             self._update_rolling(dt)
@@ -147,18 +128,10 @@ class EventScene(Scene):
         outcome = self.event.get_outcome(self.final_roll)
         self.player.gold = max(0, self.player.gold + outcome.gold_delta)
         self.player.silver = max(0, self.player.silver + outcome.silver_delta)
-        if outcome.moves_delta:
-            self.gameplay_scene.turn_manager.adjust_moves(outcome.moves_delta)
-        if outcome.refill_moves:
-            self.gameplay_scene.turn_manager.refill_moves(extra_cap=outcome.refill_extra_cap)
         if outcome.displacement_cells:
             self.world.displace_player_randomly(self.player, outcome.displacement_cells)
         if outcome.effect_factory:
-            effect = outcome.effect_factory()
-            self.player.add_effect(effect)
-            self.world.refresh_effects_immediately(self.player)
-        if outcome.skip_turn:
-            self._pending_skip_turn = True
+            self.player.add_effect(outcome.effect_factory())
 
     # --- отрисовка ---
 
@@ -216,23 +189,12 @@ class EventScene(Scene):
         for label, value in (
                 ("Золото", outcome.gold_delta),
                 ("Серебро", outcome.silver_delta),
-                ("Ходы", outcome.moves_delta),
         ):
             if value == 0:
                 continue
             sign = "+" if value > 0 else ""
             color = WARNING_TEXT_COLOR if value < 0 else TEXT_COLOR
             surf = get_font(FONT_SIZE_LABEL + 4).render(f"{label}: {sign}{value}", True, color)
-            screen.blit(surf, surf.get_rect(center=(cx, y)))
-            y += 34
-
-        if outcome.skip_turn:
-            surf = get_font(FONT_SIZE_LABEL + 4).render("Черёд пропущен", True, WARNING_TEXT_COLOR)
-            screen.blit(surf, surf.get_rect(center=(cx, y)))
-            y += 34
-
-        if outcome.refill_moves:
-            surf = get_font(FONT_SIZE_LABEL + 4).render("Шаги полностью восстановлены", True, TEXT_COLOR)
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34
 
@@ -246,10 +208,9 @@ class EventScene(Scene):
         if outcome.effect_factory:
             preview_effect = outcome.effect_factory()
             color = WARNING_TEXT_COLOR if preview_effect.warning else TEXT_COLOR
-            turns = preview_effect.duration_turns
-            turns_word = "черёд" if turns == 1 else "черёда" if turns < 5 else "черёдов"
+            seconds = int(round(preview_effect.duration_seconds))
             surf = get_font(FONT_SIZE_LABEL + 4).render(
-                f"{preview_effect.label}: {turns} {turns_word}", True, color,
+                f"{preview_effect.label}: {seconds} с", True, color,
             )
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34

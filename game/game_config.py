@@ -9,27 +9,24 @@ MAX_OBSTACLE_PERCENT = 35
 DEFAULT_OBSTACLE_PERCENT = 20
 
 MIN_PLAYERS = 1
-MAX_PLAYERS = 5
+MAX_PLAYERS = 1
 DEFAULT_PLAYERS = 1
-
-# --- Правила одного черёда хода ---
-TURN_MAX_MOVES = 8
-TURN_TIME_SECONDS = 30.0
-
-MIN_TURN_MOVES = 4
-MAX_TURN_MOVES = 16
-DEFAULT_TURN_MOVES = TURN_MAX_MOVES
-
-MIN_TURN_TIME = 15
-MAX_TURN_TIME = 60
-TURN_TIME_STEP = 3
-DEFAULT_TURN_TIME = 30
 
 MIN_VISION_RADIUS = 3
 MAX_VISION_RADIUS = 10
 DEFAULT_VISION_RADIUS = 4
 
 DEFAULT_MAP_SIZE = 15
+
+# --- Движение в реальном времени ---
+PLAYER_BASE_SPEED = 3.0        # клеток в секунду (стартовое значение, подберём в симуляции)
+MIN_SPEED_MULTIPLIER = 0.0     # 0 = полная остановка (стан)
+MAX_SPEED_MULTIPLIER = 2.5
+
+# --- Периодические события мира, секунды ---
+GOLD_YIELD_INTERVAL = 10.0     # раз в столько секунд в золотых клетках копится GOLD_CELL_YIELD
+SILVER_RESPAWN_INTERVAL = 15.0
+EVENT_RESPAWN_INTERVAL = 20.0
 
 # (подпись кнопки, ширина, высота)
 MAP_SIZE_PRESETS = [
@@ -59,8 +56,6 @@ MIN_SILVER_CELLS_ABSOLUTE = 1
 SILVER_PILE_MIN_VALUE = 15
 SILVER_PILE_MAX_VALUE = 45
 
-SILVER_RESPAWN_CYCLES = 2
-
 # --- Условия победы (настраиваются на экране NewGameScene) ---
 MIN_WIN_GOLD = 10
 MAX_WIN_GOLD = 50
@@ -72,14 +67,8 @@ MAX_WIN_SILVER = 500
 WIN_SILVER_STEP = 25
 DEFAULT_WIN_SILVER = 125
 
-# --- Режим завершения партии ---
-FINISH_MODE_INSTANT = "instant"  # игра заканчивается для всех сразу, как только кто-то выполнил условие
-FINISH_MODE_RANKED = "ranked"    # игроки выбывают по мере финиша, в конце — таблица мест
-DEFAULT_FINISH_MODE = FINISH_MODE_INSTANT
-
 # --- События ---
 EVENTS_DIR_NAME = "events"          # имя папки-реестра, на уровне корня проекта
-EVENT_RESPAWN_CYCLES = 3            # обновление раз в 3 цикла ходов, как и просили
 
 MIN_EVENT_DENSITY_PERCENT = 2
 MAX_EVENT_DENSITY_PERCENT = 10
@@ -103,9 +92,6 @@ class GameSettings:
     win_gold_required: int = DEFAULT_WIN_GOLD
     win_silver_required: int = DEFAULT_WIN_SILVER
     gold_cell_count: int = DEFAULT_GOLD_CELLS
-    finish_mode: str = DEFAULT_FINISH_MODE
-    moves_per_turn: int = DEFAULT_TURN_MOVES
-    turn_time_seconds: int = DEFAULT_TURN_TIME
     vision_radius: int = DEFAULT_VISION_RADIUS
     event_density_percent: int = DEFAULT_EVENT_DENSITY_PERCENT
 
@@ -123,12 +109,6 @@ class GameSettings:
         max_cells = max_gold_cells_for_map(self.map_width, self.map_height)
         self.gold_cell_count = max(MIN_GOLD_CELLS, min(max_cells, self.gold_cell_count))
 
-        if self.finish_mode not in (FINISH_MODE_INSTANT, FINISH_MODE_RANKED):
-            self.finish_mode = DEFAULT_FINISH_MODE
-
-        self.moves_per_turn = max(MIN_TURN_MOVES, min(MAX_TURN_MOVES, self.moves_per_turn))
-        self.turn_time_seconds = int(
-            self._clamp_step(self.turn_time_seconds, MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP))
         self.vision_radius = max(MIN_VISION_RADIUS, min(MAX_VISION_RADIUS, self.vision_radius))
         self.event_density_percent = max(
             MIN_EVENT_DENSITY_PERCENT, min(MAX_EVENT_DENSITY_PERCENT, self.event_density_percent)

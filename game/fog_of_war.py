@@ -63,7 +63,7 @@ class FogOfWar:
             effect.vision_radius_override for effect in player.active_effects
             if getattr(effect, "vision_radius_override", None) is not None
         ]
-        return min(overrides) if overrides else self.radius
+        return min(self.radius, *overrides) if overrides else self.radius
 
     def _full_map_cells(self):
         if self._full_map_cache is None:

@@ -1,36 +1,33 @@
 import pygame
-import math
 from settings import *
 from game.rendering.image_manager import ImageManager
 
 class Renderer:
     """Только отрисовка игрового поля и фигур на нём."""
 
-    def __init__(self, screen, camera, field, players, turn_manager, input_handler,
+    def __init__(self, screen, camera, field, players, viewer, input_handler,
                  resource_manager, event_manager):
         self.screen = screen
         self.camera = camera
         self.field = field
         self.players = players
-        self.turn_manager = turn_manager
+        self.viewer = viewer
         self.input_handler = input_handler
         self.resource_manager = resource_manager
         self.event_manager = event_manager
         self._fog_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
-        self._preview_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 
     def draw(self):
         self.draw_field()
         self.draw_resources()
         self.draw_events()
         self.draw_path()
-        self.draw_preview()
         self.draw_players()
 
     def draw_field(self):
         self.screen.fill(BG_COLOR)
         hovered_cell = self.input_handler.get_hovered_cell()
-        viewer = self.turn_manager.current_player
+        viewer = self.viewer
         explored = viewer.explored_cells
 
         min_x, min_y, max_x, max_y = self._visible_cell_bounds()
@@ -137,7 +134,7 @@ class Renderer:
 
     def draw_resources(self):
         icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))
-        visible = self.turn_manager.current_player.visible_cells
+        visible = self.viewer.visible_cells
 
         for pos in self.field.gold_cell_positions:
             if pos not in visible:
@@ -159,7 +156,7 @@ class Renderer:
     def draw_events(self):
         """Иконки активных событий — только те, что сейчас в зоне видимости игрока."""
         icon_size = max(4, int(FIELD_ICON_RATIO * self.camera.scale))
-        visible = self.turn_manager.current_player.visible_cells
+        visible = self.viewer.visible_cells
 
         for pos, definition in self.event_manager.active_events.items():
             if pos not in visible:
@@ -172,9 +169,9 @@ class Renderer:
             self.screen.blit(icon, rect)
 
     def draw_path(self):
-        """Линия и точка цели текущего маршрута — цветом того игрока, который сейчас идёт."""
-        player = self.turn_manager.current_player
-        if not player.moving or not player.path:
+        """Маршрут игрока: линия и точка цели. Если на цели спрятано событие, рисуется маркер."""
+        player = self.viewer
+        if not player.path:
             return
         points = [(player.pos_x, player.pos_y)]
         points += [(cx + 0.5, cy + 0.5) for cx, cy in player.path]
@@ -189,39 +186,9 @@ class Renderer:
         goal_screen = screen_points[-1]
         pygame.draw.circle(self.screen, color, (int(goal_screen[0]), int(goal_screen[1])), circle_radius)
 
-    def draw_preview(self):
-        """Пунктирный предпросмотр ещё не подтверждённого пути — тоже цветом текущего игрока."""
-        preview_path = self.input_handler.preview_path
-        player = self.turn_manager.current_player
-        if not preview_path or player.moving:
-            return
-
-        overlay = self._preview_overlay
-        overlay.fill((0, 0, 0, 0))
-        line_width = max(2, int(PREVIEW_WIDTH_RATIO * self.camera.scale))
-        dash_length = max(6, int(PREVIEW_DASH_RATIO * self.camera.scale))
-        gap_length = max(4, int(PREVIEW_GAP_RATIO * self.camera.scale))
-        preview_color = (*player.color, PREVIEW_ALPHA)
-
-        points = [(player.pos_x, player.pos_y)]
-        points += [(cx + 0.5, cy + 0.5) for cx, cy in preview_path]
-        screen_points = [self.camera.project(x, y) for x, y in points]
-
-        for i in range(len(screen_points) - 1):
-            self._draw_dashed_line(
-                overlay, preview_color,
-                screen_points[i], screen_points[i + 1],
-                dash_length, gap_length, line_width
-            )
-        self.screen.blit(overlay, (0, 0))
-
-        preview_goal = self.input_handler.preview_goal
-        if (
-                preview_goal is not None
-                and preview_goal in player.visible_cells
-                and self.event_manager.get_event_at(preview_goal) is not None
-        ):
-            self._draw_select_marker(preview_goal)
+        goal_cell = player.path[-1]
+        if goal_cell in player.visible_cells and self.event_manager.get_event_at(goal_cell) is not None:
+            self._draw_select_marker(goal_cell)
 
     def _draw_select_marker(self, cell):
         """Значок select.png вокруг клетки-цели, если на ней спрятано событие."""
@@ -231,77 +198,17 @@ class Renderer:
         rect = icon.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
         self.screen.blit(icon, rect)
 
-    def _draw_dashed_line(self, surface, color, start, end, dash_length, gap_length, width):
-        x1, y1 = start
-        x2, y2 = end
-        dx = x2 - x1
-        dy = y2 - y1
-        distance = math.hypot(dx, dy)
-        if distance == 0:
-            return
-        dx /= distance
-        dy /= distance
-        current = 0
-        while current < distance:
-            segment_end = min(current + dash_length, distance)
-            sx = x1 + dx * current
-            sy = y1 + dy * current
-            ex = x1 + dx * segment_end
-            ey = y1 + dy * segment_end
-            pygame.draw.line(surface, color, (sx, sy), (ex, ey), width)
-            current += dash_length + gap_length
-
     # --- Игроки ---
 
     def draw_players(self):
-        current = self.turn_manager.current_player
-        visible = current.visible_cells
-        moving_player = current if current.moving else None
-        stationary = [
-            p for p in self.players
-            if p is not moving_player and (p.grid_x, p.grid_y) in visible
-        ]
-
-        groups = {}
-        for p in stationary:
-            cell = (p.grid_x, p.grid_y)
-            groups.setdefault(cell, []).append(p)
-
-        for group in groups.values():
-            self._draw_stack(group, current)
-
-        if moving_player:
-            radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
-            screen_pos = self.camera.project(moving_player.pos_x, moving_player.pos_y)
-            self._draw_circle(moving_player.color, screen_pos, radius, highlight=True)
-
-    def _draw_stack(self, group, current):
+        visible = self.viewer.visible_cells
         radius = max(3, int(PLAYER_RADIUS_RATIO * self.camera.scale))
-        step = STACK_OFFSET_RATIO * radius
-
-        others = [p for p in group if p is not current]
-        ordered = others + ([current] if current in group else [])
-        n = len(ordered)
-
-        grid_x, grid_y = ordered[0].grid_x, ordered[0].grid_y
-        base_x, base_y = self.camera.project(grid_x + 0.5, grid_y + 0.5)
-
-        for i, p in enumerate(ordered):
-            back_index = n - 1 - i  # 0 у переднего (последнего в списке) слоя
-            offset_x, offset_y = self._stack_offset(back_index, step)
-            screen_pos = (base_x + offset_x, base_y + offset_y)
-
-            is_current = p is current
-            color = p.color if is_current else self._dim_color(p.color)
-            self._draw_circle(color, screen_pos, radius, highlight=is_current)
-
-    @staticmethod
-    def _stack_offset(back_index, step):
-        if back_index == 0:
-            return 0.0, 0.0
-        magnitude = ((back_index + 1) // 2) * step
-        direction = -1 if back_index % 2 == 1 else 1
-        return direction * magnitude, direction * magnitude
+        # зритель рисуется последним, чтобы быть поверх остальных
+        for p in sorted(self.players, key=lambda actor: actor is self.viewer):
+            if p is not self.viewer and (p.grid_x, p.grid_y) not in visible:
+                continue
+            screen_pos = self.camera.project(p.pos_x, p.pos_y)
+            self._draw_circle(p.color, screen_pos, radius, highlight=p is self.viewer)
 
     def _draw_circle(self, color, screen_pos, radius, highlight=False):
         center = (int(screen_pos[0]), int(screen_pos[1]))

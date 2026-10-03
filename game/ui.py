@@ -5,41 +5,46 @@ from game.rendering.image_manager import ImageManager
 
 class PlayerPanel:
 
-    def __init__(self, turn_manager, resource_manager):
-        self.turn_manager = turn_manager
+    def __init__(self, player, resource_manager, clock):
+        self.player = player
         self.resource_manager = resource_manager
+        self.clock = clock
         self.rect = pygame.Rect(GAME_AREA_WIDTH, 0, PANEL_WIDTH, SCREEN_HEIGHT)
 
     def draw(self, screen):
         pygame.draw.rect(screen, PANEL_BG_COLOR, self.rect)
         pygame.draw.line(screen, PANEL_BORDER_COLOR, (self.rect.x, 0), (self.rect.x, SCREEN_HEIGHT), 2)
 
-        player = self.turn_manager.current_player
+        player = self.player
         padding = 18
         x = self.rect.x + padding
         right_x = self.rect.x + self.rect.width // 2 + 6
         max_text_width = self.rect.width - padding * 2
         y = 24
 
-        y = self._draw_line(screen, x, y, "Текущий ход:", HINT_TEXT_COLOR, FONT_SIZE_HINT)
-        y = self._draw_line(screen, x, y + 2, PLAYER_NAMES_RU[player.color_key], player.color, FONT_SIZE_LABEL + 4)
+        y = self._draw_line(screen, x, y, PLAYER_NAMES_RU[player.color_key], player.color, FONT_SIZE_LABEL + 4)
         y += 26
 
         section_top = y
 
-        # --- Левая колонка: Ходы и Время ---
-        left_y = self._draw_line(screen, x, section_top, "Ходы", HINT_TEXT_COLOR, FONT_SIZE_HINT)
+        # --- Левая колонка: Скорость и Время партии ---
+        multiplier = player.speed_multiplier
+        if multiplier < 1.0:
+            speed_color = WARNING_TEXT_COLOR
+        elif multiplier > 1.0:
+            speed_color = SELECTED_BORDER_COLOR
+        else:
+            speed_color = TEXT_COLOR
+
+        left_y = self._draw_line(screen, x, section_top, "Скорость", HINT_TEXT_COLOR, FONT_SIZE_HINT)
         left_y = self._draw_icon_line(
-            screen, x, left_y + 2, ICON_MOVE,
-            f"{self.turn_manager.moves_left}/{self.turn_manager.moves_cap}",
-            TEXT_COLOR, FONT_SIZE_LABEL + 2,
+            screen, x, left_y + 2, ICON_MOVE, f"x{multiplier:.2f}", speed_color, FONT_SIZE_LABEL + 2,
         )
         left_y += 20
 
-        left_y = self._draw_line(screen, x, left_y, "Время", HINT_TEXT_COLOR, FONT_SIZE_HINT)
+        left_y = self._draw_line(screen, x, left_y, "Время партии", HINT_TEXT_COLOR, FONT_SIZE_HINT)
         left_y = self._draw_icon_line(
-            screen, x, left_y + 2, ICON_TIME,
-            f"{self.turn_manager.time_left:.1f} с",
+            screen, x, left_y + 2, ICON_TIME, self._format_time(self.clock.match_time),
             TEXT_COLOR, FONT_SIZE_LABEL + 2,
         )
 
@@ -68,7 +73,7 @@ class PlayerPanel:
 
         if player.warning_message:
             y += 18
-            self._draw_wrapped_text(
+            y = self._draw_wrapped_text(
                 screen, x, y, player.warning_message,
                 WARNING_TEXT_COLOR, FONT_SIZE_HINT, max_text_width,
             )
@@ -76,6 +81,11 @@ class PlayerPanel:
         if player.active_effects:
             y += 22
             self._draw_active_effects(screen, x, y, player)
+
+    @staticmethod
+    def _format_time(seconds):
+        total = int(seconds)
+        return f"{total // 60}:{total % 60:02d}"
 
     @staticmethod
     def _draw_line(screen, x, y, text, color, font_size):
@@ -122,8 +132,7 @@ class PlayerPanel:
     def _draw_active_effects(screen, x, y, player):
         for effect in player.active_effects:
             color = WARNING_TEXT_COLOR if effect.warning else TEXT_COLOR
-            remaining = effect.duration_turns
-            turns_word = "черёд" if remaining == 1 else "черёда" if remaining < 5 else "черёдов"
-            surf = get_font(FONT_SIZE_HINT).render(f"{effect.label}: {remaining} {turns_word}", True, color)
+            remaining = max(0.0, effect.duration_seconds)
+            surf = get_font(FONT_SIZE_HINT).render(f"{effect.label}: {remaining:.1f} с", True, color)
             screen.blit(surf, (x, y))
             y += surf.get_height() + 2

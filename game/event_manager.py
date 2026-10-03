@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 from game.effects.effects import Effect
 from game.game_config import (
-    EVENTS_DIR_NAME, EVENT_RESPAWN_CYCLES,
+    EVENTS_DIR_NAME,
     EVENT_DENSITY_PER_PLAYER, MIN_EVENTS_ABSOLUTE,
 )
 
@@ -83,7 +83,6 @@ class EventRegistry:
     def get(self, event_id):
         return self._definitions.get(event_id)
 
-
 class EventManager:
     def __init__(self, field, player_count, event_density, registry=None):
         self.field = field
@@ -95,20 +94,17 @@ class EventManager:
         self._occupied_provider = None  # callable() -> set[(x, y)] клетки, занятые игроками
         self._currency_provider = None  # callable() -> set[(x, y)] клетки с золотом/серебром
         self._visible_provider = None  # callable() -> set[(x, y)] клетки, видимые игрокам прямо сейчас
-        self._cycles_since_respawn = 0
 
     def bind_dynamic_providers(self, occupied_provider, currency_provider, visible_provider=None):
         self._occupied_provider = occupied_provider
         self._currency_provider = currency_provider
         self._visible_provider = visible_provider
 
-    # --- Цикл ходов ---
+    # --- Периодические события ---
 
-    def on_cycle_complete(self):
-        self._cycles_since_respawn += 1
-        if self._cycles_since_respawn >= EVENT_RESPAWN_CYCLES:
-            self._cycles_since_respawn = 0
-            self.respawn()
+    def tick_gold_deposits(self):
+        for pos in self.gold_deposits:
+            self.gold_deposits[pos] += GOLD_CELL_YIELD
 
     def respawn(self):
         available = self.registry.all()

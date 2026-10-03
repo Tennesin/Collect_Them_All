@@ -6,12 +6,9 @@ from game.game_config import (
     GameSettings, MAP_SIZE_PRESETS,
     MIN_MAP_SIZE, MAX_MAP_SIZE,
     MIN_OBSTACLE_PERCENT, MAX_OBSTACLE_PERCENT,
-    MIN_PLAYERS, MAX_PLAYERS,
     MIN_WIN_GOLD, MAX_WIN_GOLD, WIN_GOLD_STEP,
     MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP,
-    MIN_GOLD_CELLS, FINISH_MODE_INSTANT,
-    FINISH_MODE_RANKED, MIN_TURN_MOVES, MAX_TURN_MOVES,
-    MIN_TURN_TIME, MAX_TURN_TIME, TURN_TIME_STEP,
+    MIN_GOLD_CELLS,
     MIN_VISION_RADIUS, MAX_VISION_RADIUS,
     MIN_EVENT_DENSITY_PERCENT, MAX_EVENT_DENSITY_PERCENT, EVENT_DENSITY_PERCENT_STEP,
     max_gold_cells_for_map,
@@ -65,17 +62,13 @@ class NewGameScene(Scene):
             min_value=MIN_OBSTACLE_PERCENT, max_value=MAX_OBSTACLE_PERCENT, step=1,
         )
 
-        # --- Раздел "Игроки" ---
-        self.player_minus_button = Button((self.CX_LEFT - 76, 292, 32, 32), "-")
-        self.player_plus_button = Button((self.CX_LEFT + 44, 292, 32, 32), "+")
-
         # --- Раздел "Видимость" (новое) ---
         self.vision_minus_button = Button((self.CX_LEFT - 76, 402, 32, 32), "-")
         self.vision_plus_button = Button((self.CX_LEFT + 44, 402, 32, 32), "+")
 
         # --- Раздел "События" ---
         self.events_density_slider = Slider(
-            (self.CX_LEFT - self.SLIDER_WIDTH // 2, 504, self.SLIDER_WIDTH, 16),
+            (self.CX_RIGHT - self.SLIDER_WIDTH // 2, 326, self.SLIDER_WIDTH, 16),
             value=self.settings.event_density_percent,
             min_value=MIN_EVENT_DENSITY_PERCENT, max_value=MAX_EVENT_DENSITY_PERCENT,
             step=EVENT_DENSITY_PERCENT_STEP,
@@ -95,28 +88,6 @@ class NewGameScene(Scene):
         )
         self.gold_cells_minus_button = Button((self.CX_RIGHT - 76, 216, 32, 32), "-")
         self.gold_cells_plus_button = Button((self.CX_RIGHT + 44, 216, 32, 32), "+")
-
-        # --- Раздел "Финиш" ---
-        finish_btn_w, finish_btn_h, finish_gap = 156, 38, 10
-        finish_total_w = finish_btn_w * 2 + finish_gap
-        finish_start_x = self.CX_RIGHT - finish_total_w // 2
-        self.finish_instant_button = Button(
-            (finish_start_x, 308, finish_btn_w, finish_btn_h), "Первый у цели"
-        )
-        self.finish_ranked_button = Button(
-            (finish_start_x + finish_btn_w + finish_gap, 308, finish_btn_w, finish_btn_h), "До последнего"
-        )
-
-        # --- Раздел "Черёд" ---
-        self.moves_minus_button = Button((self.CX_RIGHT - 76, 424, 32, 32), "-")
-        self.moves_plus_button = Button((self.CX_RIGHT + 44, 424, 32, 32), "+")
-
-        self.time_slider = Slider(
-            (self.CX_RIGHT - self.SLIDER_WIDTH // 2, 488, self.SLIDER_WIDTH, 16),
-            value=self.settings.turn_time_seconds,
-            min_value=MIN_TURN_TIME, max_value=MAX_TURN_TIME, step=TURN_TIME_STEP,
-        )
-        self._gold_cells_flash_until = 0.0
 
         # ================= СТАРТ =================
         start_w, start_h = 240, 48
@@ -157,14 +128,11 @@ class NewGameScene(Scene):
                 self.gold_win_slider.set_from_mouse(event.pos[0])
             if self.silver_win_slider.dragging:
                 self.silver_win_slider.set_from_mouse(event.pos[0])
-            if self.time_slider.dragging:
-                self.time_slider.set_from_mouse(event.pos[0])
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             self.obstacle_slider.dragging = False
             self.events_density_slider.dragging = False
             self.gold_win_slider.dragging = False
             self.silver_win_slider.dragging = False
-            self.time_slider.dragging = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 from scene.scene_main_menu import MainMenuScene
@@ -198,14 +166,6 @@ class NewGameScene(Scene):
         if self.obstacle_slider.rect.collidepoint(pos):
             self.obstacle_slider.dragging = True
             self.obstacle_slider.set_from_mouse(pos[0])
-            return
-
-        # --- Игроки ---
-        if self.player_minus_button.collidepoint(pos):
-            self.settings.player_count = max(MIN_PLAYERS, self.settings.player_count - 1)
-            return
-        if self.player_plus_button.collidepoint(pos):
-            self.settings.player_count = min(MAX_PLAYERS, self.settings.player_count + 1)
             return
 
         # --- Видимость ---
@@ -242,26 +202,6 @@ class NewGameScene(Scene):
                 self.settings.gold_cell_count += 1
             return
 
-        # --- Финиш ---
-        if self.finish_instant_button.collidepoint(pos):
-            self.settings.finish_mode = FINISH_MODE_INSTANT
-            return
-        if self.finish_ranked_button.collidepoint(pos):
-            self.settings.finish_mode = FINISH_MODE_RANKED
-            return
-
-        # --- Черёд ---
-        if self.moves_minus_button.collidepoint(pos):
-            self.settings.moves_per_turn = max(MIN_TURN_MOVES, self.settings.moves_per_turn - 1)
-            return
-        if self.moves_plus_button.collidepoint(pos):
-            self.settings.moves_per_turn = min(MAX_TURN_MOVES, self.settings.moves_per_turn + 1)
-            return
-        if self.time_slider.rect.collidepoint(pos):
-            self.time_slider.dragging = True
-            self.time_slider.set_from_mouse(pos[0])
-            return
-
         if self.start_button.collidepoint(pos):
             self._start_game()
 
@@ -272,7 +212,6 @@ class NewGameScene(Scene):
         self.settings.obstacle_percent = int(round(self.obstacle_slider.value))
         self.settings.win_gold_required = int(round(self.gold_win_slider.value))
         self.settings.win_silver_required = int(round(self.silver_win_slider.value))
-        self.settings.turn_time_seconds = int(round(self.time_slider.value))
         self.settings.event_density_percent = int(round(self.events_density_slider.value))
         self.settings.clamp()
 
@@ -320,26 +259,12 @@ class NewGameScene(Scene):
         self.obstacle_slider.draw(screen)
 
         self._draw_divider(screen, cx_left, 234)
-        self._draw_section_header(screen, "ИГРОКИ", cx_left, 246)
-        self._draw_label(screen, hint_font, "Количество игроков", (cx_left, 274))
-        self.player_minus_button.draw(screen, mouse_pos)
-        count_surf = label_font.render(str(self.settings.player_count), True, TEXT_COLOR)
-        screen.blit(count_surf, count_surf.get_rect(center=(cx_left, 308)))
-        self.player_plus_button.draw(screen, mouse_pos)
-
-        self._draw_divider(screen, cx_left, 344)
-        self._draw_section_header(screen, "ВИДИМОСТЬ", cx_left, 356)
-        self._draw_label(screen, hint_font, "Дальность обзора", (cx_left, 384))
+        self._draw_section_header(screen, "ВИДИМОСТЬ", cx_left, 246)
+        self._draw_label(screen, hint_font, "Дальность обзора", (cx_left, 274))
         self.vision_minus_button.draw(screen, mouse_pos)
         vision_surf = label_font.render(str(self.settings.vision_radius), True, TEXT_COLOR)
-        screen.blit(vision_surf, vision_surf.get_rect(center=(cx_left, 418)))
+        screen.blit(vision_surf, vision_surf.get_rect(center=(cx_left, 308)))
         self.vision_plus_button.draw(screen, mouse_pos)
-
-        self._draw_divider(screen, cx_left, 446)
-        self._draw_section_header(screen, "СОБЫТИЯ", cx_left, 458)
-        density_val = int(round(self.events_density_slider.value))
-        self._draw_label(screen, hint_font, f"Плотность событий: {density_val}%", (cx_left, 486))
-        self.events_density_slider.draw(screen)
 
         # ============ ПРАВАЯ КОЛОНКА ============
 
@@ -358,24 +283,10 @@ class NewGameScene(Scene):
         self.gold_cells_plus_button.draw(screen, mouse_pos)
 
         self._draw_divider(screen, cx_right, 268)
-        self._draw_section_header(screen, "ФИНИШ", cx_right, 280)
-        self.finish_instant_button.draw(screen, mouse_pos, font_size=FONT_SIZE_HINT)
-        self.finish_ranked_button.draw(screen, mouse_pos, font_size=FONT_SIZE_HINT)
-        if self.settings.finish_mode == FINISH_MODE_INSTANT:
-            pygame.draw.rect(screen, SELECTED_BORDER_COLOR, self.finish_instant_button.rect, 3, border_radius=4)
-        else:
-            pygame.draw.rect(screen, SELECTED_BORDER_COLOR, self.finish_ranked_button.rect, 3, border_radius=4)
-
-        self._draw_divider(screen, cx_right, 366)
-        self._draw_section_header(screen, "ЧЕРЁД", cx_right, 378)
-        self._draw_label(screen, hint_font, "Ходов за черёд", (cx_right, 406))
-        self.moves_minus_button.draw(screen, mouse_pos)
-        moves_surf = label_font.render(str(self.settings.moves_per_turn), True, TEXT_COLOR)
-        screen.blit(moves_surf, moves_surf.get_rect(center=(cx_right, 440)))
-        self.moves_plus_button.draw(screen, mouse_pos)
-        time_val = int(round(self.time_slider.value))
-        self._draw_label(screen, hint_font, f"Время на действие: {time_val} с", (cx_right, 470))
-        self.time_slider.draw(screen)
+        self._draw_section_header(screen, "СОБЫТИЯ", cx_right, 280)
+        density_val = int(round(self.events_density_slider.value))
+        self._draw_label(screen, hint_font, f"Плотность событий: {density_val}%", (cx_right, 308))
+        self.events_density_slider.draw(screen)
 
         # ============ СТАРТ ============
         self.start_button.enabled = self._custom_inputs_valid()

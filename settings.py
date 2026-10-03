@@ -12,7 +12,6 @@ DEFAULT_SCROLL_SPEED = 20
 # --- Игровое поле и камера ---
 INITIAL_SCALE = 30
 MAX_SCALE = 50
-PLAYER_SPEED = 5.0
 
 # Цвета игрового поля
 BG_COLOR = (135, 206, 235)

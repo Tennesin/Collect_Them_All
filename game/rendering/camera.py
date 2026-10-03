@@ -10,6 +10,7 @@ class Camera:
         self.field_width = field_width
         self.field_height = field_height
         self.smooth_speed = smooth_speed
+        self.follow = True  # True: камера следует за игроком; драг ПКМ переводит в False
 
         self.min_scale = max(screen_width / field_width, screen_height / field_height)
         self.max_scale = max(max_scale, self.min_scale)

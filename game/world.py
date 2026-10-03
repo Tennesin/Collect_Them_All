@@ -1,33 +1,35 @@
 import random
 
+from game.clock import WorldClock
 from game.effects.effect_context import EffectContext
 from game.effects.effect_reader import EffectReader
 from game.event_manager import EventManager
 from game.field import Field
 from game.fog_of_war import FogOfWar
-from game.game_config import FINISH_MODE_INSTANT
+from game.game_config import (
+    PLAYER_BASE_SPEED, GOLD_YIELD_INTERVAL,
+    SILVER_RESPAWN_INTERVAL, EVENT_RESPAWN_INTERVAL,
+)
 from game.generation.field_texture import FieldTextureGenerator
 from game.generation.gold_cell_generator import GoldCellGenerator
 from game.generation.obstacle_generator import ObstacleGenerator
 from game.player import Player
 from game.resource_manager import ResourceManager
-from game.turn_manager import TurnManager
+
 
 class GameWorld:
-    """Игровой мир без отрисовки: поле, акторы, менеджеры и правила партии.
-    Сцена лишь вызывает update(dt) и подписывается на колбэки."""
+    """Игровой мир без отрисовки: поле, акторы, менеджеры, часы и правила партии."""
 
-    def __init__(self, settings, player_speed, color_keys):
+    def __init__(self, settings, player_palette):
+        """player_palette: список (color_key, rgb) по порядку игроков."""
         self.settings = settings
         self.winner = None
-        self.placements = []
+        self.on_event_triggered = None  # (player, event_definition)
 
-        # Колбэки для слоя представления (сцена). Все необязательные.
-        self.on_event_triggered = None     # (player, event_definition)
-        self.on_turn_changed = None        # (new_player)
-        self.on_player_teleported = None   # (player)
+        self._pending_event_players = []  # игроки, которых телепортировало на клетку с событием
 
-        self._pending_event_players = set()
+        self.clock = WorldClock()
+        self.effect_context = EffectContext(self)
 
         self.field = Field(settings.map_width, settings.map_height)
         self._generate_field()
@@ -37,7 +39,8 @@ class GameWorld:
             settings.win_gold_required, settings.win_silver_required,
         )
         self.fog_of_war = FogOfWar(self.field, settings.vision_radius)
-        self.players = self._create_players(player_speed, color_keys)
+        self.players = self._create_players(player_palette)
+        self.human = self.players[0]
 
         self.event_manager = EventManager(
             self.field, settings.player_count, settings.event_density_fraction
@@ -55,12 +58,9 @@ class GameWorld:
             occupied_provider=self._occupied_cells,
         )
 
-        self.turn_manager = TurnManager(
-            self.players, max_moves=settings.moves_per_turn, turn_time=settings.turn_time_seconds
-        )
-        self.turn_manager.on_turn_change = self._on_turn_change
-        self.turn_manager.on_cycle_complete = self._on_cycle_complete
-        self.turn_manager.on_player_turn_end = self._on_player_turn_end
+        self.clock.every(GOLD_YIELD_INTERVAL, self.resource_manager.tick_gold_deposits)
+        self.clock.every(SILVER_RESPAWN_INTERVAL, self.resource_manager.respawn_silver)
+        self.clock.every(EVENT_RESPAWN_INTERVAL, self.event_manager.respawn)
 
     # --- Построение ---
 
@@ -77,15 +77,16 @@ class GameWorld:
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
         FieldTextureGenerator(self.field).generate()
 
-    def _create_players(self, player_speed, color_keys):
+    def _create_players(self, player_palette):
         players = []
         for i in range(self.settings.player_count):
+            color_key, color = player_palette[i]
             player = Player(
-                self.field, start_cell=self.field.start_cell,
-                speed=player_speed, color_key=color_keys[i],
+                self.field, start_cell=self.field.start_cell, base_speed=PLAYER_BASE_SPEED,
+                color_key=color_key, color=color,
             )
             player.on_cell_reached = self._make_cell_reached_handler(player)
-            self.fog_of_war.update_player(player)  # видимость на старте
+            self.fog_of_war.update_player(player)
             players.append(player)
         return players
 
@@ -112,73 +113,69 @@ class GameWorld:
     def update(self, dt):
         if self.winner is not None:
             return
-        self.turn_manager.update(dt)
-        current = self.turn_manager.current_player
-        if current.moving:
-            current.update(dt)
+        self.clock.update(dt)
+
+        for player in self.players:
+            EffectReader.update(player, dt, self.effect_context)
+            EffectReader.tick(player, dt, self.effect_context)
+            player.trim_blocked_path()
+            player.update(dt)
+
+        self._refresh_dirty_vision()
+        self._check_finish()
         self._flush_pending_events()
 
+        for player in self.players:
+            player.warning_message = self.resource_manager.missing_requirements_message(player)
+
+    def _refresh_dirty_vision(self):
+        for player in self.players:
+            if player.vision_dirty:
+                player.vision_dirty = False
+                self.fog_of_war.update_player(player)
+
+    def _check_finish(self):
+        for player in self.players:
+            if self.resource_manager.check_win(player):
+                player.path = []
+                self.winner = player
+                return
+
     def _flush_pending_events(self):
-        """Открывает отложенное событие, когда его владелец стал текущим игроком и стоит на месте."""
-        current = self.turn_manager.current_player
-        if current not in self._pending_event_players or current.moving:
-            return
-        self._pending_event_players.discard(current)
-        event = self.event_manager.consume_at(current.grid_x, current.grid_y)
-        if event is not None:
-            self._trigger_event(current, event)
-
-    # --- Цикл ходов ---
-
-    def _on_cycle_complete(self):
-        self.resource_manager.on_cycle_complete()
-        self.event_manager.on_cycle_complete()
-
-    def _on_turn_change(self, new_player):
-        if self.on_turn_changed:
-            self.on_turn_changed(new_player)
-
-    def _on_player_turn_end(self, player):
-        """Черёд завершился: тикаем эффекты и сразу пересчитываем обзор (п. 3.2)."""
-        player.tick_effects(EffectContext(self))
-        self.fog_of_war.update_player(player)
+        """Открывает событие под игроком, которого телепортировало на его клетку.
+        Откладываем, чтобы попап не открывался поверх другого попапа."""
+        while self._pending_event_players:
+            player = self._pending_event_players.pop(0)
+            event = self.event_manager.consume_at(player.grid_x, player.grid_y)
+            if event is not None:
+                self._trigger_event(player, event)
+                return
 
     # --- Обработка клетки ---
 
     def _make_cell_reached_handler(self, player):
         def handler():
-            if self._arrive_at_cell(player):
-                return
-            self.turn_manager.consume_move()
-            player.warning_message = self.resource_manager.missing_requirements_message(player)
+            self._arrive_at_cell(player)
         return handler
 
     def _arrive_at_cell(self, player, defer_events=False):
-        """Единая обработка прихода актора на клетку (шаг или телепорт).
-        Возвращает True, если игрок финишировал."""
+        """Единая обработка прихода на клетку (шаг или телепорт)."""
         self.fog_of_war.update_player(player)
         self.resource_manager.collect_at(player)
-        EffectReader.notify_cell_reached(player, EffectContext(self))
-
-        if self.winner is None and player not in self.placements and self.resource_manager.check_win(player):
-            self._handle_player_finish(player)
-            return True
+        EffectReader.notify_cell_reached(player, self.effect_context)
 
         pos = (player.grid_x, player.grid_y)
         if defer_events:
-            if self.event_manager.get_event_at(pos) is not None:
-                self._pending_event_players.add(player)
-            return False
-
+            if self.event_manager.get_event_at(pos) is not None and player not in self._pending_event_players:
+                self._pending_event_players.append(player)
+            return
         event = self.event_manager.consume_at(*pos)
         if event is not None:
             self._trigger_event(player, event)
-        return False
 
     def _trigger_event(self, player, event):
-        """Мгновенно обрывает путь и просит слой представления показать событие."""
+        """Обрывает маршрут и просит слой представления показать событие."""
         player.path = []
-        player.moving = False
         if self.on_event_triggered:
             self.on_event_triggered(player, event)
 
@@ -208,39 +205,10 @@ class GameWorld:
         player.pos_x = cell[0] + 0.5
         player.pos_y = cell[1] + 0.5
         player.path = []
-        player.moving = False
-        self._arrive_at_cell(player, defer_events=True)  # п. 3.6
-        player.warning_message = self.resource_manager.missing_requirements_message(player)
-        if self.on_player_teleported:
-            self.on_player_teleported(player)
+        self._arrive_at_cell(player, defer_events=True)
 
     def relocate_player_to_nearest_free_cell(self, player):
         cell = (player.grid_x, player.grid_y)
         if self.field.is_free(*cell):
             return
         self._teleport_player_to(player, self.field.nearest_free_cell(*cell))
-
-    def refresh_effects_immediately(self, player):
-        self.fog_of_war.update_player(player)
-        if player is self.turn_manager.current_player:
-            self.turn_manager.recompute_moves_cap()
-
-    # --- Финиш ---
-
-    def _handle_player_finish(self, player):
-        player.moving = False
-        player.path = []
-        self.placements.append(player)
-
-        if self.settings.finish_mode == FINISH_MODE_INSTANT:
-            self.winner = player
-            return
-
-        self.turn_manager.eliminate(player)
-        active_players = [p for p in self.players if p not in self.placements]
-        if len(active_players) <= 1:
-            if active_players:
-                self.placements.append(active_players[0])
-            self.winner = self.placements[0]
-            return
-        self.turn_manager.end_turn_early()

@@ -6,7 +6,18 @@ class SilverMagnetEffect(Effect):
 
     label = "Магнит серебра"
     RADIUS = 3
-    DURATION_TURNS = 4
+    DURATION_SECONDS = 12.0
+    POLL_INTERVAL = 0.4  # как часто магнит проверяет серебро вокруг
+
+    def __init__(self, duration_seconds):
+        super().__init__(duration_seconds)
+        self._poll_timer = 0.0
+
+    def on_update(self, player, dt, context):
+        self._poll_timer += dt
+        if self._poll_timer >= self.POLL_INTERVAL:
+            self._poll_timer = 0.0
+            context.collect_nearby_silver(player, self.RADIUS)
 
     def on_cell_reached(self, player, context):
         context.collect_nearby_silver(player, self.RADIUS)
@@ -43,7 +54,7 @@ class BoxEvent(EventDefinition):
             "Внутри оказался странный гудящий артефакт — он словно сам "
             "притягивает к вам разбросанное вокруг серебро!",
             gold_delta=5,
-            effect_factory=lambda: SilverMagnetEffect(SilverMagnetEffect.DURATION_TURNS),
+            effect_factory=lambda: SilverMagnetEffect(SilverMagnetEffect.DURATION_SECONDS),
         ),
     }
 

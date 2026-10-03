@@ -38,7 +38,7 @@ class ResourceManager:
             self._cycles_since_silver_respawn = 0
             self._respawn_silver()
 
-    def _respawn_silver(self):
+    def respawn_silver(self):
         visible = self._visible_provider() if self._visible_provider else set()
         kept = {pos: amount for pos, amount in self.silver_cells.items() if pos in visible}
 
@@ -97,7 +97,8 @@ class ResourceManager:
             if (pos[0] - px) ** 2 + (pos[1] - py) ** 2 <= radius_sq
         ]
         for pos in nearby:
-            player.silver += self.silver_cells.pop(pos)
+            amount = self.silver_cells.pop(pos)
+            player.silver += EffectReader.modify_income(player, "silver", amount)
 
     def check_win(self, player):
         """True, если игрок стоит на финишной клетке и набрал достаточно золота и серебра."""
