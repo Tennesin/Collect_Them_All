@@ -10,6 +10,7 @@ from game.fog_of_war import FogOfWar
 from game.game_config import (
     PLAYER_BASE_SPEED, GOLD_YIELD_INTERVAL,
     SILVER_RESPAWN_INTERVAL, EVENT_RESPAWN_INTERVAL,
+    FIELD_COLOR_VARIANT_COUNT,
 )
 from game.generation.field_texture import FieldTextureGenerator
 from game.generation.gold_cell_generator import GoldCellGenerator
@@ -83,7 +84,7 @@ class GameWorld:
         total_cells = settings.map_width * settings.map_height
         max_obstacle_cells = int(total_cells * settings.obstacle_fraction)
         ObstacleGenerator(self.field, max_obstacle_cells).generate()
-        FieldTextureGenerator(self.field).generate()
+        FieldTextureGenerator(self.field, FIELD_COLOR_VARIANT_COUNT).generate()
 
     def _create_players(self, player_palette):
         players = []

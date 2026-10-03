@@ -16,6 +16,7 @@ class HalfIncomeCurseEffect(Effect):
 
 class ChestEvent(EventDefinition):
     id = "chest"
+    title = "Сундук"
     icon_file = "chest.png"
     prompt_text = (
         "Перед вами стоит старый сундук — крышка слегка подрагивает, будто он "

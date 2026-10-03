@@ -98,6 +98,11 @@ class NewGameScene(Scene):
             value=self.settings.win_silver_required,
             min_value=MIN_WIN_SILVER, max_value=MAX_WIN_SILVER, step=WIN_SILVER_STEP,
         )
+
+        self._sliders = [
+            self.obstacle_slider, self.events_density_slider,
+            self.gold_win_slider, self.silver_win_slider,
+        ]
         self.gold_cells_minus_button = Button((self.CX_RIGHT - 76, 216, 32, 32), "-")
         self.gold_cells_plus_button = Button((self.CX_RIGHT + 44, 216, 32, 32), "+")
         self._gold_cells_flash_until = 0.0  # до какого момента число золотых клеток подсвечено как предупреждение
@@ -127,37 +132,41 @@ class NewGameScene(Scene):
         if self.settings.gold_cell_count > max_cells:
             self.settings.gold_cell_count = max_cells
 
+    def _go_to_main_menu(self):
+        from scene.scene_main_menu import MainMenuScene
+        self.manager.switch_to(MainMenuScene(self.manager))
+
+    def _grab_slider(self, pos):
+        """Если клик попал в слайдер, начинает его перетаскивание."""
+        for slider in self._sliders:
+            if slider.rect.collidepoint(pos):
+                slider.dragging = True
+                slider.set_from_mouse(pos[0])
+                return True
+        return False
+
     # --- События ---
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._handle_click(event.pos)
-        elif event.type == pygame.MOUSEMOTION:
-            if self.obstacle_slider.dragging:
-                self.obstacle_slider.set_from_mouse(event.pos[0])
-            if self.events_density_slider.dragging:
-                self.events_density_slider.set_from_mouse(event.pos[0])
-            if self.gold_win_slider.dragging:
-                self.gold_win_slider.set_from_mouse(event.pos[0])
-            if self.silver_win_slider.dragging:
-                self.silver_win_slider.set_from_mouse(event.pos[0])
+            elif event.type == pygame.MOUSEMOTION:
+            for slider in self._sliders:
+                if slider.dragging:
+                    slider.set_from_mouse(event.pos[0])
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-            self.obstacle_slider.dragging = False
-            self.events_density_slider.dragging = False
-            self.gold_win_slider.dragging = False
-            self.silver_win_slider.dragging = False
+            for slider in self._sliders:
+                slider.dragging = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                from scene.scene_main_menu import MainMenuScene
-                self.manager.switch_to(MainMenuScene(self.manager))
+                self._go_to_main_menu()
                 return
             self.width_input.handle_keydown(event)
             self.height_input.handle_keydown(event)
 
     def _handle_click(self, pos):
         if self.back_button.collidepoint(pos):
-            from scene.scene_main_menu import MainMenuScene
-            self.manager.switch_to(MainMenuScene(self.manager))
+            self._go_to_main_menu()
             return
 
         # --- Карта ---
@@ -176,9 +185,7 @@ class NewGameScene(Scene):
         if self.custom_mode:
             self.width_input.try_focus(pos)
             self.height_input.try_focus(pos)
-        if self.obstacle_slider.rect.collidepoint(pos):
-            self.obstacle_slider.dragging = True
-            self.obstacle_slider.set_from_mouse(pos[0])
+        if self._grab_slider(pos):
             return
 
         # --- Видимость ---
@@ -201,21 +208,6 @@ class NewGameScene(Scene):
                 self.settings.bot_difficulty = key
                 return
 
-        # --- События ---
-        if self.events_density_slider.rect.collidepoint(pos):
-            self.events_density_slider.dragging = True
-            self.events_density_slider.set_from_mouse(pos[0])
-            return
-
-        # --- Победа ---
-        if self.gold_win_slider.rect.collidepoint(pos):
-            self.gold_win_slider.dragging = True
-            self.gold_win_slider.set_from_mouse(pos[0])
-            return
-        if self.silver_win_slider.rect.collidepoint(pos):
-            self.silver_win_slider.dragging = True
-            self.silver_win_slider.set_from_mouse(pos[0])
-            return
         if self.gold_cells_minus_button.collidepoint(pos):
             self.settings.gold_cell_count = max(MIN_GOLD_CELLS, self.settings.gold_cell_count - 1)
             return

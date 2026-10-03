@@ -60,14 +60,14 @@ class GameplayScene(Scene):
             parts.append(f"{outcome.silver_delta:+d} сер.")
         if outcome.displacement_cells:
             parts.append("отброшен")
-        title = EVENT_TITLES_RU.get(event.id, event.id)
+        title = event.title or event.id
         result = ", ".join(parts) if parts else "без добычи"
         self.notifications.add(f"{PLAYER_NAMES_RU[player.color_key]}: {title} ({result})", player.color)
 
     # --- Жизненный цикл сцены ---
 
     def on_pause(self):
-        # MOUSEBUTTONUP уйдёт в другую сцену, поэтому драг сбрасываем здесь (п. 3.8)
+        # MOUSEBUTTONUP уйдёт в другую сцену, поэтому драг сбрасываем здесь
         self.input_handler.dragging = False
 
     def handle_event(self, event):

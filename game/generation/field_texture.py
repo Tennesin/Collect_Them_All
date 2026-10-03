@@ -1,11 +1,11 @@
 import random
-from settings import FIELD_COLOR_VARIANTS
 
 class FieldTextureGenerator:
-    """Назначает каждой клетке один из базовых оттенков FIELD_COLOR_VARIANTS."""
+    """Назначает каждой клетке один из базовых оттенков (индекс 0..variant_count-1)."""
 
-    def __init__(self, field):
+    def __init__(self, field, variant_count):
         self.field = field
+        self.variant_count = variant_count
 
     def generate(self):
         field = self.field
@@ -17,8 +17,8 @@ class FieldTextureGenerator:
 
     def _pick_base_color(self, x, y):
         forbidden = self._forbidden_neighbor_colors(x, y)
-        choices = [v for v in range(len(FIELD_COLOR_VARIANTS)) if v not in forbidden]
-        return random.choice(choices) if choices else random.randrange(len(FIELD_COLOR_VARIANTS))
+        choices = [v for v in range(self.variant_count) if v not in forbidden]
+        return random.choice(choices) if choices else random.randrange(self.variant_count)
 
     def _needs_color(self, x, y):
         field = self.field

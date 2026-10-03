@@ -3,6 +3,7 @@ from game.effects.speed_effects import SlowEffect, HasteEffect
 
 class InjuredEvent(EventDefinition):
     id = "injured"
+    title = "Раненый"
     icon_file = "injured.png"
     prompt_text = (
         "Вы наткнулись на раненого человека, который просит вас помочь ему. "

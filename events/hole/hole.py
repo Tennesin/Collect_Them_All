@@ -18,6 +18,7 @@ class PhantomWalkEffect(Effect):
 
 class HoleEvent(EventDefinition):
     id = "hole"
+    title = "Яма"
     icon_file = "hole.png"
     prompt_text = (
         "Вы наткнулись на глубокую яму, дна которой не видно даже при освещении. "

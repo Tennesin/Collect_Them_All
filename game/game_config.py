@@ -23,9 +23,10 @@ DEFAULT_VISION_RADIUS = 4
 DEFAULT_MAP_SIZE = 15
 
 # --- Движение в реальном времени ---
-PLAYER_BASE_SPEED = 3.0        # клеток в секунду (стартовое значение, подберём в симуляции)
+PLAYER_BASE_SPEED = 3.0        # клеток в секунду
 MIN_SPEED_MULTIPLIER = 0.0     # 0 = полная остановка (стан)
 MAX_SPEED_MULTIPLIER = 2.5
+FIELD_COLOR_VARIANT_COUNT = 4   # сколько оттенков травы; должно совпадать с len(FIELD_COLOR_VARIANTS) в settings.py
 
 # --- Периодические события мира, секунды ---
 GOLD_YIELD_INTERVAL = 10.0     # раз в столько секунд в золотых клетках копится GOLD_CELL_YIELD
@@ -81,11 +82,11 @@ DEFAULT_EVENT_DENSITY_PERCENT = 4   # эквивалент прежней кон
 
 EVENT_DENSITY_PER_PLAYER = 0.005    # доп. плотность за каждого игрока сверх первого — остаётся фиксированной
 MIN_EVENTS_ABSOLUTE = 1
+
 def max_gold_cells_for_map(width, height):
     """Верхняя граница количества золотых клеток, разумная для данного размера карты."""
     capacity = (width * height) // GOLD_CELL_AREA_PER_CELL
     return max(MIN_GOLD_CELLS, min(MAX_GOLD_CELLS, capacity))
-
 
 @dataclass
 class GameSettings:

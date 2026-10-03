@@ -1,7 +1,7 @@
 import os
 import pygame
 from settings import *
-from widgets import Button, ScrollArea, get_font
+from widgets import Button, ScrollArea, get_font, wrap_text
 from game.rendering.image_manager import ImageManager
 from game.event_manager import EVENTS_ROOT
 from scene.scenes import Scene
@@ -194,22 +194,6 @@ class InstructionScene(Scene):
 
     # --- Построение содержимого (один раз при создании сцены) ---
 
-    @staticmethod
-    def _wrap_lines(font, text, max_width):
-        words = text.split(" ")
-        lines = []
-        line = ""
-        for word in words:
-            candidate = f"{line} {word}".strip()
-            if font.size(candidate)[0] > max_width and line:
-                lines.append(line)
-                line = word
-            else:
-                line = candidate
-        if line:
-            lines.append(line)
-        return lines
-
     def _build_content(self, content_width):
         header_font = get_font(FONT_SIZE_LABEL + 2)
         para_font = get_font(FONT_SIZE_HINT + 2)
@@ -230,7 +214,7 @@ class InstructionScene(Scene):
                 if kind == "p":
                     text = item[1]
                     color = item[2] if len(item) > 2 else TEXT_COLOR
-                    for line in self._wrap_lines(para_font, text, content_width):
+                    for line in wrap_text(para_font, text, content_width):
                         line_surf = para_font.render(line, True, color)
                         blocks.append((y, "text", line_surf))
                         y += line_surf.get_height() + 4
@@ -245,7 +229,7 @@ class InstructionScene(Scene):
 
                     text_indent = icon.get_width() + 8
                     wrap_width = max(40, content_width - text_indent)
-                    lines = self._wrap_lines(para_font, text, wrap_width) or [""]
+                    lines = wrap_text(para_font, text, wrap_width) or [""]
 
                     first_surf = para_font.render(lines[0], True, color)
                     line_height = max(icon.get_height(), first_surf.get_height())

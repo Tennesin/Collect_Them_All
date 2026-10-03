@@ -37,10 +37,6 @@ class Player:
     # --- Состояние движения ---
 
     @property
-    def moving(self):
-        return bool(self.path)
-
-    @property
     def anchor_cell(self):
         """Клетка, от которой надо строить новый маршрут: ближайшая цель
         текущего движения либо текущая клетка, если игрок стоит."""

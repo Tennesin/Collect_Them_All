@@ -1,5 +1,6 @@
 import pygame
 from settings import *
+from game.game_config import FIELD_COLOR_VARIANT_COUNT
 from game.rendering.image_manager import ImageManager
 
 class Renderer:
@@ -7,6 +8,9 @@ class Renderer:
 
     def __init__(self, screen, camera, field, players, viewer, input_handler,
                  resource_manager, event_manager):
+
+        assert len(FIELD_COLOR_VARIANTS) == FIELD_COLOR_VARIANT_COUNT, \
+            "FIELD_COLOR_VARIANTS в settings.py и FIELD_COLOR_VARIANT_COUNT в game_config.py разошлись"
         self.screen = screen
         self.camera = camera
         self.field = field
@@ -30,7 +34,8 @@ class Renderer:
         viewer = self.viewer
         explored = viewer.known_cells
 
-        min_x, min_y, max_x, max_y = self._visible_cell_bounds()
+        bounds = self._visible_cell_bounds()
+        min_x, min_y, max_x, max_y = bounds
 
         for x in range(min_x, max_x):
             for y in range(min_y, max_y):
@@ -55,13 +60,12 @@ class Renderer:
                         color = HOVER_COLOR
                     else:
                         variant_index = self.field.color_variants[x][y]
-                        color = FIELD_COLOR_VARIANTS[variant_index] if variant_index is not None else \
-                        FIELD_COLOR_VARIANTS[0]
+                        color = FIELD_COLOR_VARIANTS[variant_index or 0]
                     pygame.draw.polygon(self.screen, color, points)
                     pygame.draw.polygon(self.screen, GRID_COLOR, points, 1)
 
-        self.draw_walls(explored)
-        self._draw_fog_dimming(explored, viewer.visible_cells)
+        self.draw_walls(explored, bounds)
+        self._draw_fog_dimming(explored, viewer.visible_cells, bounds)
 
     def _visible_cell_bounds(self):
         """Диапазон клеток поля, которые реально попадают на экран при текущих зуме/панораме."""
@@ -79,49 +83,53 @@ class Renderer:
         s = self.camera.scale
         return [(x0, y0), (x0 + s, y0), (x0 + s, y0 + s), (x0, y0 + s)]
 
-    def draw_walls(self, explored):
+    def draw_walls(self, explored, bounds):
         if not self.field.wall_segments:
             return
+        min_x, min_y, max_x, max_y = bounds
         wall_thickness = max(2.0, WALL_THICKNESS_RATIO * self.camera.scale)
+        line_width = int(wall_thickness)
         color = WALL_COLOR
+        project = self.camera.project
+        field = self.field
 
         for segment in self.field.wall_segments:
-            if len(segment) < 2:
+            if not any(min_x <= x < max_x and min_y <= y < max_y for x, y in segment):
                 continue
 
+            # Соединения между соседними клетками стены
             for i in range(len(segment) - 1):
                 c1, c2 = segment[i], segment[i + 1]
                 if c1 not in explored or c2 not in explored:
                     continue
-                p1 = self.camera.project(c1[0] + 0.5, c1[1] + 0.5)
-                p2 = self.camera.project(c2[0] + 0.5, c2[1] + 0.5)
-                pygame.draw.line(self.screen, color, p1, p2, int(wall_thickness))
+                p1 = project(c1[0] + 0.5, c1[1] + 0.5)
+                p2 = project(c2[0] + 0.5, c2[1] + 0.5)
+                pygame.draw.line(self.screen, color, p1, p2, line_width)
 
             for cell in segment:
                 if cell not in explored:
                     continue
-                pt = self.camera.project(cell[0] + 0.5, cell[1] + 0.5)
+                x, y = cell
+                center = project(x + 0.5, y + 0.5)
+
+                # Квадрат в узле стены
                 rect = pygame.Rect(0, 0, wall_thickness, wall_thickness)
-                rect.center = pt
+                rect.center = center
                 pygame.draw.rect(self.screen, color, rect)
 
-        for segment in self.field.wall_segments:
-            for x, y in segment:
-                if (x, y) not in explored:
-                    continue
-                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                # Мостик к соседнему блоку
+                for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                     nx, ny = x + dx, y + dy
-                    if (self.field.in_bounds(nx, ny)
+                    if (field.in_bounds(nx, ny)
                             and (nx, ny) in explored
-                            and self.field.obstacle_grid[nx][ny]
-                            and self.field.obstacle_type[nx][ny] == 'block'):
-                        screen1 = self.camera.project(x + 0.5, y + 0.5)
-                        screen2 = self.camera.project(nx + 0.5, ny + 0.5)
-                        screen_mid = ((screen1[0] + screen2[0]) / 2, (screen1[1] + screen2[1]) / 2)
-                        pygame.draw.line(self.screen, color, screen1, screen_mid, int(wall_thickness))
+                            and field.obstacle_grid[nx][ny]
+                            and field.obstacle_type[nx][ny] == 'block'):
+                        other = project(nx + 0.5, ny + 0.5)
+                        mid = ((center[0] + other[0]) / 2, (center[1] + other[1]) / 2)
+                        pygame.draw.line(self.screen, color, center, mid, line_width)
 
-    def _draw_fog_dimming(self, explored, visible):
-        min_x, min_y, max_x, max_y = self._visible_cell_bounds()
+    def _draw_fog_dimming(self, explored, visible, bounds):
+        min_x, min_y, max_x, max_y = bounds
         overlay = self._fog_overlay
         overlay.fill((0, 0, 0, 0))
         drawn = False

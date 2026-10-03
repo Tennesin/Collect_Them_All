@@ -18,7 +18,6 @@ class Field:
 
         self.gold_cell_positions = []
         self.reserved_cells = {self.win_cell, self.start_cell}
-        self._finish_distances = None   # кэш BFS от финиша (препятствия статичны после генерации)
 
     def reserve_cell(self, x, y):
         self.reserved_cells.add((x, y))
@@ -105,37 +104,10 @@ class Field:
         path.reverse()
         return path
 
-    def find_path_optimistic(self, start, goal, known_cells):
-        """Как find_path, но клетки вне known_cells считаются проходимыми: реальные
-        препятствия учитываются только там, где актор их уже видел. Не раскрывает
-        боту неисследованную часть карты; при обнаружении блока путь перестраивают."""
-        if start == goal:
-            return []
-        if goal in known_cells and not self.is_free(*goal):
-            return []
-        queue = deque([start])
-        visited = {start: None}
-        while queue:
-            current = queue.popleft()
-            if current == goal:
-                break
-            cx, cy = current
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                nxt = (cx + dx, cy + dy)
-                if not self.in_bounds(*nxt) or nxt in visited:
-                    continue
-                if nxt in known_cells and not self.is_free(*nxt):
-                    continue
-                visited[nxt] = current
-                queue.append(nxt)
-        if goal not in visited:
-            return []
-        return self._restore_path(visited, start, goal)
-
     def optimistic_tree(self, start, known_cells, avoid=None):
-        """Один BFS от start с оптимистичным допущением (как find_path_optimistic):
-        неизвестные клетки проходимы, известные препятствия нет. avoid - клетки,
-        которые нельзя проходить насквозь. Возвращает (расстояния, родители)."""
+        """Один BFS от start с оптимистичным допущением: неизвестные клетки проходимы,
+        известные препятствия нет. avoid - клетки, которые нельзя проходить насквозь.
+        Возвращает (расстояния, родители)."""
         distances = {start: 0}
         parents = {start: None}
         queue = deque([start])
@@ -161,25 +133,6 @@ class Field:
         if goal not in parents:
             return []
         return self._restore_path(parents, start, goal)
-
-    def bfs_distances(self, source):
-        """Расстояния (в шагах) от source до всех достижимых свободных клеток: {клетка: расстояние}."""
-        distances = {source: 0}
-        queue = deque([source])
-        while queue:
-            current = queue.popleft()
-            next_distance = distances[current] + 1
-            for neighbor in self.get_neighbors(*current):
-                if neighbor not in distances:
-                    distances[neighbor] = next_distance
-                    queue.append(neighbor)
-        return distances
-
-    def distances_to_finish(self):
-        """Карта расстояний до финиша. Считается один раз, вызывать только после генерации поля."""
-        if self._finish_distances is None:
-            self._finish_distances = self.bfs_distances(self.win_cell)
-        return self._finish_distances
 
     def nearest_free_cell(self, x, y):
         """BFS до ближайшей свободной клетки — используется, чтобы вытолкнуть игрока

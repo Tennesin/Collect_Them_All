@@ -37,13 +37,3 @@ class Tween:
         eased = self.ease(progress)
         self.value = self.start + (self.end - self.start) * eased
         return self.value
-
-    def reset(self, start, end, duration=None):
-        """Перезапускает ту же Tween с новыми границами — удобно, чтобы развернуть
-        fade-in в fade-out, продолжив с текущего значения (start=self.value)."""
-        self.start = start
-        self.end = end
-        if duration is not None:
-            self.duration = max(0.0001, duration)
-        self.elapsed = 0.0
-        self.value = start

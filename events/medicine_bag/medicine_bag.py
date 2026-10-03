@@ -30,6 +30,7 @@ class SupermanEffect(Effect):
 
 class MedicineBagEvent(EventDefinition):
     id = "medicine_bag"
+    title = "Аптечка"
     icon_file = "medicine_bag.png"
     prompt_text = (
         "На пути лежала заброшенная аптечка, внутри которой нашлись странные "

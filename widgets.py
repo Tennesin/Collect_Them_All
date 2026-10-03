@@ -14,13 +14,11 @@ def get_font(size, name=FONT_NAME):
         _font_cache[key] = font
     return font
 
-def draw_wrapped_text_centered(surface, cx, y, text, color, font_size, max_width, line_spacing=4):
-    """Перенос текста по словам с центровкой каждой строки вокруг cx."""
-    font = get_font(font_size)
-    words = text.split(" ")
+def wrap_text(font, text, max_width):
+    """Разбивает текст на строки по словам так, чтобы каждая строка влезала в max_width."""
     lines = []
     line = ""
-    for word in words:
+    for word in text.split(" "):
         candidate = f"{line} {word}".strip()
         if font.size(candidate)[0] > max_width and line:
             lines.append(line)
@@ -29,9 +27,13 @@ def draw_wrapped_text_centered(surface, cx, y, text, color, font_size, max_width
             line = candidate
     if line:
         lines.append(line)
+    return lines
 
+def draw_wrapped_text_centered(surface, cx, y, text, color, font_size, max_width, line_spacing=4):
+    """Перенос текста по словам с центровкой каждой строки вокруг cx."""
+    font = get_font(font_size)
     line_y = y
-    for line_text in lines:
+    for line_text in wrap_text(font, text, max_width):
         surf = font.render(line_text, True, color)
         surface.blit(surf, surf.get_rect(center=(cx, line_y + surf.get_height() // 2)))
         line_y += surf.get_height() + line_spacing

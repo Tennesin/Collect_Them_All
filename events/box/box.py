@@ -25,6 +25,7 @@ class SilverMagnetEffect(Effect):
 
 class BoxEvent(EventDefinition):
     id = "box"
+    title = "Коробка"
     icon_file = "box.png"
     prompt_text = (
         "Незнакомец в капюшоне протянул вам перевязанную коробку и растворился "

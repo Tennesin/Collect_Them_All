@@ -3,6 +3,7 @@ from game.effects.speed_effects import SlowEffect, HasteEffect, StunEffect
 
 class BagEvent(EventDefinition):
     id = "bag"
+    title = "Мешок"
     icon_file = "bag.png"
     prompt_text = (
         "На земле лежит потрёпанный оранжевый мешок, туго завязанный верёвкой. "

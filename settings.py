@@ -148,12 +148,3 @@ MAX_FRAME_DT = 0.05              # сек, верхняя граница dt од
 NOTIFICATION_DURATION = 4.0                # сек, сколько живёт одно сообщение
 NOTIFICATION_FADE = 0.6                    # сек, плавное исчезновение в конце
 NOTIFICATION_BG_COLOR = (10, 10, 15, 170)  # RGBA, подложка под текстом
-
-EVENT_TITLES_RU = {
-    "bag": "Мешок",
-    "box": "Коробка",
-    "chest": "Сундук",
-    "hole": "Яма",
-    "injured": "Раненый",
-    "medicine_bag": "Аптечка",
-}

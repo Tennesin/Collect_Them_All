@@ -47,7 +47,7 @@ class EffectReader:
 
         if len(still_active) != len(player.active_effects):
             player.active_effects = still_active
-            player.vision_dirty = True  # обзор пересчитает мир (п. 3.2)
+            player.vision_dirty = True
         for effect in expired:
             EffectReader._safe_call(effect, "on_expire", player, context)
 

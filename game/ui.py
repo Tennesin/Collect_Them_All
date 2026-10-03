@@ -1,6 +1,6 @@
 import pygame
 from settings import *
-from widgets import get_font
+from widgets import get_font, wrap_text
 from game.rendering.image_manager import ImageManager
 
 class PlayerPanel:
@@ -110,23 +110,11 @@ class PlayerPanel:
     @staticmethod
     def _draw_wrapped_text(screen, x, y, text, color, font_size, max_width):
         font = get_font(font_size)
-        words = text.split(" ")
-        line = ""
-        line_y = y
-        for word in words:
-            candidate = f"{line} {word}".strip()
-            if font.size(candidate)[0] > max_width and line:
-                surf = font.render(line, True, color)
-                screen.blit(surf, (x, line_y))
-                line_y += surf.get_height() + 2
-                line = word
-            else:
-                line = candidate
-        if line:
+        for line in wrap_text(font, text, max_width):
             surf = font.render(line, True, color)
-            screen.blit(surf, (x, line_y))
-            line_y += surf.get_height()
-        return line_y
+            screen.blit(surf, (x, y))
+            y += surf.get_height() + 2
+        return y
 
     @staticmethod
     def _draw_active_effects(screen, x, y, player):

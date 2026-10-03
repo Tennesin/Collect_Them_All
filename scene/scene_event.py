@@ -180,7 +180,7 @@ class EventScene(Scene):
         elif self.stage in (STAGE_ROLLING, STAGE_FROZEN):
             self._draw_dice(content, mouse_pos)
         elif self.stage == STAGE_RESULT:
-            self._draw_result(content)
+            self._draw_result(content, mouse_pos)
 
         content.set_alpha(int(self._alpha))
         screen.blit(content, (0, 0))
@@ -209,7 +209,7 @@ class EventScene(Scene):
         if self.stage == STAGE_ROLLING:
             self.stop_button.draw(screen, mouse_pos)
 
-    def _draw_result(self, screen):
+    def _draw_result(self, screen, mouse_pos):
         cx = SCREEN_WIDTH // 2
         outcome = self.event.get_outcome(self.final_roll)
 
@@ -225,4 +225,4 @@ class EventScene(Scene):
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34
 
-        self.continue_button.draw(screen, pygame.mouse.get_pos())
+        self.continue_button.draw(screen, mouse_pos)
