@@ -88,6 +88,7 @@ class NewGameScene(Scene):
         )
         self.gold_cells_minus_button = Button((self.CX_RIGHT - 76, 216, 32, 32), "-")
         self.gold_cells_plus_button = Button((self.CX_RIGHT + 44, 216, 32, 32), "+")
+        self._gold_cells_flash_until = 0.0  # до какого момента число золотых клеток подсвечено как предупреждение
 
         # ================= СТАРТ =================
         start_w, start_h = 240, 48

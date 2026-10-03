@@ -2,7 +2,7 @@ import random
 from game.game_config import (
     GOLD_CELL_YIELD,
     SILVER_CELL_BASE_DENSITY, SILVER_CELL_DENSITY_PER_PLAYER, MIN_SILVER_CELLS_ABSOLUTE,
-    SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE, SILVER_RESPAWN_CYCLES,
+    SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE,
 )
 from game.effects.effect_reader import EffectReader
 
@@ -15,11 +15,10 @@ class ResourceManager:
         self.win_silver_required = win_silver_required
         self.gold_deposits = {pos: 0 for pos in field.gold_cell_positions}
         self.silver_cells = {}
-        self._cycles_since_silver_respawn = 0
-        self._visible_provider = None  # клетки, видимые хотя бы одному игроку прямо сейчас
-        self._event_provider = None  # клетки, занятые активным событием
+        self._visible_provider = None   # клетки, видимые хотя бы одному игроку прямо сейчас
+        self._event_provider = None     # клетки, занятые активным событием
         self._occupied_provider = None  # клетки, на которых стоят акторы
-        self._respawn_silver()
+        self.respawn_silver()
 
     def bind_dynamic_providers(self, visible_provider=None, event_provider=None, occupied_provider=None):
         """Вызывается один раз после создания игроков и event_manager."""
@@ -27,16 +26,11 @@ class ResourceManager:
         self._event_provider = event_provider
         self._occupied_provider = occupied_provider
 
-    # --- Цикл ходов ---
+    # --- Периодические события (вызываются таймерами WorldClock) ---
 
-    def on_cycle_complete(self):
+    def tick_gold_deposits(self):
         for pos in self.gold_deposits:
             self.gold_deposits[pos] += GOLD_CELL_YIELD
-
-        self._cycles_since_silver_respawn += 1
-        if self._cycles_since_silver_respawn >= SILVER_RESPAWN_CYCLES:
-            self._cycles_since_silver_respawn = 0
-            self._respawn_silver()
 
     def respawn_silver(self):
         visible = self._visible_provider() if self._visible_provider else set()
@@ -89,7 +83,7 @@ class ResourceManager:
             player.silver += amount
 
     def collect_nearby_silver(self, player, radius):
-        """Забирает всё серебро в радиусе — используется эффектом "магнит" (события "Коробка")."""
+        """Забирает всё серебро в радиусе — используется эффектом "магнит" (событие "Коробка")."""
         px, py = player.grid_x, player.grid_y
         radius_sq = radius * radius
         nearby = [
