@@ -55,7 +55,6 @@ class EventRegistry:
     def __init__(self):
         self._definitions = {}
         self._load_all()
-        self.registry = registry or EventRegistry.shared()
 
     def _load_all(self):
         if not os.path.isdir(EVENTS_ROOT):
@@ -95,6 +94,7 @@ class EventManager:
         self.field = field
         self.player_count = player_count
         self.event_density = event_density
+        self.registry = registry or EventRegistry.shared()
 
         self.active_events = {}  # {(x, y): EventDefinition}
         self._occupied_provider = None  # callable() -> set[(x, y)] клетки, занятые игроками

@@ -70,13 +70,13 @@ def get_file_size_str(path: str) -> str:
         return f"{size / (1024 * 1024):.1f} MB"
 
 def main():
-    main_dir = os.path.dirname(os.path.abspath(__file__))
+    main_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     script_name = os.path.basename(__file__)
 
     base_target_dir = r"d:\Akmal\Personal\AI developed Mini-games\Collect Them All!\temporary"
     os.makedirs(base_target_dir, exist_ok=True)
 
-    allowed_subdirs = {"scene", "game", "images", "events"}
+    allowed_subdirs = {"scene", "game", "images", "events", "bot"}
     image_base = os.path.join(main_dir, "images")
     events_base = os.path.join(main_dir, "events")
 
