@@ -1,6 +1,6 @@
 from game.event_manager import EventDefinition, EventOutcome
 from game.effects.effects import Effect
-
+from game.effects.speed_effects import SlowEffect, HasteEffect
 
 class HalfIncomeCurseEffect(Effect):
     """Собственная механика события 'Сундук': пока эффект активен, весь
@@ -29,8 +29,10 @@ class ChestEvent(EventDefinition):
             effect_factory=lambda: HalfIncomeCurseEffect(HalfIncomeCurseEffect.DURATION_SECONDS),
         ),
         2: EventOutcome(
-            "Сундук недовольно заскрипел и вытряс на вас пыль вместо сокровищ.",
-            silver_delta=-35, moves_delta=-2,
+            "Сундук недовольно заскрипел и вытряс на вас пыль вместо сокровищ — "
+            "вы закашлялись и сбавили шаг.",
+            silver_delta=-35,
+            effect_factory=lambda: SlowEffect(0.75, 3.5),
         ),
         3: EventOutcome(
             "Сундук нехотя выдал горстку монет.",
@@ -41,12 +43,16 @@ class ChestEvent(EventDefinition):
             silver_delta=15,
         ),
         5: EventOutcome(
-            "Похоже, вы ему приглянулись — сундук выдал щедрую пригоршню серебра.",
-            silver_delta=35, moves_delta=3,
+            "Похоже, вы ему приглянулись — сундук выдал щедрую пригоршню серебра "
+            "и будто подбодрил вас.",
+            silver_delta=35,
+            effect_factory=lambda: HasteEffect(1.25, 4.0),
         ),
         6: EventOutcome(
-            "Сундук довольно заурчал и вывалил перед вами настоящий подарок!",
-            gold_delta=20, moves_delta=7,
+            "Сундук довольно заурчал и вывалил перед вами настоящий подарок — "
+            "силы так и прибывают!",
+            gold_delta=20,
+            effect_factory=lambda: HasteEffect(1.5, 5.0),
         ),
     }
 

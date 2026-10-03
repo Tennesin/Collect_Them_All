@@ -51,6 +51,7 @@ class InputHandler:
     def _on_mouse_down(self, event):
         if event.button == 3:  # ПКМ - драг камеры
             self.dragging = True
+            self.camera.follow = False
             self.last_mouse_pos = event.pos
         elif event.button == 1:  # ЛКМ - новая цель
             self._handle_left_click()

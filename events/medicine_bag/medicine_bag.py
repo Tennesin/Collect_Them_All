@@ -1,5 +1,6 @@
 from game.event_manager import EventDefinition, EventOutcome
-from game.effects.effects import Effect
+from game.effects.effects import Effect, remove_warning_effects
+from game.effects.speed_effects import StunEffect, HasteEffect
 
 class ConfusionEffect(Effect):
     """Эффект события 'Аптечка' (ШИЗА): обзор и скорость игрока падают."""
@@ -25,9 +26,7 @@ class SupermanEffect(Effect):
 
     def on_apply(self, player):
         """Супермэн лечит от всего плохого разом."""
-        player.active_effects = [
-            effect for effect in player.active_effects if not getattr(effect, "warning", False)
-        ]
+        remove_warning_effects(player)
 
 class MedicineBagEvent(EventDefinition):
     id = "medicine_bag"
@@ -37,8 +36,6 @@ class MedicineBagEvent(EventDefinition):
         "медикаменты. Желаете попробовать их?"
     )
 
-    REFILL_EXTRA_CAP = 5  # см. исход 5 — насколько можно выйти за обычный лимит шагов
-
     outcomes = {
         1: EventOutcome(
             "ШИЗА: препарат оказался просроченным — сознание помутилось, обзор "
@@ -47,8 +44,8 @@ class MedicineBagEvent(EventDefinition):
             effect_factory=lambda: ConfusionEffect(ConfusionEffect.DURATION_SECONDS),
         ),
         2: EventOutcome(
-            "Рвота: организм не принял находку — пришлось потратить время, приходя в себя.",
-            moves_delta=-4,
+            "Рвота: организм не принял находку — пришлось пережидать, приходя в себя.",
+            effect_factory=lambda: StunEffect(2.5),
         ),
         3: EventOutcome(
             "Ничего: препарат оказался бесполезным, но на дне аптечки нашлась мелочь.",
@@ -56,15 +53,15 @@ class MedicineBagEvent(EventDefinition):
         ),
         4: EventOutcome(
             "Усилитель: неизвестное средство придало бодрости и сил на дорогу.",
-            moves_delta=4,
+            effect_factory=lambda: HasteEffect(1.5, 5.0),
         ),
         5: EventOutcome(
-            "Полная свежесть: препарат снял всю усталость без остатка.",
-            refill_moves=True, refill_extra_cap=REFILL_EXTRA_CAP,
+            "Полная свежесть: препарат снял всю усталость и все дурные последствия.",
+            effect_factory=lambda: HasteEffect(1.25, 4.0, cleanses=True),
         ),
         6: EventOutcome(
             "СУПЕРМЭН: чудо-состав пробудил нечеловеческие силы — вы видите всю карту "
-            "и способны пройти намного больше обычного!",
+            "и несётесь намного быстрее обычного!",
             effect_factory=lambda: SupermanEffect(SupermanEffect.DURATION_SECONDS),
         ),
     }

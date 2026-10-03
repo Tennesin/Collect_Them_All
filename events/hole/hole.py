@@ -1,5 +1,6 @@
 from game.event_manager import EventDefinition, EventOutcome
 from game.effects.effects import Effect
+from game.effects.speed_effects import StunEffect
 
 class PhantomWalkEffect(Effect):
     """Эффект события 'Яма': пока активен, игрок строит путь сквозь любые препятствия.
@@ -24,13 +25,14 @@ class HoleEvent(EventDefinition):
     )
     outcomes = {
         1: EventOutcome(
-            "БЕЗДНА: яма оказалась глубже, чем казалось, — вы едва выбрались наружу, "
-            "потеряв часть серебра и весь остаток текущего черёда.",
-            silver_delta=-35, skip_turn=True,
+            "БЕЗДНА: яма оказалась глубже, чем казалось, — вы с трудом выбрались "
+            "наружу, потеряв часть серебра и несколько долгих секунд.",
+            silver_delta=-35,
+            effect_factory=lambda: StunEffect(3.0),
         ),
         2: EventOutcome(
             "Пустота: внутри не оказалось ничего, кроме темноты — время потрачено впустую.",
-            moves_delta=-4,
+            effect_factory=lambda: StunEffect(1.5),
         ),
         3: EventOutcome(
             "Ржавая монета: на дне ямы нашлась позеленевшая от времени монета.",

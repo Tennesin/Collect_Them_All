@@ -44,7 +44,7 @@ MIN_GOLD_CELLS = 3
 MAX_GOLD_CELLS = 8
 DEFAULT_GOLD_CELLS = 5
 GOLD_CELL_AREA_PER_CELL = 40  # сколько клеток поля "полагается" на одну золотую клетку
-GOLD_CELL_YIELD = 2            # золота за один цикл ходов всех игроков
+GOLD_CELL_YIELD = 2
 GOLD_CELL_BOX_RADIUS = 2       # половина стороны короба (2 -> короб 5x5)
 GOLD_CELL_BUFFER = 1           # минимум свободных клеток вокруг короба
 

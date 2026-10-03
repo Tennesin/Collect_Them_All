@@ -1,5 +1,6 @@
 from game.event_manager import EventDefinition, EventOutcome
 from game.effects.effects import Effect
+from game.effects.speed_effects import StunEffect
 
 class SilverMagnetEffect(Effect):
     """Собственная механика события 'Коробка'."""
@@ -35,8 +36,8 @@ class BoxEvent(EventDefinition):
             gold_delta=-5, silver_delta=-30, displacement_cells=4,
         ),
         2: EventOutcome(
-            "Коробка совершенно пуста — только время потрачено зря.",
-            moves_delta=-3,
+            "Коробка совершенно пуста — вы только зря потеряли время.",
+            effect_factory=lambda: StunEffect(1.5),
         ),
         3: EventOutcome(
             "Внутри — скромный, но честный подарок.",

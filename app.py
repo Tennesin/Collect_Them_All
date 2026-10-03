@@ -22,7 +22,7 @@ class Application:
 
     def run(self):
         while self.running:
-            dt = self.clock.tick(FPS) / 1000.0
+            dt = min(self.clock.tick(FPS) / 1000.0, MAX_FRAME_DT)
             self._process_events()
             self.scene_manager.update(dt)
             self.scene_manager.draw(self.screen)

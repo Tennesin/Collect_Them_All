@@ -16,16 +16,13 @@ EVENTS_ROOT = os.path.join(_PROJECT_ROOT, EVENTS_DIR_NAME)
 
 @dataclass
 class EventOutcome:
-    """Один из шести возможных исходов броска кубика."""
+    """Один из шести возможных исходов броска кубика. Всё, что длится во времени
+    (замедление, ускорение, оглушение), описывается эффектом в effect_factory."""
     text: str
     gold_delta: int = 0
     silver_delta: int = 0
-    moves_delta: int = 0
     displacement_cells: int = 0   # мгновенное смещение игрока на N клеток в случайном направлении
     effect_factory: Optional[Callable[[], Effect]] = None
-    skip_turn: bool = False       # мгновенно завершает текущий черёд игрока
-    refill_moves: bool = False    # особое пополнение шагов текущего черёда (см. TurnManager.refill_moves)
-    refill_extra_cap: int = 0     # на сколько шагов сверх лимита разрешено выйти при refill_moves
 
 class EventDefinition:
     """Базовый класс события. Каждый events/<id>/<id>.py должен объявить
@@ -101,10 +98,6 @@ class EventManager:
         self._visible_provider = visible_provider
 
     # --- Периодические события ---
-
-    def tick_gold_deposits(self):
-        for pos in self.gold_deposits:
-            self.gold_deposits[pos] += GOLD_CELL_YIELD
 
     def respawn(self):
         available = self.registry.all()

@@ -31,10 +31,6 @@ FIELD_COLOR_VARIANTS = [
 WALL_THICKNESS_RATIO = 0.35
 PATH_WIDTH_RATIO = 0.25
 PATH_GOAL_RADIUS_RATIO = 0.3
-PREVIEW_WIDTH_RATIO = 0.2
-PREVIEW_DASH_RATIO = 0.2
-PREVIEW_GAP_RATIO = 0.1
-PREVIEW_ALPHA = 150  # прозрачность предпросмотра пути; сам цвет теперь берётся из player.color
 PLAYER_RADIUS_RATIO = 0.2
 
 # --- Игроки ---
@@ -55,10 +51,6 @@ PLAYER_NAMES_RU = {
     "orange": "Оранжевый",
     "pink": "Розовый",
 }
-
-# Отрисовка "слоёв", когда несколько игроков в одной клетке
-STACK_OFFSET_RATIO = 0.4   # шаг смещения между соседними слоями, доля от радиуса круга
-PLAYER_DIM_FACTOR = 0.45   # насколько темнее рисуются ожидающие (не ходящие сейчас) игроки
 
 # --- UI (меню, настройки, пауза, правая панель) ---
 FONT_NAME = None
@@ -95,7 +87,7 @@ PAUSE_OVERLAY_COLOR = (10, 10, 15, 170)
 PANEL_BG_COLOR = (24, 24, 32)
 PANEL_BORDER_COLOR = (55, 55, 70)
 
-# --- Иконки (см. game.image_manager.ImageManager) ---
+# --- Иконки ---
 ICON_GOLD = "gold.png"
 ICON_SILVER = "silver.png"
 ICON_SILVER_FIELD = "more_silvers.png"

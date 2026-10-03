@@ -25,6 +25,11 @@ class Effect:
         self.duration_seconds -= dt
         return self.duration_seconds > 0
 
+    def absorb(self, other):
+        """Вызывается у уже действующего эффекта, когда на игрока накладывают
+        второй с тем же key. По умолчанию просто продлевает время."""
+        self.duration_seconds = max(self.duration_seconds, other.duration_seconds)
+
     def on_update(self, player, dt, context):
         """Вызывается каждый кадр, пока эффект активен (для периодических механик)."""
         pass
@@ -44,3 +49,10 @@ class Effect:
     def on_apply(self, player):
         """Вызывается сразу после наложения эффекта на игрока."""
         pass
+
+def remove_warning_effects(player):
+    """Снимает с игрока все «плохие» эффекты (warning = True) и просит мир пересчитать обзор."""
+    player.active_effects = [
+        effect for effect in player.active_effects if not getattr(effect, "warning", False)
+    ]
+    player.vision_dirty = True

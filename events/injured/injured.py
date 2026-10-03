@@ -1,4 +1,5 @@
 from game.event_manager import EventDefinition, EventOutcome
+from game.effects.speed_effects import SlowEffect, HasteEffect
 
 class InjuredEvent(EventDefinition):
     id = "injured"
@@ -10,8 +11,9 @@ class InjuredEvent(EventDefinition):
     outcomes = {
         1: EventOutcome(
             "Раненый оказался грабителем, который притворялся больным для окружающих. "
-            "Вы попали в его ловушку.",
-            gold_delta=-10, silver_delta=-60, moves_delta=-3,
+            "Вы попали в его ловушку, а удар по голове сбил вам темп.",
+            gold_delta=-10, silver_delta=-60,
+            effect_factory=lambda: SlowEffect(0.75, 4.0),
         ),
         2: EventOutcome(
             "Раненый после оказания помощи не сдержал слово и сбежал от вас.",
@@ -19,11 +21,13 @@ class InjuredEvent(EventDefinition):
         ),
         3: EventOutcome(
             "Раненый поспешил уйти сразу, дав вам минимальную компенсацию за задержку.",
-            silver_delta=20, moves_delta=2,
+            silver_delta=20,
+            effect_factory=lambda: HasteEffect(1.25, 3.0),
         ),
         4: EventOutcome(
             "Раненый поспешил уйти сразу, дав вам минимальную компенсацию за задержку.",
-            silver_delta=20, moves_delta=2,
+            silver_delta=20,
+            effect_factory=lambda: HasteEffect(1.25, 3.0),
         ),
         5: EventOutcome(
             "Раненый оплатил за вашу услугу и поблагодарил перед уходом.",
@@ -32,7 +36,8 @@ class InjuredEvent(EventDefinition):
         6: EventOutcome(
             "Раненый оказался священником, который благословил вас своей силой "
             "за оказанную ему помощь.",
-            gold_delta=15, moves_delta=10,
+            gold_delta=15,
+            effect_factory=lambda: HasteEffect(1.5, 6.0),
         ),
     }
 

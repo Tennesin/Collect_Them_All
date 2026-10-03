@@ -216,7 +216,3 @@ class Renderer:
         border_color = (255, 255, 255) if highlight else (20, 20, 20)
         border_width = 2 if highlight else 1
         pygame.draw.circle(self.screen, border_color, center, radius, border_width)
-
-    @staticmethod
-    def _dim_color(color):
-        return tuple(max(0, int(c * PLAYER_DIM_FACTOR)) for c in color)

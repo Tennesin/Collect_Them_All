@@ -28,6 +28,7 @@ class EventScene(Scene):
         self.current_face = random.randint(1, 6)
         self.final_roll = None
         self._outcome_applied = False
+        self._result_lines = []   # [(текст, цвет)] — строится один раз при применении исхода
 
         self._alpha = 0
         self._fade = Tween(0, 255, FADE_POPUP_IN_DURATION, ease_out_cubic)
@@ -118,20 +119,26 @@ class EventScene(Scene):
         self.stage = STAGE_ROLLING
         self.roll_timer = 0.0
         self.face_change_timer = 0.0
+        self.final_roll = self.world.event_resolver.roll()
 
     def _freeze_roll(self):
-        self.final_roll = self.current_face
+        self.current_face = self.final_roll
         self.stage = STAGE_FROZEN
         self.freeze_timer = 0.0
 
     def _apply_outcome(self):
-        outcome = self.event.get_outcome(self.final_roll)
-        self.player.gold = max(0, self.player.gold + outcome.gold_delta)
-        self.player.silver = max(0, self.player.silver + outcome.silver_delta)
+        outcome, effect = self.world.event_resolver.resolve(self.player, self.event, self.final_roll)
+        lines = []
+        for label, value in (("Золото", outcome.gold_delta), ("Серебро", outcome.silver_delta)):
+            if value:
+                sign = "+" if value > 0 else ""
+                lines.append((f"{label}: {sign}{value}", WARNING_TEXT_COLOR if value < 0 else TEXT_COLOR))
         if outcome.displacement_cells:
-            self.world.displace_player_randomly(self.player, outcome.displacement_cells)
-        if outcome.effect_factory:
-            self.player.add_effect(outcome.effect_factory())
+            lines.append((f"Смещение: {outcome.displacement_cells} кл.", WARNING_TEXT_COLOR))
+        if effect is not None:
+            color = WARNING_TEXT_COLOR if effect.warning else TEXT_COLOR
+            lines.append((f"{effect.label}: {effect.duration_seconds:g} с", color))
+        self._result_lines = lines
 
     # --- отрисовка ---
 
@@ -186,32 +193,9 @@ class EventScene(Scene):
         )
 
         y += 30
-        for label, value in (
-                ("Золото", outcome.gold_delta),
-                ("Серебро", outcome.silver_delta),
-        ):
-            if value == 0:
-                continue
-            sign = "+" if value > 0 else ""
-            color = WARNING_TEXT_COLOR if value < 0 else TEXT_COLOR
-            surf = get_font(FONT_SIZE_LABEL + 4).render(f"{label}: {sign}{value}", True, color)
-            screen.blit(surf, surf.get_rect(center=(cx, y)))
-            y += 34
-
-        if outcome.displacement_cells:
-            surf = get_font(FONT_SIZE_LABEL + 4).render(
-                f"Смещение: {outcome.displacement_cells} кл.", True, WARNING_TEXT_COLOR,
-            )
-            screen.blit(surf, surf.get_rect(center=(cx, y)))
-            y += 34
-
-        if outcome.effect_factory:
-            preview_effect = outcome.effect_factory()
-            color = WARNING_TEXT_COLOR if preview_effect.warning else TEXT_COLOR
-            seconds = int(round(preview_effect.duration_seconds))
-            surf = get_font(FONT_SIZE_LABEL + 4).render(
-                f"{preview_effect.label}: {seconds} с", True, color,
-            )
+        font = get_font(FONT_SIZE_LABEL + 4)
+        for text, color in self._result_lines:
+            surf = font.render(text, True, color)
             screen.blit(surf, surf.get_rect(center=(cx, y)))
             y += 34
 

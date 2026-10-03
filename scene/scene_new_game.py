@@ -63,8 +63,8 @@ class NewGameScene(Scene):
         )
 
         # --- Раздел "Видимость" (новое) ---
-        self.vision_minus_button = Button((self.CX_LEFT - 76, 402, 32, 32), "-")
-        self.vision_plus_button = Button((self.CX_LEFT + 44, 402, 32, 32), "+")
+        self.vision_minus_button = Button((self.CX_LEFT - 76, 292, 32, 32), "-")
+        self.vision_plus_button = Button((self.CX_LEFT + 44, 292, 32, 32), "+")
 
         # --- Раздел "События" ---
         self.events_density_slider = Slider(

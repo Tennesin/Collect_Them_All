@@ -4,6 +4,7 @@ from game.clock import WorldClock
 from game.effects.effect_context import EffectContext
 from game.effects.effect_reader import EffectReader
 from game.event_manager import EventManager
+from game.event_resolver import EventResolver
 from game.field import Field
 from game.fog_of_war import FogOfWar
 from game.game_config import (
@@ -15,7 +16,6 @@ from game.generation.gold_cell_generator import GoldCellGenerator
 from game.generation.obstacle_generator import ObstacleGenerator
 from game.player import Player
 from game.resource_manager import ResourceManager
-
 
 class GameWorld:
     """Игровой мир без отрисовки: поле, акторы, менеджеры, часы и правила партии."""
@@ -30,6 +30,7 @@ class GameWorld:
 
         self.clock = WorldClock()
         self.effect_context = EffectContext(self)
+        self.event_resolver = EventResolver(self)
 
         self.field = Field(settings.map_width, settings.map_height)
         self._generate_field()

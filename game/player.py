@@ -118,14 +118,15 @@ class Player:
     # --- Временные эффекты ---
 
     def add_effect(self, effect):
-        """Эффект с тем же stack_key не накладывается второй раз, а продлевает действующий."""
+        """Эффект с тем же key не накладывается второй раз, а сливается с действующим (см. Effect.absorb)."""
         if effect is None or effect.duration_seconds <= 0:
             return
         from game.effects.effect_reader import EffectReader
         for existing in self.active_effects:
             if existing.key == effect.key:
-                existing.duration_seconds = max(existing.duration_seconds, effect.duration_seconds)
-                EffectReader.notify_effect_applied(self, existing)
+                existing.absorb(effect)
+                EffectReader.notify_effect_applied(self, effect)
+                self.vision_dirty = True
                 return
         EffectReader.notify_effect_applied(self, effect)
         self.active_effects.append(effect)
