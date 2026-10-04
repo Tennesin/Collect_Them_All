@@ -1,5 +1,13 @@
 from collections import deque
 
+def start_cell_for(width, height):
+    """Клетка старта - всегда левый верхний угол поля."""
+    return (0, 0)
+
+def win_cell_for(width, height):
+    """Победная клетка - всегда правый нижний угол поля."""
+    return (width - 1, height - 1)
+
 class Field:
     """Хранит сетку препятствий и умеет искать путь. Не знает, как эти препятствия генерируются."""
 
@@ -13,8 +21,8 @@ class Field:
         self._obstacle_count = 0
 
         # Победная клетка — всегда правый нижний угол поля.
-        self.win_cell = (width - 1, height - 1)
-        self.start_cell = (0, 0)
+        self.win_cell = win_cell_for(width, height)
+        self.start_cell = start_cell_for(width, height)
 
         self.gold_cell_positions = []
         self.reserved_cells = {self.win_cell, self.start_cell}

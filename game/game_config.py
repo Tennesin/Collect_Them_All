@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+from game.generation.gold_layout import gold_capacity
 
 # --- Границы значений, которые задаются на экране настроек ---
 MIN_MAP_SIZE = 11
@@ -45,13 +46,12 @@ STARTING_GOLD = 0
 STARTING_SILVER = 0
 
 # --- Золотые клетки ---
-MIN_GOLD_CELLS = 3
+MIN_GOLD_CELLS = 3             # действует там, где карта вмещает столько (см. min_gold_cells_for_map)
 MAX_GOLD_CELLS = 8
-DEFAULT_GOLD_CELLS = 5
-GOLD_CELL_AREA_PER_CELL = 40  # сколько клеток поля "полагается" на одну золотую клетку
+DEFAULT_GOLD_CELLS = 4         # столько вмещает карта по умолчанию (15x15)
 GOLD_CELL_YIELD = 2
 GOLD_CELL_BOX_RADIUS = 2       # половина стороны короба (2 -> короб 5x5)
-GOLD_CELL_BUFFER = 1           # минимум свободных клеток вокруг короба
+GOLD_CELL_BUFFER = 1           # свободных клеток между коробами, до края карты и до старта/финиша (общая для соседей)
 
 # --- Серебряные клетки ---
 SILVER_CELL_BASE_DENSITY = 0.05
@@ -84,9 +84,13 @@ EVENT_DENSITY_PER_PLAYER = 0.005    # доп. плотность за каждо
 MIN_EVENTS_ABSOLUTE = 1
 
 def max_gold_cells_for_map(width, height):
-    """Верхняя граница количества золотых клеток, разумная для данного размера карты."""
-    capacity = (width * height) // GOLD_CELL_AREA_PER_CELL
-    return max(MIN_GOLD_CELLS, min(MAX_GOLD_CELLS, capacity))
+    """Верхняя граница золотых клеток: сколько коробов карта гарантированно вмещает."""
+    capacity = gold_capacity(width, height, GOLD_CELL_BOX_RADIUS, GOLD_CELL_BUFFER)
+    return min(MAX_GOLD_CELLS, capacity)
+
+def min_gold_cells_for_map(width, height):
+    """Нижняя граница: MIN_GOLD_CELLS, но не больше того, что вмещает карта."""
+    return min(MIN_GOLD_CELLS, max_gold_cells_for_map(width, height))
 
 @dataclass
 class GameSettings:
@@ -115,8 +119,9 @@ class GameSettings:
             self.win_silver_required, MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP
         )
 
+        min_cells = min_gold_cells_for_map(self.map_width, self.map_height)
         max_cells = max_gold_cells_for_map(self.map_width, self.map_height)
-        self.gold_cell_count = max(MIN_GOLD_CELLS, min(max_cells, self.gold_cell_count))
+        self.gold_cell_count = max(min_cells, min(max_cells, self.gold_cell_count))
 
         self.vision_radius = max(MIN_VISION_RADIUS, min(MAX_VISION_RADIUS, self.vision_radius))
         self.event_density_percent = max(

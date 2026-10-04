@@ -3,15 +3,13 @@ import time
 from settings import *
 from widgets import Button, Slider, TextInputBox, get_font
 from game.game_config import (
-    GameSettings, MAP_SIZE_PRESETS,
-    MIN_MAP_SIZE, MAX_MAP_SIZE,
-    MIN_OBSTACLE_PERCENT, MAX_OBSTACLE_PERCENT,
-    MIN_WIN_GOLD, MAX_WIN_GOLD, WIN_GOLD_STEP,
-    MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP,
-    MIN_GOLD_CELLS, MIN_VISION_RADIUS, MAX_VISION_RADIUS,
-    MIN_EVENT_DENSITY_PERCENT, MAX_EVENT_DENSITY_PERCENT, EVENT_DENSITY_PERCENT_STEP,
-    MIN_BOT_COUNT, MAX_BOT_COUNT, BOT_DIFFICULTY_ORDER,
-    max_gold_cells_for_map,
+    GameSettings, MAP_SIZE_PRESETS, MIN_MAP_SIZE, MAX_MAP_SIZE,
+    MIN_OBSTACLE_PERCENT, MAX_OBSTACLE_PERCENT, MIN_WIN_GOLD,
+    MAX_WIN_GOLD, WIN_GOLD_STEP, MIN_WIN_SILVER, MAX_WIN_SILVER,
+    WIN_SILVER_STEP, MIN_VISION_RADIUS, MAX_VISION_RADIUS,
+    MIN_EVENT_DENSITY_PERCENT, MAX_EVENT_DENSITY_PERCENT,
+    EVENT_DENSITY_PERCENT_STEP, MIN_BOT_COUNT, MAX_BOT_COUNT,
+    BOT_DIFFICULTY_ORDER, max_gold_cells_for_map, min_gold_cells_for_map,
 )
 from scene.scenes import Scene
 
@@ -110,6 +108,7 @@ class NewGameScene(Scene):
         # ================= СТАРТ =================
         start_w, start_h = 240, 48
         self.start_button = Button((SCREEN_WIDTH // 2 - start_w // 2, 542, start_w, start_h), "Начать игру")
+        self._sync_gold_cells_with_map()
 
     # --- Валидация custom-ввода ---
 
@@ -126,11 +125,20 @@ class NewGameScene(Scene):
             return True
         return self._is_valid_size(self.width_input.text) and self._is_valid_size(self.height_input.text)
 
-    def _clamp_gold_cells_to_map(self):
-        """При смене размера карты не даём количеству золотых клеток остаться выше нового максимума."""
-        max_cells = max_gold_cells_for_map(self.settings.map_width, self.settings.map_height)
-        if self.settings.gold_cell_count > max_cells:
-            self.settings.gold_cell_count = max_cells
+    def _selected_map_size(self):
+        """Размер карты, который выбран на экране прямо сейчас (в режиме «Свой» - из полей ввода)."""
+        if self.custom_mode and self._custom_inputs_valid():
+            return int(self.width_input.text), int(self.height_input.text)
+        return self.settings.map_width, self.settings.map_height
+
+    def _sync_gold_cells_with_map(self):
+        """Держит число золотых клеток в пределах, которые выбранная карта реально вмещает."""
+        low = min_gold_cells_for_map(*self._selected_map_size())
+        high = max_gold_cells_for_map(*self._selected_map_size())
+        self.settings.gold_cell_count = max(low, min(high, self.settings.gold_cell_count))
+
+    def update(self, dt):
+        self._sync_gold_cells_with_map()
 
     def _go_to_main_menu(self):
         from scene.scene_main_menu import MainMenuScene
@@ -177,7 +185,6 @@ class NewGameScene(Scene):
                 self.settings.map_height = h
                 self.width_input.focused = False
                 self.height_input.focused = False
-                self._clamp_gold_cells_to_map()
                 return
         if self.custom_button.collidepoint(pos):
             self.custom_mode = True
@@ -209,10 +216,11 @@ class NewGameScene(Scene):
                 return
 
         if self.gold_cells_minus_button.collidepoint(pos):
-            self.settings.gold_cell_count = max(MIN_GOLD_CELLS, self.settings.gold_cell_count - 1)
+            low = min_gold_cells_for_map(*self._selected_map_size())
+            self.settings.gold_cell_count = max(low, self.settings.gold_cell_count - 1)
             return
         if self.gold_cells_plus_button.collidepoint(pos):
-            max_cells = max_gold_cells_for_map(self.settings.map_width, self.settings.map_height)
+            max_cells = max_gold_cells_for_map(*self._selected_map_size())
             if self.settings.gold_cell_count >= max_cells:
                 self._gold_cells_flash_until = time.time() + 0.6
             else:
@@ -313,6 +321,8 @@ class NewGameScene(Scene):
         cells_color = WARNING_TEXT_COLOR if time.time() < self._gold_cells_flash_until else TEXT_COLOR
         cells_surf = label_font.render(str(self.settings.gold_cell_count), True, cells_color)
         screen.blit(cells_surf, cells_surf.get_rect(center=(cx_right, 232)))
+        max_cells = max_gold_cells_for_map(*self._selected_map_size())
+        self._draw_label(screen, hint_font, f"макс. для этой карты: {max_cells}", (cx_right, 258))
         self.gold_cells_plus_button.draw(screen, mouse_pos)
 
         self._draw_divider(screen, cx_right, 268)
