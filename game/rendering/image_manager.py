@@ -37,7 +37,3 @@ class ImageManager:
                 surf.set_alpha(alpha)
             _scaled_cache[key] = surf
         return surf
-
-    @staticmethod
-    def clear_scaled_cache():
-        _scaled_cache.clear()

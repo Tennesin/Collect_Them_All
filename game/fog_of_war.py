@@ -3,7 +3,6 @@ class FogOfWar:
     def __init__(self, field, radius):
         self.field = field
         self.radius = radius
-        self.radius_sq = radius * radius
         self._gold_aura = self._build_gold_aura()
         self._win_aura = self._build_win_aura()
         self._full_map_cache = None

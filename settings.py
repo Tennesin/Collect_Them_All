@@ -29,8 +29,13 @@ FIELD_COLOR_VARIANTS = [
 
 # Визуальные коэффициенты отрисовки (доля от текущего camera.scale)
 WALL_THICKNESS_RATIO = 0.35
-PATH_WIDTH_RATIO = 0.25
-PATH_GOAL_RADIUS_RATIO = 0.3
+PATH_COLOR = (255, 0, 0)
+PATH_ALPHA = 130            # 0-255
+PATH_DASH_LENGTH = 0.28
+PATH_DASH_GAP = 0.22
+PATH_DASH_WIDTH = 0.14
+PATH_GOAL_INSET = 0.08      # отступ рамки цели от края клетки
+PATH_GOAL_FRAME_RATIO = 0.06  # толщина рамки цели (доля camera.scale)
 PLAYER_RADIUS_RATIO = 0.2
 
 # --- Игроки ---

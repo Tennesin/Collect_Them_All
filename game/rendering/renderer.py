@@ -1,3 +1,4 @@
+import math
 import pygame
 from settings import *
 from game.game_config import FIELD_COLOR_VARIANT_COUNT
@@ -20,6 +21,7 @@ class Renderer:
         self.resource_manager = resource_manager
         self.event_manager = event_manager
         self._fog_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        self._path_overlay = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 
     def draw(self):
         self.draw_field()
@@ -179,26 +181,66 @@ class Renderer:
             self.screen.blit(icon, rect)
 
     def draw_path(self):
-        """Маршрут игрока: линия и точка цели. Если на цели спрятано событие, рисуется маркер."""
+        """Маршрут игрока: полупрозрачные штрихи и рамка на клетке-цели.
+        Если на цели спрятано событие, дополнительно рисуется маркер."""
         player = self.viewer
         if not player.path:
             return
         points = [(player.pos_x, player.pos_y)]
         points += [(cx + 0.5, cy + 0.5) for cx, cy in player.path]
-        screen_points = [self.camera.project(x, y) for x, y in points]
 
-        line_width = max(3, int(PATH_WIDTH_RATIO * self.camera.scale))
-        circle_radius = max(4, int(PATH_GOAL_RADIUS_RATIO * self.camera.scale))
-        color = player.color
-
-        if len(screen_points) >= 2:
-            pygame.draw.lines(self.screen, color, False, screen_points, line_width)
-        goal_screen = screen_points[-1]
-        pygame.draw.circle(self.screen, color, (int(goal_screen[0]), int(goal_screen[1])), circle_radius)
+        overlay = self._path_overlay
+        overlay.fill((0, 0, 0, 0))
+        color = (*PATH_COLOR, PATH_ALPHA)
+        self._draw_dashes(overlay, points, color)
+        self._draw_goal_frame(overlay, player.path[-1], color)
+        self.screen.blit(overlay, (0, 0))
 
         goal_cell = player.path[-1]
         if goal_cell in player.visible_cells and self.event_manager.get_event_at(goal_cell) is not None:
             self._draw_select_marker(goal_cell)
+
+    def _draw_dashes(self, overlay, points, color):
+        """Режет ломаную на штрихи. Расчёт ведётся в клетках, на экран переводится только
+        результат. Штрих, попавший на поворот, рисуется двумя кусками без перекрытия."""
+        period = PATH_DASH_LENGTH + PATH_DASH_GAP
+        half_width = PATH_DASH_WIDTH / 2
+        project = self.camera.project
+
+        # Штрихи отсчитываются от центра ближайшей клетки маршрута: при движении они стоят на месте.
+        anchor = math.dist(points[0], points[1])
+        walked = 0.0
+        for (x0, y0), (x1, y1) in zip(points, points[1:]):
+            length = math.dist((x0, y0), (x1, y1))
+            if length == 0:
+                continue
+            ux, uy = (x1 - x0) / length, (y1 - y0) / length
+            nx, ny = -uy * half_width, ux * half_width
+
+            first = math.ceil((walked - anchor - PATH_DASH_LENGTH) / period)
+            last = math.floor((walked + length - anchor) / period)
+            for k in range(first, last + 1):
+                dash_start = anchor + k * period
+                begin = max(dash_start, walked) - walked
+                end = min(dash_start + PATH_DASH_LENGTH, walked + length) - walked
+                if end <= begin:
+                    continue
+                ax, ay = x0 + ux * begin, y0 + uy * begin
+                bx, by = x0 + ux * end, y0 + uy * end
+                quad = [
+                    project(ax + nx, ay + ny), project(bx + nx, by + ny),
+                    project(bx - nx, by - ny), project(ax - nx, ay - ny),
+                ]
+                pygame.draw.polygon(overlay, color, quad)
+            walked += length
+
+    def _draw_goal_frame(self, overlay, cell, color):
+        """Тонкая рамка вокруг клетки-цели: видно, куда идём, но содержимое клетки не закрыто."""
+        x0, y0 = self.camera.project(cell[0], cell[1])
+        size = self.camera.scale
+        inset = size * PATH_GOAL_INSET
+        rect = pygame.Rect(x0 + inset, y0 + inset, size - 2 * inset, size - 2 * inset)
+        pygame.draw.rect(overlay, color, rect, max(2, int(PATH_GOAL_FRAME_RATIO * size)))
 
     def _draw_select_marker(self, cell):
         """Значок select.png вокруг клетки-цели, если на ней спрятано событие."""

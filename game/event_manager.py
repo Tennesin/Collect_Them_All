@@ -23,6 +23,7 @@ class EventOutcome:
     silver_delta: int = 0
     displacement_cells: int = 0   # мгновенное смещение игрока на N клеток в случайном направлении
     effect_factory: Optional[Callable[[], Effect]] = None
+    summary: str = ""   # короткая «изюминка» исхода для инструкции (заполняется для исходов 1 и 6)
 
 class EventDefinition:
     """Базовый класс события. Каждый events/<id>/<id>.py должен объявить
@@ -39,6 +40,27 @@ class EventDefinition:
 
     def get_outcome(self, roll):
         return self.outcomes[roll]
+
+    def describe_outcome(self, roll):
+        """Краткое описание исхода для инструкции: «изюминка» + награды, штрафы, эффект."""
+        outcome = self.get_outcome(roll)
+        parts = []
+        if outcome.gold_delta:
+            parts.append(f"{outcome.gold_delta:+d} золота")
+        if outcome.silver_delta:
+            parts.append(f"{outcome.silver_delta:+d} серебра")
+        if outcome.displacement_cells:
+            parts.append(f"смещение на {outcome.displacement_cells} кл.")
+        if outcome.effect_factory is not None:
+            effect = outcome.effect_factory()
+            text = f"{effect.label} на {effect.duration_seconds:g} с"
+            if effect.description:
+                text += f" ({effect.description})"
+            parts.append(text)
+        details = ", ".join(parts)
+        if outcome.summary:
+            return f"{outcome.summary} — {details}" if details else outcome.summary
+        return details
 
 class EventRegistry:
     """Читает содержимое events/ один раз при создании. Ничего не знает

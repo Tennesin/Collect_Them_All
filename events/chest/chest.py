@@ -7,6 +7,7 @@ class HalfIncomeCurseEffect(Effect):
     собираемый игроком доход (золото и серебро) урезается вдвое."""
 
     label = "Проклятие (половина дохода)"
+    description = "доход золота и серебра вдвое меньше"
     warning = True
     DURATION_SECONDS = 10.0
 
@@ -28,6 +29,7 @@ class ChestEvent(EventDefinition):
             "демон! Он проклял вашу удачу.",
             gold_delta=-15,
             effect_factory=lambda: HalfIncomeCurseEffect(HalfIncomeCurseEffect.DURATION_SECONDS),
+            summary="демон в сундуке",
         ),
         2: EventOutcome(
             "Сундук недовольно заскрипел и вытряс на вас пыль вместо сокровищ — "
@@ -54,6 +56,7 @@ class ChestEvent(EventDefinition):
             "силы так и прибывают!",
             gold_delta=20,
             effect_factory=lambda: HasteEffect(1.5, 5.0),
+            summary="щедрый подарок",
         ),
     }
 

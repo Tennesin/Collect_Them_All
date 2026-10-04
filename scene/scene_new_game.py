@@ -62,7 +62,7 @@ class NewGameScene(Scene):
             min_value=MIN_OBSTACLE_PERCENT, max_value=MAX_OBSTACLE_PERCENT, step=1,
         )
 
-        # --- Раздел "Видимость" (новое) ---
+        # --- Раздел "Видимость" ---
         self.vision_minus_button = Button((self.CX_LEFT - 76, 292, 32, 32), "-")
         self.vision_plus_button = Button((self.CX_LEFT + 44, 292, 32, 32), "+")
 
@@ -150,7 +150,7 @@ class NewGameScene(Scene):
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._handle_click(event.pos)
-            elif event.type == pygame.MOUSEMOTION:
+        elif event.type == pygame.MOUSEMOTION:
             for slider in self._sliders:
                 if slider.dragging:
                     slider.set_from_mouse(event.pos[0])

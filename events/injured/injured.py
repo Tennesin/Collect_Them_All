@@ -15,6 +15,7 @@ class InjuredEvent(EventDefinition):
             "Вы попали в его ловушку, а удар по голове сбил вам темп.",
             gold_delta=-10, silver_delta=-60,
             effect_factory=lambda: SlowEffect(0.75, 4.0),
+            summary="мнимый раненый оказывается грабителем",
         ),
         2: EventOutcome(
             "Раненый после оказания помощи не сдержал слово и сбежал от вас.",
@@ -39,6 +40,7 @@ class InjuredEvent(EventDefinition):
             "за оказанную ему помощь.",
             gold_delta=15,
             effect_factory=lambda: HasteEffect(1.5, 6.0),
+            summary="раненый оказывается священником",
         ),
     }
 

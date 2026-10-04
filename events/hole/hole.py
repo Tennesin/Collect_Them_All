@@ -8,6 +8,7 @@ class PhantomWalkEffect(Effect):
     свободную клетку (см. EffectContext.push_out_of_obstacle_if_needed)."""
 
     label = "Тайный проход"
+    description = "проход сквозь стены"
     DURATION_SECONDS = 6.0
 
     ignores_obstacles = True
@@ -30,6 +31,7 @@ class HoleEvent(EventDefinition):
             "наружу, потеряв часть серебра и несколько долгих секунд.",
             silver_delta=-35,
             effect_factory=lambda: StunEffect(3.0),
+            summary="бездна",
         ),
         2: EventOutcome(
             "Пустота: внутри не оказалось ничего, кроме темноты — время потрачено впустую.",
@@ -52,6 +54,7 @@ class HoleEvent(EventDefinition):
             "и на время научились проходить сквозь любые стены.",
             gold_delta=15,
             effect_factory=lambda: PhantomWalkEffect(PhantomWalkEffect.DURATION_SECONDS),
+            summary="тайный проход",
         ),
     }
 

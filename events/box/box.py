@@ -9,6 +9,7 @@ class SilverMagnetEffect(Effect):
     RADIUS = 3
     DURATION_SECONDS = 12.0
     POLL_INTERVAL = 0.4  # как часто магнит проверяет серебро вокруг
+    description = f"притягивает серебро в радиусе {RADIUS} кл."
 
     def __init__(self, duration_seconds):
         super().__init__(duration_seconds)
@@ -35,6 +36,7 @@ class BoxEvent(EventDefinition):
         1: EventOutcome(
             "Внутри оказалась мина-ловушка! Взрыв отбросил вас далеко в сторону.",
             gold_delta=-5, silver_delta=-30, displacement_cells=4,
+            summary="мина-ловушка",
         ),
         2: EventOutcome(
             "Коробка совершенно пуста — вы только зря потеряли время.",
@@ -57,6 +59,7 @@ class BoxEvent(EventDefinition):
             "притягивает к вам разбросанное вокруг серебро!",
             gold_delta=5,
             effect_factory=lambda: SilverMagnetEffect(SilverMagnetEffect.DURATION_SECONDS),
+            summary="магнитный артефакт",
         ),
     }
 

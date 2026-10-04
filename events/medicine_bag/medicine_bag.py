@@ -10,6 +10,7 @@ class ConfusionEffect(Effect):
     DURATION_SECONDS = 10.0
     VISION_RADIUS = 3
     SPEED_MULTIPLIER = 0.6
+    description = f"обзор {VISION_RADIUS} кл., скорость ×{SPEED_MULTIPLIER:g}"
 
     vision_radius_override = VISION_RADIUS
     speed_multiplier = SPEED_MULTIPLIER
@@ -20,6 +21,7 @@ class SupermanEffect(Effect):
     label = "Супермэн"
     DURATION_SECONDS = 10.0
     SPEED_MULTIPLIER = 1.5
+    description = f"видна вся карта, скорость ×{SPEED_MULTIPLIER:g}, снимает негативные эффекты"
 
     full_map_vision = True
     speed_multiplier = SPEED_MULTIPLIER
@@ -43,6 +45,7 @@ class MedicineBagEvent(EventDefinition):
             "и подвижность резко упали.",
             silver_delta=-20,
             effect_factory=lambda: ConfusionEffect(ConfusionEffect.DURATION_SECONDS),
+            summary="просроченный препарат",
         ),
         2: EventOutcome(
             "Рвота: организм не принял находку — пришлось пережидать, приходя в себя.",
@@ -64,6 +67,7 @@ class MedicineBagEvent(EventDefinition):
             "СУПЕРМЭН: чудо-состав пробудил нечеловеческие силы — вы видите всю карту "
             "и несётесь намного быстрее обычного!",
             effect_factory=lambda: SupermanEffect(SupermanEffect.DURATION_SECONDS),
+            summary="чудо-состав",
         ),
     }
 

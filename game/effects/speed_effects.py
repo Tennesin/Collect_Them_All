@@ -32,6 +32,10 @@ class HasteEffect(Effect):
     def label(self):
         return f"Ускорение ×{self.speed_multiplier:g}"
 
+    @property
+    def description(self):
+        return "снимает негативные эффекты" if self.cleanses else ""
+
     def absorb(self, other):
         super().absorb(other)
         self.speed_multiplier = max(self.speed_multiplier, other.speed_multiplier)

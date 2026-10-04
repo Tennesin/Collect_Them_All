@@ -1,9 +1,8 @@
-import os
 import pygame
 from settings import *
 from widgets import Button, ScrollArea, get_font, wrap_text
 from game.rendering.image_manager import ImageManager
-from game.event_manager import EVENTS_ROOT
+from game.event_manager import EventRegistry
 from bot.bot_profiles import BOT_PROFILES
 from scene.scenes import Scene
 from game.game_config import (
@@ -22,14 +21,9 @@ from game.game_config import (
     MIN_BOT_COUNT, MAX_BOT_COUNT, BOT_DIFFICULTY_ORDER,
 )
 
-def _event_icon_dir(event_id):
-    """Путь к папке события — там же лежит его иконка (см. game/event_manager.py)."""
-    return os.path.join(EVENTS_ROOT, event_id)
-
 def _pct(fraction):
     """0.05 -> '5%'."""
     return f"{fraction * 100:g}%"
-
 
 def _bot_difficulty_items():
     """Строки про уровни сложности собираются из профилей, чтобы не расходились с балансом."""
@@ -42,6 +36,14 @@ def _bot_difficulty_items():
                            f"стоит на старте {profile.start_delay:g} с, {mistakes}."))
     return items
 
+def _event_items():
+    """Блок по каждому событию собирается из самих определений в events/."""
+    items = []
+    for event in EventRegistry.shared().all():
+        items.append(("icon", event.icon_file, event.title, TEXT_COLOR, event.icon_dir))
+        items.append(("p", f"Риск: {event.describe_outcome(1)}.", WARNING_TEXT_COLOR))
+        items.append(("p", f"Удача: {event.describe_outcome(6)}.", SELECTED_BORDER_COLOR))
+    return items
 
 INSTRUCTION_SECTIONS = [
     {
@@ -160,38 +162,7 @@ INSTRUCTION_SECTIONS = [
              f"плюс {_pct(EVENT_DENSITY_PER_PLAYER)} за каждого бота).",
              SELECTED_BORDER_COLOR),
 
-            ("icon", "bag.png", "Мешок", TEXT_COLOR, _event_icon_dir("bag")),
-            ("p", "Риск: разъярённый барсук — −50 серебра и замедление ×0.5 на 6 с.", WARNING_TEXT_COLOR),
-            ("p", "Удача: тайник контрабандиста — +20 золота, +50 серебра и ускорение ×1.5 на 5 с.",
-             SELECTED_BORDER_COLOR),
-
-            ("icon", "box.png", "Коробка", TEXT_COLOR, _event_icon_dir("box")),
-            ("p", "Риск: мина-ловушка — −5 золота, −30 серебра и смещение на 4 клетки.",
-             WARNING_TEXT_COLOR),
-            ("p", "Удача: «Магнит серебра» на 12 с (притягивает серебро в радиусе 3 клеток) "
-                  "и +5 золота.", SELECTED_BORDER_COLOR),
-
-            ("icon", "chest.png", "Сундук", TEXT_COLOR, _event_icon_dir("chest")),
-            ("p", "Риск: демон в сундуке — −15 золота и проклятие «половина дохода» на 10 с.",
-             WARNING_TEXT_COLOR),
-            ("p", "Удача: щедрый подарок — +20 золота и ускорение ×1.5 на 5 с.", SELECTED_BORDER_COLOR),
-
-            ("icon", "hole.png", "Яма", TEXT_COLOR, _event_icon_dir("hole")),
-            ("p", "Риск: бездна — −35 серебра и оглушение на 3 с.", WARNING_TEXT_COLOR),
-            ("p", "Удача: тайный проход — +15 золота и способность проходить сквозь стены 6 с.",
-             SELECTED_BORDER_COLOR),
-
-            ("icon", "injured.png", "Раненый", TEXT_COLOR, _event_icon_dir("injured")),
-            ("p", "Риск: мнимый раненый оказывается грабителем — −10 золота, −60 серебра "
-                  "и замедление ×0.75 на 4 с.", WARNING_TEXT_COLOR),
-            ("p", "Удача: раненый оказывается священником — +15 золота и ускорение ×1.5 на 6 с.",
-             SELECTED_BORDER_COLOR),
-
-            ("icon", "medicine_bag.png", "Аптечка", TEXT_COLOR, _event_icon_dir("medicine_bag")),
-            ("p", "Риск: «Шиза» — обзор 3 клетки и скорость ×0.6 на 10 с.", WARNING_TEXT_COLOR),
-            ("p", "Удача: «Супермэн» — видимость всей карты и скорость ×1.5 на 10 с; "
-                  "снимает все негативные эффекты. «Полная свежесть» тоже их снимает.",
-             SELECTED_BORDER_COLOR),
+            *_event_items(),
         ],
     },
     {

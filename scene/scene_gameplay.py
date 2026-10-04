@@ -15,7 +15,6 @@ class GameplayScene(Scene):
 
     def __init__(self, manager, settings):
         super().__init__(manager)
-        self.settings = settings
         self._victory_alpha = 0
         self._victory_fade = None
         screen = self.manager.app.screen
@@ -24,7 +23,6 @@ class GameplayScene(Scene):
         self.world = GameWorld(settings, palette, controller_factory=create_bot_controller)
         self.human = self.world.human
 
-        # Алиасы, чтобы Renderer и сцены-оверлеи не менялись
         self.field = self.world.field
         self.players = self.world.players
         self.resource_manager = self.world.resource_manager
@@ -67,7 +65,6 @@ class GameplayScene(Scene):
     # --- Жизненный цикл сцены ---
 
     def on_pause(self):
-        # MOUSEBUTTONUP уйдёт в другую сцену, поэтому драг сбрасываем здесь
         self.input_handler.dragging = False
 
     def handle_event(self, event):

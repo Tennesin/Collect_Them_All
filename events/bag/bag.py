@@ -15,6 +15,7 @@ class BagEvent(EventDefinition):
             "и вцепился вам в ногу!",
             silver_delta=-50,
             effect_factory=lambda: SlowEffect(0.5, 6.0),
+            summary="разъярённый барсук",
         ),
         2: EventOutcome(
             "Узел оказался слишком тугим — вы застряли над ним, потеряв пару секунд.",
@@ -38,6 +39,7 @@ class BagEvent(EventDefinition):
             "Это оказался тайник контрабандиста!",
             gold_delta=20, silver_delta=50,
             effect_factory=lambda: HasteEffect(1.5, 5.0),
+            summary="тайник контрабандиста",
         ),
     }
 
