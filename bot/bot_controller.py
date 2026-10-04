@@ -4,7 +4,6 @@ class BotController:
     """Источник команд для бота. Раз в think_interval вызывает think(), который
     просит мозг выбрать цель и отдаёт путь в player.follow_path()."""
 
-    IDLE_THINK_DELAY = 0.05   # как быстро бот задумывается после остановки
     STUCK_TIMEOUT = 3.0       # секунд на одной клетке при ненулевой скорости
     STUCK_BLACKLIST = 8.0     # сколько секунд игнорировать цель, на которой застряли
 
@@ -27,7 +26,7 @@ class BotController:
         # Маршрут закончился (дошли, событие, телепорт): не ждём весь интервал.
         moving = bool(self.player.path)
         if self._was_moving and not moving:
-            self._time_to_think = min(self._time_to_think, self.IDLE_THINK_DELAY)
+            self._time_to_think = min(self._time_to_think, self.profile.idle_delay)
         self._was_moving = moving
 
         self._check_stuck(now)
@@ -37,6 +36,10 @@ class BotController:
             return
         self._time_to_think += self.profile.think_interval
         self.think()
+
+    @property
+    def event_delay(self):
+        return self.profile.event_delay
 
     def think(self):
         plan = self.brain.plan(self.world.clock.match_time)

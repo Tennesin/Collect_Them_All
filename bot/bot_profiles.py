@@ -12,19 +12,24 @@ class BotProfile:
     silver_weight: float     # вес серебра в оценке целей
     event_risk: float        # 0..1: готовность идти на клетки событий
     mistake_chance: float    # 0..1: вероятность выбрать не лучшую цель
+    idle_delay: float        # секунд "реакции" после остановки, прежде чем бот выберет новую цель
+    event_delay: float       # секунд, которые бот стоит на клетке события (человек читает окно и крутит кубик)
 
 BOT_PROFILES = {
     "easy": BotProfile(
-        think_interval=0.5, speed_factor=0.85, start_delay=3.0,
-        gold_weight=1.0, silver_weight=1.0, event_risk=0.3, mistake_chance=0.25,
+        think_interval=0.6, speed_factor=0.65, start_delay=8.0,
+        gold_weight=0.8, silver_weight=1.0, event_risk=0.3, mistake_chance=0.35,
+        idle_delay=1.2, event_delay=7.0,
     ),
     "normal": BotProfile(
-        think_interval=0.4, speed_factor=1.0, start_delay=1.5,
-        gold_weight=1.0, silver_weight=1.0, event_risk=0.5, mistake_chance=0.10,
+        think_interval=0.4, speed_factor=0.85, start_delay=4.0,
+        gold_weight=1.0, silver_weight=1.0, event_risk=0.5, mistake_chance=0.15,
+        idle_delay=0.7, event_delay=5.0,
     ),
     "hard": BotProfile(
-        think_interval=0.3, speed_factor=1.1, start_delay=0.0,
-        gold_weight=1.2, silver_weight=1.0, event_risk=0.7, mistake_chance=0.0,
+        think_interval=0.3, speed_factor=1.0, start_delay=1.0,
+        gold_weight=1.1, silver_weight=1.0, event_risk=0.7, mistake_chance=0.05,
+        idle_delay=0.3, event_delay=4.0,
     ),
 }
 

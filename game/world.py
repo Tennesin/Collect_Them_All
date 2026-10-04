@@ -12,6 +12,7 @@ from game.game_config import (
     SILVER_RESPAWN_INTERVAL, EVENT_RESPAWN_INTERVAL,
     FIELD_COLOR_VARIANT_COUNT,
 )
+from game.effects.speed_effects import BusyEffect
 from game.generation.field_texture import FieldTextureGenerator
 from game.generation.gold_cell_generator import GoldCellGenerator
 from game.generation.obstacle_generator import ObstacleGenerator
@@ -206,11 +207,12 @@ class GameWorld:
             outcome, _effect = self.event_resolver.resolve_now(
                 player, event, self.event_resolver.roll()
             )
+            delay = getattr(player.controller, "event_delay", 0.0)
+            if delay > 0:
+                player.add_effect(BusyEffect(delay))
             if self.on_bot_event:
                 self.on_bot_event(player, event, outcome)
             return
-        if self.on_event_triggered:
-            self.on_event_triggered(player, event)
 
     # --- Перемещения ---
 

@@ -51,3 +51,9 @@ class StunEffect(Effect):
     warning = True
     stack_key = "stun"
     speed_multiplier = 0.0
+
+class BusyEffect(Effect):
+    """Бот «занят событием»: стоит на месте, как стоит человек над окном события."""
+    label = "Занят"
+    stack_key = "busy"
+    speed_multiplier = 0.0
