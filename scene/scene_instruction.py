@@ -4,16 +4,44 @@ from settings import *
 from widgets import Button, ScrollArea, get_font, wrap_text
 from game.rendering.image_manager import ImageManager
 from game.event_manager import EVENTS_ROOT
+from bot.bot_profiles import BOT_PROFILES
 from scene.scenes import Scene
 from game.game_config import (
     PLAYER_BASE_SPEED, GOLD_YIELD_INTERVAL, GOLD_CELL_YIELD,
     SILVER_RESPAWN_INTERVAL, EVENT_RESPAWN_INTERVAL,
     SILVER_PILE_MIN_VALUE, SILVER_PILE_MAX_VALUE,
+    SILVER_CELL_BASE_DENSITY, SILVER_CELL_DENSITY_PER_PLAYER,
+    MIN_MAP_SIZE, MAX_MAP_SIZE, MAP_SIZE_PRESETS,
+    MIN_OBSTACLE_PERCENT, MAX_OBSTACLE_PERCENT, DEFAULT_OBSTACLE_PERCENT,
+    MIN_VISION_RADIUS, MAX_VISION_RADIUS, DEFAULT_VISION_RADIUS,
+    MIN_WIN_GOLD, MAX_WIN_GOLD, WIN_GOLD_STEP, DEFAULT_WIN_GOLD,
+    MIN_WIN_SILVER, MAX_WIN_SILVER, WIN_SILVER_STEP, DEFAULT_WIN_SILVER,
+    MIN_GOLD_CELLS, MAX_GOLD_CELLS, DEFAULT_GOLD_CELLS,
+    MIN_EVENT_DENSITY_PERCENT, MAX_EVENT_DENSITY_PERCENT, DEFAULT_EVENT_DENSITY_PERCENT,
+    EVENT_DENSITY_PER_PLAYER,
+    MIN_BOT_COUNT, MAX_BOT_COUNT, BOT_DIFFICULTY_ORDER,
 )
 
 def _event_icon_dir(event_id):
     """Путь к папке события — там же лежит его иконка (см. game/event_manager.py)."""
     return os.path.join(EVENTS_ROOT, event_id)
+
+def _pct(fraction):
+    """0.05 -> '5%'."""
+    return f"{fraction * 100:g}%"
+
+
+def _bot_difficulty_items():
+    """Строки про уровни сложности собираются из профилей, чтобы не расходились с балансом."""
+    items = []
+    for key in BOT_DIFFICULTY_ORDER:
+        profile = BOT_PROFILES[key]
+        mistakes = (f"ошибается в выборе цели в {_pct(profile.mistake_chance)} случаев"
+                    if profile.mistake_chance > 0 else "не ошибается в выборе цели")
+        items.append(("p", f"• {BOT_DIFFICULTY_NAMES_RU[key]}: скорость ×{profile.speed_factor:g}, "
+                           f"стоит на старте {profile.start_delay:g} с, {mistakes}."))
+    return items
+
 
 INSTRUCTION_SECTIONS = [
     {
@@ -22,10 +50,14 @@ INSTRUCTION_SECTIONS = [
             ("p", "Соберите нужное количество золота и серебра, а затем добегите до финишной "
                   "клетки — она всегда находится в правом нижнем углу карты. Игра идёт в "
                   "реальном времени."),
-            ("icon", ICON_GOLD, "Золото для победы: 10–50 (шаг 5, по умолчанию 25).", SELECTED_BORDER_COLOR),
-            ("icon", ICON_SILVER, "Серебро для победы: 50–500 (шаг 25, по умолчанию 125).", SELECTED_BORDER_COLOR),
-            ("p", "Партия заканчивается, как только вы стоите на финише и у вас хватает "
-                  "золота и серебра."),
+            ("icon", ICON_GOLD, f"Золото для победы: {MIN_WIN_GOLD}–{MAX_WIN_GOLD} "
+                                 f"(шаг {WIN_GOLD_STEP}, по умолчанию {DEFAULT_WIN_GOLD}).",
+             SELECTED_BORDER_COLOR),
+            ("icon", ICON_SILVER, f"Серебро для победы: {MIN_WIN_SILVER}–{MAX_WIN_SILVER} "
+                                   f"(шаг {WIN_SILVER_STEP}, по умолчанию {DEFAULT_WIN_SILVER}).",
+             SELECTED_BORDER_COLOR),
+            ("p", "Побеждает первый, кто стоит на финише, имея достаточно золота и серебра, "
+                  "будь то вы или бот. Партия заканчивается сразу."),
             ("p", "Совет: финишная клетка всегда выделена на карте — планируйте маршрут "
                   "туда заранее, пока копите ресурсы.", WIN_CELL_COLOR),
         ],
@@ -61,8 +93,9 @@ INSTRUCTION_SECTIONS = [
                   f"{GOLD_YIELD_INTERVAL:g} секунд в них понемногу накапливается золото."),
             ("icon", ICON_GOLD, f"Прирост: {GOLD_CELL_YIELD} золота за клетку каждые "
                                  f"{GOLD_YIELD_INTERVAL:g} с.", GOLD_CELL_BORDER_COLOR),
-            ("icon", ICON_GOLD, "Количество клеток на карте: 3–8 (по умолчанию 5; "
-                                 "максимум зависит от размера карты).", GOLD_CELL_BORDER_COLOR),
+            ("icon", ICON_GOLD, f"Количество клеток на карте: {MIN_GOLD_CELLS}–{MAX_GOLD_CELLS} "
+                                 f"(по умолчанию {DEFAULT_GOLD_CELLS}; максимум зависит от "
+                                 "размера карты).", GOLD_CELL_BORDER_COLOR),
             ("p", "Дойдите до клетки, чтобы забрать всё накопленное золото сразу."),
             ("p", "Совет: золотые клетки и площадка вокруг них видны на карте всегда, даже "
                   "вне обзора игрока — их можно приметить заранее и спланировать маршрут.",
@@ -74,7 +107,9 @@ INSTRUCTION_SECTIONS = [
         "items": [
             ("p", "Серебряные кучки разбросаны по карте в случайных местах и исчезают "
                   "после сбора."),
-            ("icon", ICON_SILVER_FIELD, "Плотность: 5% свободных клеток.", SELECTED_BORDER_COLOR),
+            ("icon", ICON_SILVER_FIELD,
+             f"Плотность: {_pct(SILVER_CELL_BASE_DENSITY)} свободных клеток "
+             f"плюс {_pct(SILVER_CELL_DENSITY_PER_PLAYER)} за каждого бота.", SELECTED_BORDER_COLOR),
             ("icon", ICON_SILVER, f"Размер кучки: {SILVER_PILE_MIN_VALUE}–{SILVER_PILE_MAX_VALUE} "
                                    "серебра (случайно).", SELECTED_BORDER_COLOR),
             ("p", f"Каждые {SILVER_RESPAWN_INTERVAL:g} секунд кучки вне вашего поля зрения "
@@ -88,11 +123,27 @@ INSTRUCTION_SECTIONS = [
             ("p", "Клетки в радиусе обзора видны прямо сейчас."),
             ("p", "Ранее исследованные, но не видимые сейчас клетки — показаны "
                   "затемнёнными.", HINT_TEXT_COLOR),
-            ("icon", ICON_SELECT, "Дальность обзора: 3–10 клеток (по умолчанию 4), "
-                                   "настраивается перед игрой.", SELECTED_BORDER_COLOR),
+            ("icon", ICON_SELECT, f"Дальность обзора: {MIN_VISION_RADIUS}–{MAX_VISION_RADIUS} клеток "
+                                   f"(по умолчанию {DEFAULT_VISION_RADIUS}), настраивается перед игрой.",
+             SELECTED_BORDER_COLOR),
             ("p", "Важно: капитальные блоки перекрывают обзор — сквозь них не видно. А "
                   "вот тонкие стены обзор не блокируют: видно, что за ними, но пройти "
                   "напрямую нельзя.", WARNING_TEXT_COLOR),
+        ],
+    },
+    {
+        "title": "Боты",
+        "items": [
+            ("p", f"Против вас могут играть от {MIN_BOT_COUNT} до {MAX_BOT_COUNT} ботов. "
+                  "Они подчиняются тем же правилам: туман войны, скорость, события и эффекты."),
+            ("p", "Золотые клетки и финиш бот знает с самого начала, как и вы. Серебро и события "
+                  "он запоминает только те, что увидел сам, и забывает, если клетка оказалась пустой."),
+            ("p", "Игроки не мешают друг другу и свободно проходят сквозь друг друга. Борьба идёт "
+                  "только за ресурсы: кто первый пришёл, тот и забрал."),
+            ("p", "Сложность выбирается перед игрой:"),
+            *_bot_difficulty_items(),
+            ("p", "Если бот открыл событие в вашем поле зрения, слева вверху появится уведомление "
+                  "с его результатом.", HINT_TEXT_COLOR),
         ],
     },
     {
@@ -104,7 +155,9 @@ INSTRUCTION_SECTIONS = [
                   "события; эффекты начинают действовать после его закрытия."),
             ("icon", "dice-six-faces-six.png",
              "Грань 1–6 равновероятна; расстановка вне поля зрения обновляется каждые "
-             f"{EVENT_RESPAWN_INTERVAL:g} секунд; плотность 2–10% (по умолчанию 4%).",
+             f"{EVENT_RESPAWN_INTERVAL:g} секунд; плотность {MIN_EVENT_DENSITY_PERCENT}–"
+             f"{MAX_EVENT_DENSITY_PERCENT}% (по умолчанию {DEFAULT_EVENT_DENSITY_PERCENT}%, "
+             f"плюс {_pct(EVENT_DENSITY_PER_PLAYER)} за каждого бота).",
              SELECTED_BORDER_COLOR),
 
             ("icon", "bag.png", "Мешок", TEXT_COLOR, _event_icon_dir("bag")),
@@ -145,15 +198,22 @@ INSTRUCTION_SECTIONS = [
         "title": "Настройки партии",
         "items": [
             ("p", "Перед стартом партии можно настроить параметры:"),
-            ("p", "• Размер карты: 11–50 клеток (пресеты 15×15, 22×22, 30×30 — или свой "
-                  "размер)."),
-            ("p", "• Доля стен и камней: 10–35% (по умолчанию 20%)."),
-            ("icon", ICON_SELECT, "• Дальность обзора: 3–10 клеток (по умолчанию 4)."),
-            ("p", "• Плотность событий: 2–10% (по умолчанию 4%)."),
-            ("icon", ICON_GOLD, "• Золото для победы: 10–50, шаг 5."),
-            ("icon", ICON_SILVER, "• Серебро для победы: 50–500, шаг 25."),
-            ("icon", ICON_GOLD, "• Золотых клеток: 3–8 (максимум зависит от размера "
-                                 "карты)."),
+            ("p", f"• Размер карты: {MIN_MAP_SIZE}–{MAX_MAP_SIZE} клеток (пресеты "
+                  f"{', '.join(label.replace('x', '×') for label, _w, _h in MAP_SIZE_PRESETS)} "
+                  "или свой размер)."),
+            ("p", f"• Доля стен и камней: {MIN_OBSTACLE_PERCENT}–{MAX_OBSTACLE_PERCENT}% "
+                  f"(по умолчанию {DEFAULT_OBSTACLE_PERCENT}%)."),
+            ("icon", ICON_SELECT, f"• Дальность обзора: {MIN_VISION_RADIUS}–{MAX_VISION_RADIUS} "
+                                   f"(по умолчанию {DEFAULT_VISION_RADIUS})."),
+            ("p", f"• Количество ботов: {MIN_BOT_COUNT}–{MAX_BOT_COUNT} и их сложность."),
+            ("p", f"• Плотность событий: {MIN_EVENT_DENSITY_PERCENT}–{MAX_EVENT_DENSITY_PERCENT}% "
+                  f"(по умолчанию {DEFAULT_EVENT_DENSITY_PERCENT}%)."),
+            ("icon", ICON_GOLD, f"• Золото для победы: {MIN_WIN_GOLD}–{MAX_WIN_GOLD}, "
+                                 f"шаг {WIN_GOLD_STEP}."),
+            ("icon", ICON_SILVER, f"• Серебро для победы: {MIN_WIN_SILVER}–{MAX_WIN_SILVER}, "
+                                   f"шаг {WIN_SILVER_STEP}."),
+            ("icon", ICON_GOLD, f"• Золотых клеток: {MIN_GOLD_CELLS}–{MAX_GOLD_CELLS} "
+                                 "(максимум зависит от размера карты)."),
         ],
     },
     {
@@ -164,7 +224,6 @@ INSTRUCTION_SECTIONS = [
         ],
     },
 ]
-
 
 class InstructionScene(Scene):
     """Полноэкранный текстовый блок с описанием механик игры, доступен из главного меню."""
