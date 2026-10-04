@@ -214,6 +214,9 @@ class GameWorld:
                 self.on_bot_event(player, event, outcome)
             return
 
+        if self.on_event_triggered:
+            self.on_event_triggered(player, event)
+
     # --- Перемещения ---
 
     def displace_player_randomly(self, player, distance):
